@@ -35,6 +35,8 @@ static char THIS_FILE[]=__FILE__;
 // OpenMP
 #ifdef _OPENMP
 # include <omp.h>
+#else
+# include <thread>
 #endif
 
 CommandLine::CommandLine(void)
@@ -43,8 +45,8 @@ CommandLine::CommandLine(void)
 , noiselevel(nlUnknown)
 , memorylimit(0)
 , basepath()
-#ifdef _OPENMP
 , nthreads(0) // 0 means use default number
+#ifdef _OPENMP
 , filethreads( _FILE_THREADS ) // default from header file
 #endif
 , parfilename()
@@ -116,6 +118,9 @@ void CommandLine::usage(void)
     "  -t<n>    : Number of threads used for main processing (" << omp_get_max_threads() << " detected)\n"
     "  -T<n>    : Number of files hashed in parallel\n"
     "             (" << _FILE_THREADS << " are the default)\n";
+#else
+  cout <<
+    "  -t<n>    : Number of threads used for main processing (" << thread::hardware_concurrency() << " detected)\n";
 #endif
   cout <<
     "  --       : Treat all following arguments as filenames\n"
@@ -386,7 +391,6 @@ bool CommandLine::ReadArgs(int argc, const char * const *argv)
           }
           break;
 
-#ifdef _OPENMP
         case 't':  // Set amount of threads
           {
             nthreads = 0;
@@ -406,6 +410,7 @@ bool CommandLine::ReadArgs(int argc, const char * const *argv)
           }
           break;
 
+#ifdef _OPENMP
         case 'T':  // Set amount of file threads
           {
             filethreads = 0;

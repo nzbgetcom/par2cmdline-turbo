@@ -64,8 +64,8 @@ int main(int argc, char *argv[])
 			    commandline->GetNoiseLevel(),
 			    commandline->GetMemoryLimit(),
 			    commandline->GetBasePath(),
-#ifdef _OPENMP
 			    commandline->GetNumThreads(),
+#ifdef _OPENMP
 			    commandline->GetFileThreads(),
 #endif
 			    commandline->GetParFilename(),
@@ -106,8 +106,8 @@ int main(int argc, char *argv[])
 				  commandline->GetNoiseLevel(),
 				  commandline->GetMemoryLimit(),
 				  commandline->GetBasePath(),
-#ifdef _OPENMP
 				  commandline->GetNumThreads(),
+#ifdef _OPENMP
 				  commandline->GetFileThreads(),
 #endif
 				  commandline->GetParFilename(),

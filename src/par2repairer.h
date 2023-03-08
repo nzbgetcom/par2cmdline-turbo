@@ -21,6 +21,7 @@
 #ifndef __PAR2REPAIRER_H__
 #define __PAR2REPAIRER_H__
 
+#include "../parpar/gf16/controller_cpu.h"
 
 class Par2Repairer
 {
@@ -30,8 +31,8 @@ public:
 
   Result Process(const size_t memorylimit,
 		 const string &basepath,
-#ifdef _OPENMP
 		 const u32 nthreads,
+#ifdef _OPENMP
 		 const u32 filethreads,
 #endif
 		 string parfilename,
@@ -202,9 +203,10 @@ protected:
   vector<DataBlock*>        outputblocks;            // Which DataBlocks have to calculated using RS
 
   ReedSolomon<Galois16>     rs;                      // The Reed Solomon matrix.
+  PAR2Proc parpar;                                   // Main ParPar backend
+  PAR2ProcCPU parparcpu;                             // ParPar CPU sub-backend
 
-  void                     *inputbuffer;             // Buffer for reading DataBlocks (chunksize)
-  void                     *outputbuffer;            // Buffer for writing DataBlocks (chunksize * missingblockcount)
+  void                     *transferbuffer;          // Buffer for reading/writing DataBlocks (chunksize * num_transfer_buffers)
 
   u64                       progress;                // How much data has been processed.
   u64                       totaldata;               // Total amount of data to be processed.

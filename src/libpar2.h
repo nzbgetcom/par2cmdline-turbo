@@ -141,8 +141,8 @@ Result par2create(std::ostream &sout,
 			  const NoiseLevel noiselevel,
 			  const size_t memorylimit,
 			  const std::string &basepath,
-#ifdef _OPENMP
 			  const u32 nthreads,
+#ifdef _OPENMP
 			  const u32 filethreads,
 #endif
 			  const std::string &parfilename,
@@ -160,8 +160,8 @@ Result par2repair(std::ostream &sout,
 		  const NoiseLevel noiselevel,
 		  const size_t memorylimit,
 		  const std::string &basepath,
-#ifdef _OPENMP
 		  const u32 nthreads,
+#ifdef _OPENMP
 		  const u32 filethreads,
 #endif
 		  const std::string &parfilename,

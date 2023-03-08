@@ -67,6 +67,9 @@ public:
                const void *inputbuffer, // Buffer containing input data
                u32 outputindex,         // The row in the RS matrix
                void *outputbuffer);     // Buffer containing output data
+
+  // Get a processing coefficient from the matrix
+  u32 GetFactor(u32 inputindex, u32 outputindex);
 private:
 		bool InternalProcess(const g &factor, size_t size, const void *inputbuffer, void *outputbuffer);	// Optimization
 
@@ -169,6 +172,12 @@ inline bool ReedSolomon<g>::Process(size_t size, u32 inputindex, const void *inp
 	if (factor == 0)
 		return eSuccess;
 	return this->InternalProcess (factor, size, inputbuffer, outputbuffer);
+}
+
+template<class g>
+inline u32 ReedSolomon<g>::GetFactor(u32 inputindex, u32 outputindex)
+{
+	return leftmatrix[outputindex * (datapresent + datamissing) + inputindex].Value();
 }
 
 u32 gcd(u32 a, u32 b);

@@ -41,8 +41,7 @@ Par2Creator::Par2Creator(std::ostream &sout, std::ostream &serr, const NoiseLeve
 , noiselevel(noiselevel)
 , blocksize(0)
 , chunksize(0)
-, inputbuffer(0)
-, outputbuffer(0)
+, transferbuffer(0)
 
 , sourcefilecount(0)
 , sourceblockcount(0)
@@ -62,7 +61,6 @@ Par2Creator::Par2Creator(std::ostream &sout, std::ostream &serr, const NoiseLeve
 , recoverypackets()
 , criticalpackets()
 , criticalpacketentries()
-, rs()
 , progress(0)
 , totaldata(0)
 
@@ -78,8 +76,9 @@ Par2Creator::~Par2Creator(void)
   delete mainpacket;
   delete creatorpacket;
 
-  delete [] (u8*)inputbuffer;
-  delete [] (u8*)outputbuffer;
+  delete [] (u8*)transferbuffer;
+
+  parpar.deinit();
 
   vector<Par2CreatorSourceFile*>::iterator sourcefile = sourcefiles.begin();
   while (sourcefile != sourcefiles.end())
@@ -92,8 +91,8 @@ Par2Creator::~Par2Creator(void)
 Result Par2Creator::Process(
 			    const size_t memorylimit,
 			    const string &basepath,
-#ifdef _OPENMP
 			    const u32 nthreads,
+#ifdef _OPENMP
 			    const u32 _filethreads,
 #endif
 			    const string &parfilename,
@@ -117,12 +116,6 @@ Result Par2Creator::Process(
   firstrecoveryblock = _firstblock;
   recoveryfilescheme = _recoveryfilescheme;
 
-#ifdef _OPENMP
-  // Set the number of threads
-  if (nthreads != 0)
-    omp_set_num_threads(nthreads);
-#endif
-
   // Compute block size from block count or vice versa depending on which was
   // specified on the command line
   if (!ComputeBlockCount(extrafiles))
@@ -142,6 +135,19 @@ Result Par2Creator::Process(
   // Determine how much recovery data can be computed on one pass
   if (!CalculateProcessBlockSize(memorylimit))
     return eLogicError;
+
+  // Init ParPar backend
+  if (!parpar.init(chunksize, {{&parparcpu, 0, (size_t)chunksize}}))
+    return eLogicError;
+  if (nthreads != 0)
+    parparcpu.setNumThreads(nthreads);
+
+  // If there aren't many input blocks, restrict the submission batch size
+  u32 inputbatch = 0;
+  if (sourceblockcount < 12)
+    inputbatch = sourceblockcount;
+  if (!parparcpu.init(GF16_AUTO, inputbatch))
+    return eMemoryError;
 
   if (noiselevel > nlQuiet)
   {
@@ -181,13 +187,16 @@ Result Par2Creator::Process(
     if (!AllocateBuffers())
       return eMemoryError;
 
-    // Compute the Reed Solomon matrix
-    if (!ComputeRSMatrix())
-      return eLogicError;
+    // Set output exponents
+    vector<u16> recoveryindices(recoveryblockcount);
+    for (u16 i = 0; i < recoveryblockcount; i++)
+      recoveryindices[i] = i + firstrecoveryblock;
+    if (!parpar.setRecoverySlices(recoveryindices))
+      return eMemoryError;
 
     // Set the total amount of data to be processed.
     progress = 0;
-    totaldata = blocksize * sourceblockcount * recoveryblockcount;
+    totaldata = blocksize * sourceblockcount;
 
     // Start at an offset of 0 within a block.
     u64 blockoffset = 0;
@@ -195,6 +204,8 @@ Result Par2Creator::Process(
     {
       // Work out how much data to process this time.
       size_t blocklength = (size_t)min((u64)chunksize, blocksize-blockoffset);
+      if (!parpar.setCurrentSliceSize(blocklength))
+        return eMemoryError;
 
       // Read source data, process it through the RS matrix and write it to disk.
       if (!ProcessData(blockoffset, blocklength))
@@ -705,10 +716,9 @@ bool Par2Creator::InitialiseOutputFiles(const string &parfilename)
 // Allocate memory buffers for reading and writing data to disk.
 bool Par2Creator::AllocateBuffers(void)
 {
-  inputbuffer = new u8[chunksize];
-  outputbuffer = new u8[chunksize * recoveryblockcount];
+  transferbuffer = new u8[chunksize * NUM_TRANSFER_BUFFERS];
 
-  if (inputbuffer == NULL || outputbuffer == NULL)
+  if (transferbuffer == NULL)
   {
     serr << "Could not allocate buffer memory." << endl;
     return false;
@@ -717,32 +727,9 @@ bool Par2Creator::AllocateBuffers(void)
   return true;
 }
 
-// Compute the Reed Solomon matrix
-bool Par2Creator::ComputeRSMatrix(void)
-{
-  // Set the number of input blocks
-  if (!rs.SetInput(sourceblockcount, sout, serr))
-    return false;
-
-  // Set the number of output blocks to be created
-  if (!rs.SetOutput(false,
-                    (u16)firstrecoveryblock,
-                    (u16)firstrecoveryblock + (u16)(recoveryblockcount-1)))
-    return false;
-
-  // Compute the RS matrix
-  if (!rs.Compute(noiselevel, sout, serr))
-    return false;
-
-  return true;
-}
-
 // Read source data, process it through the RS matrix and write it to disk.
 bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength)
 {
-  // Clear the output buffer
-  memset(outputbuffer, 0, chunksize * recoveryblockcount);
-
   // If we have deferred computation of the file hash and block crc and hashes
   // sourcefile and sourceindex will be used to update them during
   // the main recovery block computation
@@ -753,6 +740,20 @@ bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength)
   u32 inputblock;
 
   DiskFile *lastopenfile = NULL;
+
+  // For tracking input buffer availability
+  future<void> bufferavail[NUM_TRANSFER_BUFFERS];
+  u32 bufferindex = NUM_TRANSFER_BUFFERS - 1;
+  // Set all input buffers to available
+  for (i32 i = 0; i < NUM_TRANSFER_BUFFERS; i++)
+  {
+    promise<void> stub;
+    bufferavail[i] = stub.get_future();
+    stub.set_value();
+  }
+
+  // Clear existing output data in backend
+  parpar.discardOutput();
 
   // For each input block
   for ((sourceblock=sourceblocks.begin()),(inputblock=0);
@@ -776,9 +777,19 @@ bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength)
       }
     }
 
+    // Wait for next input buffer to become available
+    bufferindex = (bufferindex + 1) % NUM_TRANSFER_BUFFERS;
+    void *inputbuffer = (char*)transferbuffer + chunksize * bufferindex;
+    bufferavail[bufferindex].get();
+    
     // Read data from the current input block
     if (!sourceblock->ReadData(blockoffset, blocklength, inputbuffer))
       return false;
+
+    // Wait for ParPar backend to be ready, if busy
+    parpar.waitForAdd();
+    // Send block to backend
+    bufferavail[bufferindex] = parpar.addInput(inputbuffer, blocklength, inputblock);
 
     if (deferhashcomputation)
     {
@@ -788,31 +799,16 @@ bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength)
       (*sourcefile)->UpdateHashes(sourceindex, inputbuffer, blocklength);
     }
 
-    // For each output block
-    #pragma omp parallel for
-    for (i64 outputblock=0; outputblock<recoveryblockcount; outputblock++)
+    if (noiselevel > nlQuiet)
     {
-      u32 internalOutputblock = (u32)outputblock;
+      // Update a progress indicator
+      u32 oldfraction = (u32)(1000 * progress / totaldata);
+      progress += blocklength;
+      u32 newfraction = (u32)(1000 * progress / totaldata);
 
-      // Select the appropriate part of the output buffer
-      void *outbuf = &((u8*)outputbuffer)[chunksize * internalOutputblock];
-
-      // Process the data through the RS matrix
-      rs.Process(blocklength, inputblock, inputbuffer, internalOutputblock, outbuf);
-
-      if (noiselevel > nlQuiet)
+      if (oldfraction != newfraction)
       {
-        // Update a progress indicator
-        u32 oldfraction = (u32)(1000 * progress / totaldata);
-        #pragma omp atomic
-        progress += blocklength;
-        u32 newfraction = (u32)(1000 * progress / totaldata);
-
-        if (oldfraction != newfraction)
-        {
-          #pragma omp critical
-          sout << "Processing: " << newfraction/10 << '.' << newfraction%10 << "%\r" << flush;
-        }
+        sout << "Processing: " << newfraction/10 << '.' << newfraction%10 << "%\r" << flush;
       }
     }
 
@@ -824,6 +820,9 @@ bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength)
     }
   }
 
+  // Flush backend
+  parpar.endInput().get();
+
   // Close the last file
   if (lastopenfile != NULL)
   {
@@ -833,15 +832,36 @@ bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength)
   if (noiselevel > nlQuiet)
     sout << "Writing recovery packets\r";
 
-  // For each output block
-  for (u32 outputblock=0; outputblock<recoveryblockcount;outputblock++)
+  if (recoveryblockcount > 0)
   {
-    // Select the appropriate part of the output buffer
-    char *outbuf = &((char*)outputbuffer)[chunksize * outputblock];
+    // For output, we only need two transfer buffers
+    future<bool> outbufavail[2];
+    // Prepare first output
+    outbufavail[0] = parpar.getOutput(0, transferbuffer);
 
-    // Write the data to the recovery packet
-    if (!recoverypackets[outputblock].WriteData(blockoffset, blocklength, outbuf))
-      return false;
+    // For each output block
+    for (u32 outputblock=0; outputblock<recoveryblockcount;outputblock++)
+    {
+      // Prepare next output
+      u32 nextoutputblock = outputblock + 1;
+      if (nextoutputblock < recoveryblockcount)
+      {
+        void *nextoutputbuffer = (char*)transferbuffer + chunksize * (nextoutputblock & 1);
+        outbufavail[nextoutputblock & 1] = parpar.getOutput(nextoutputblock, nextoutputbuffer);
+      }
+
+      // Wait for current buffer to be available
+      if (!outbufavail[outputblock & 1].get())
+      {
+        serr << "Internal checksum failure in recovery packet " << recoverypackets[outputblock].Exponent() << endl;
+        return false;
+      }
+      
+      // Write the data to the recovery packet
+      void *outputbuffer = (char*)transferbuffer + chunksize * (outputblock & 1);
+      if (!recoverypackets[outputblock].WriteData(blockoffset, blocklength, outputbuffer))
+        return false;
+    }
   }
 
   if (noiselevel > nlQuiet)

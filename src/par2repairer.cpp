@@ -83,8 +83,7 @@ Par2Repairer::Par2Repairer(std::ostream &sout, std::ostream &serr, const NoiseLe
   damagedfilecount = 0;
   missingfilecount = 0;
 
-  inputbuffer = 0;
-  outputbuffer = 0;
+  transferbuffer = 0;
 
   progress = 0;
   totaldata = 0;
@@ -99,8 +98,9 @@ Par2Repairer::Par2Repairer(std::ostream &sout, std::ostream &serr, const NoiseLe
 
 Par2Repairer::~Par2Repairer(void)
 {
-  delete [] (u8*)inputbuffer;
-  delete [] (u8*)outputbuffer;
+  delete [] (u8*)transferbuffer;
+
+  parpar.deinit();
 
   map<u32,RecoveryPacket*>::iterator rp = recoverypacketmap.begin();
   while (rp != recoverypacketmap.end())
@@ -126,8 +126,8 @@ Par2Repairer::~Par2Repairer(void)
 Result Par2Repairer::Process(
 			     const size_t memorylimit,
 			     const string &_basepath,
-#ifdef _OPENMP
 			     const u32 nthreads,
+#ifdef _OPENMP
 			     const u32 _filethreads,
 #endif
 			     string parfilename,
@@ -151,12 +151,6 @@ Result Par2Repairer::Process(
   // Get filenames from the command line
   basepath = _basepath;
   std::vector<string> extrafiles = _extrafiles;
-
-#ifdef _OPENMP
-  // Set the number of threads
-  if (nthreads != 0)
-    omp_set_num_threads(nthreads);
-#endif
 
   // Determine the searchpath from the location of the main PAR2 file
   string name;
@@ -266,9 +260,29 @@ Result Par2Repairer::Process(
           return eMemoryError;
         }
 
+        // Init ParPar backend
+        if (!parpar.init(chunksize, {{&parparcpu, 0, (size_t)chunksize}}))
+        {
+          DeleteIncompleteTargetFiles();
+          return eLogicError;
+        }
+        if (nthreads != 0)
+          parparcpu.setNumThreads(nthreads);
+
+        // If there aren't many input blocks, restrict the submission batch size
+        u32 inputbatch = 0;
+        if (sourceblockcount < 12)
+          inputbatch = sourceblockcount;
+
+        if (!parparcpu.init(GF16_AUTO, inputbatch) || !parpar.setRecoverySlices(missingblockcount))
+        {
+          DeleteIncompleteTargetFiles();
+          return eMemoryError;
+        }
+
         // Set the total amount of data to be processed.
         progress = 0;
-        totaldata = blocksize * sourceblockcount * (missingblockcount > 0 ? missingblockcount : 1);
+        totaldata = blocksize * sourceblockcount;
 
         // Start at an offset of 0 within a block.
         u64 blockoffset = 0;
@@ -276,6 +290,11 @@ Result Par2Repairer::Process(
         {
           // Work out how much data to process this time.
           size_t blocklength = (size_t)min((u64)chunksize, blocksize-blockoffset);
+          if (!parpar.setCurrentSliceSize(blocklength))
+          {
+            DeleteIncompleteTargetFiles();
+            return eMemoryError;
+          }
 
           // Read source data, process it through the RS matrix and write it to disk.
           if (!ProcessData(blockoffset, blocklength))
@@ -2444,11 +2463,10 @@ bool Par2Repairer::AllocateBuffers(size_t memorylimit)
     chunksize = (size_t)blocksize;
   }
 
-  // Allocate the two buffers
-  inputbuffer = new u8[(size_t)chunksize];
-  outputbuffer = new u8[(size_t)chunksize * missingblockcount];
+  // Allocate buffer
+  transferbuffer = new u8[(size_t)chunksize * NUM_TRANSFER_BUFFERS];
 
-  if (inputbuffer == NULL || outputbuffer == NULL)
+  if (transferbuffer == NULL)
   {
     serr << "Could not allocate buffer memory." << endl;
     return false;
@@ -2462,9 +2480,6 @@ bool Par2Repairer::ProcessData(u64 blockoffset, size_t blocklength)
 {
   u64 totalwritten = 0;
 
-  // Clear the output buffer
-  memset(outputbuffer, 0, (size_t)chunksize * missingblockcount);
-
   vector<DataBlock*>::iterator inputblock = inputblocks.begin();
   vector<DataBlock*>::iterator copyblock  = copyblocks.begin();
   u32                          inputindex = 0;
@@ -2474,6 +2489,23 @@ bool Par2Repairer::ProcessData(u64 blockoffset, size_t blocklength)
   // Are there any blocks which need to be reconstructed
   if (missingblockcount > 0)
   {
+    // For tracking input buffer availability
+    future<void> bufferavail[NUM_TRANSFER_BUFFERS];
+    u32 bufferindex = NUM_TRANSFER_BUFFERS - 1;
+    // Set all input buffers to available
+    for (i32 i = 0; i < NUM_TRANSFER_BUFFERS; i++)
+    {
+      promise<void> stub;
+      bufferavail[i] = stub.get_future();
+      stub.set_value();
+    }
+
+    // Clear existing output data in backend
+    parpar.discardOutput();
+
+    // Temporary storage for factors
+    vector<u16> factors(missingblockcount);
+
     // For each input block
     while (inputblock != inputblocks.end())
     {
@@ -2493,6 +2525,11 @@ bool Par2Repairer::ProcessData(u64 blockoffset, size_t blocklength)
           return false;
         }
       }
+
+      // Wait for next input buffer to become available
+      bufferindex = (bufferindex + 1) % NUM_TRANSFER_BUFFERS;
+      void *inputbuffer = (char*)transferbuffer + chunksize * bufferindex;
+      bufferavail[bufferindex].get();
 
       // Read data from the current input block
       if (!(*inputblock)->ReadData(blockoffset, blocklength, inputbuffer))
@@ -2515,36 +2552,33 @@ bool Par2Repairer::ProcessData(u64 blockoffset, size_t blocklength)
         ++copyblock;
       }
 
-      // For each output block
-      #pragma omp parallel for
-      for (i64 outputindex=0; outputindex<missingblockcount; outputindex++)
+      // Copy RS matrix column to send to backend
+      for (u32 outputindex=0; outputindex<missingblockcount; outputindex++)
+        factors[outputindex] = rs.GetFactor(inputindex, outputindex);
+      // Wait for ParPar backend to be ready, if busy
+      parpar.waitForAdd();
+      // Send block to backend
+      bufferavail[bufferindex] = parpar.addInput(inputbuffer, blocklength, factors.data());
+
+      if (noiselevel > nlQuiet)
       {
-        u32 internalOutputindex = (u32) outputindex;
-        // Select the appropriate part of the output buffer
-        void *outbuf = &((u8*)outputbuffer)[chunksize * internalOutputindex];
+        // Update a progress indicator
+        u32 oldfraction = (u32)(1000 * progress / totaldata);
+        progress += blocklength;
+        u32 newfraction = (u32)(1000 * progress / totaldata);
 
-        // Process the data
-        rs.Process(blocklength, inputindex, inputbuffer, internalOutputindex, outbuf);
-
-        if (noiselevel > nlQuiet)
+        if (oldfraction != newfraction)
         {
-          // Update a progress indicator
-          u32 oldfraction = (u32)(1000 * progress / totaldata);
-          #pragma omp atomic
-          progress += blocklength;
-          u32 newfraction = (u32)(1000 * progress / totaldata);
-
-          if (oldfraction != newfraction)
-          {
-            #pragma omp critical
-            sout << "Repairing: " << newfraction/10 << '.' << newfraction%10 << "%\r" << flush;
-          }
+          sout << "Repairing: " << newfraction/10 << '.' << newfraction%10 << "%\r" << flush;
         }
       }
 
       ++inputblock;
       ++inputindex;
     }
+
+    // Flush backend
+    parpar.endInput().get();
   }
   else
   {
@@ -2574,11 +2608,11 @@ bool Par2Repairer::ProcessData(u64 blockoffset, size_t blocklength)
         }
 
         // Read data from the current input block
-        if (!(*inputblock)->ReadData(blockoffset, blocklength, inputbuffer))
+        if (!(*inputblock)->ReadData(blockoffset, blocklength, transferbuffer))
           return false;
 
         size_t wrote;
-        if (!(*copyblock)->WriteData(blockoffset, blocklength, inputbuffer, wrote))
+        if (!(*copyblock)->WriteData(blockoffset, blocklength, transferbuffer, wrote))
           return false;
         totalwritten += wrote;
       }
@@ -2610,20 +2644,41 @@ bool Par2Repairer::ProcessData(u64 blockoffset, size_t blocklength)
   if (noiselevel > nlQuiet)
     sout << "Writing recovered data\r";
 
-  // For each output block that has been recomputed
-  vector<DataBlock*>::iterator outputblock = outputblocks.begin();
-  for (u32 outputindex=0; outputindex<missingblockcount;outputindex++)
+  if (missingblockcount > 0)
   {
-    // Select the appropriate part of the output buffer
-    char *outbuf = &((char*)outputbuffer)[chunksize * outputindex];
+    // For output, we only need two transfer buffers
+    future<bool> outbufavail[2];
+    // Prepare first output
+    outbufavail[0] = parpar.getOutput(0, transferbuffer);
 
-    // Write the data to the target file
-    size_t wrote;
-    if (!(*outputblock)->WriteData(blockoffset, blocklength, outbuf, wrote))
-      return false;
-    totalwritten += wrote;
+    // For each output block that has been recomputed
+    vector<DataBlock*>::iterator outputblock = outputblocks.begin();
+    for (u32 outputindex=0; outputindex<missingblockcount;outputindex++)
+    {
+      // Prepare next output
+      u32 nextoutputindex = outputindex + 1;
+      if (nextoutputindex < missingblockcount)
+      {
+        void *nextoutputbuffer = (char*)transferbuffer + chunksize * (nextoutputindex & 1);
+        outbufavail[nextoutputindex & 1] = parpar.getOutput(nextoutputindex, nextoutputbuffer);
+      }
 
-    ++outputblock;
+      // Wait for current buffer to be available
+      if (!outbufavail[outputindex & 1].get())
+      {
+        serr << "Internal checksum failure in block " << outputindex << endl;
+        return false;
+      }
+
+      // Write the data to the target file
+      void *outputbuffer = (char*)transferbuffer + chunksize * (outputindex & 1);
+      size_t wrote;
+      if (!(*outputblock)->WriteData(blockoffset, blocklength, outputbuffer, wrote))
+        return false;
+      totalwritten += wrote;
+
+      ++outputblock;
+    }
   }
 
   if (noiselevel > nlQuiet)

@@ -252,6 +252,11 @@
     <None Include="ROADMAP" />
     <None Include="stamp-h.in" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="parpar\gf16.vcxproj">
+      <Project>{2a658dc2-a6ea-41d1-ad78-2d02675fab14}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

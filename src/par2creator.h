@@ -21,6 +21,8 @@
 #ifndef __PAR2CREATOR_H__
 #define __PAR2CREATOR_H__
 
+#include "../parpar/gf16/controller_cpu.h"
+
 class MainPacket;
 class CreatorPacket;
 class CriticalPacket;
@@ -35,8 +37,8 @@ public:
   // Create recovery files from the source files specified on the command line
   Result Process(const size_t memorylimit,
 		 const string &basepath,
-#ifdef _OPENMP
 		 const u32 nthreads,
+#ifdef _OPENMP
 		 const u32 filethreads,
 #endif
 		 const string &parfilename,
@@ -77,9 +79,6 @@ protected:
   // Allocate memory buffers for reading and writing data to disk.
   bool AllocateBuffers(void);
 
-  // Compute the Reed Solomon matrix
-  bool ComputeRSMatrix(void);
-
   // Read source data, process it through the RS matrix and write it to disk.
   bool ProcessData(u64 blockoffset, size_t blocklength);
 
@@ -116,8 +115,7 @@ protected:
   size_t chunksize;   // How much of each block will be processed at a
                       // time (due to memory constraints).
 
-  void *inputbuffer;  // chunksize
-  void *outputbuffer; // chunksize * recoveryblockcount
+  void *transferbuffer;  // chunksize * num_transfer_buffers
 
   u32 sourcefilecount;   // Number of source files for which recovery data will be computed.
   u32 sourceblockcount;  // Total number of data blocks that the source files will be
@@ -150,7 +148,8 @@ protected:
   list<CriticalPacketEntry>  criticalpacketentries; // A list of which critical packet will
                                                     // be written to which recovery file.
 
-  ReedSolomon<Galois16> rs;   // The Reed Solomon matrix.
+  PAR2Proc parpar;            // Main ParPar backend
+  PAR2ProcCPU parparcpu;      // ParPar CPU sub-backend
 
   u64 progress;     // How much data has been processed.
   u64 totaldata;    // Total amount of data to be processed.
