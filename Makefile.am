@@ -47,8 +47,8 @@ libpar2_a_SOURCES = src/crc.cpp src/crc.h \
 	src/verificationhashtable.cpp src/verificationhashtable.h \
 	src/verificationpacket.cpp src/verificationpacket.h \
 	src/libpar2.cpp src/libpar2.h src/libpar2internal.h
-libpar2_a_LIBADD = libparpar_gf16.a libparpar_gf16_sse2.a libparpar_gf16_ssse3.a libparpar_gf16_avx.a libparpar_gf16_avx2.a libparpar_gf16_avx512.a libparpar_gf16_vbmi.a libparpar_gf16_gfni.a libparpar_gf16_gfni_avx2.a libparpar_gf16_gfni_avx512.a libparpar_gf16_neon.a libparpar_gf16_sve.a libparpar_gf16_sve2.a
-libpar2_a_AR = $(AR) --thin $(ARFLAGS)
+libpar2_a_DEPENDENCIES = libparpar_gf16.a libparpar_gf16_sse2.a libparpar_gf16_ssse3.a libparpar_gf16_avx.a libparpar_gf16_avx2.a libparpar_gf16_avx512.a libparpar_gf16_vbmi.a libparpar_gf16_gfni.a libparpar_gf16_gfni_avx2.a libparpar_gf16_gfni_avx512.a libparpar_gf16_neon.a libparpar_gf16_sve.a libparpar_gf16_sve2.a
+libpar2_a_LIBADD = parpar/gf16/libparpar_gf16*.o
 
 libparpar_gf16_a_SOURCES = \
 	parpar/gf16/controller.cpp \
