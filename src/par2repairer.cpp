@@ -51,7 +51,6 @@ Par2Repairer::Par2Repairer(std::ostream &sout, std::ostream &serr, const NoiseLe
 , par2list()
 , sourceblocks()
 , targetblocks()
-, windowmask(0)
 , blockverifiable(false)
 , verificationhashtable()
 , unverifiablesourcefiles()
@@ -1166,7 +1165,6 @@ bool Par2Repairer::ComputeWindowTable(void)
   if (blockverifiable)
   {
     GenerateWindowTable(blocksize, windowtable);
-    windowmask = ComputeWindowMask(blocksize);
   }
 
   return true;
@@ -1621,7 +1619,7 @@ bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
   }
 
   // Create the checksummer for the file and start reading from it
-  FileCheckSummer filechecksummer(diskfile, blocksize, windowtable, windowmask);
+  FileCheckSummer filechecksummer(diskfile, blocksize, windowtable);
   if (!filechecksummer.Start())
     return false;
 
