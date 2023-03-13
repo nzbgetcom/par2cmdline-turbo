@@ -25,7 +25,7 @@
 // blocks of data.
 
 // The CRC for a block of data may be computed piecemeal be repeatedly
-// calling CRCUpdateChar, and CRCUpdateBlock.
+// calling CRCUpdateBlock.
 
 // Given the CRC for a block of data in a buffer, CRCSlideChar may be used
 // to quickly compute the CRC for the block of data in the buffer that is the
@@ -45,13 +45,10 @@ struct crc32table
 // The one and only CCITT CRC32 lookup table
 extern crc32table ccitttable;
 
-// Update the CRC using one character
-//
-// This seems to follow:
-// http://www.efg2.com/Lab/Mathematics/CRC.htm
-inline u32 CRCUpdateChar(u32 crc, u8 ch)
+#include "../parpar/hasher/hasher.h"  // CRC32_Calc
+inline u32 CRCCompute(size_t length, const void* buffer)
 {
-  return ((crc >> 8) & 0x00ffffffL) ^ ccitttable.table[(u8)crc ^ ch];
+  return CRC32_Calc(buffer, length);
 }
 
 // Update the CRC using a block of characters in a buffer

@@ -59,6 +59,8 @@ Par2Repairer::Par2Repairer(std::ostream &sout, std::ostream &serr, const NoiseLe
 , outputblocks()
 , rs()
 {
+  setup_hasher();
+
   skipdata = false;
   skipleaway = 0;
 

@@ -22,7 +22,10 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 .DELETE_ON_ERROR:
 
-noinst_LIBRARIES = libpar2.a libparpar_gf16.a libparpar_gf16_sse2.a libparpar_gf16_ssse3.a libparpar_gf16_avx.a libparpar_gf16_avx2.a libparpar_gf16_avx512.a libparpar_gf16_vbmi.a libparpar_gf16_gfni.a libparpar_gf16_gfni_avx2.a libparpar_gf16_gfni_avx512.a libparpar_gf16_neon.a libparpar_gf16_sve.a libparpar_gf16_sve2.a
+noinst_LIBRARIES = libpar2.a \
+	libparpar_gf16.a libparpar_gf16_sse2.a libparpar_gf16_ssse3.a libparpar_gf16_avx.a libparpar_gf16_avx2.a libparpar_gf16_avx512.a libparpar_gf16_vbmi.a libparpar_gf16_gfni.a libparpar_gf16_gfni_avx2.a libparpar_gf16_gfni_avx512.a libparpar_gf16_neon.a libparpar_gf16_sve.a libparpar_gf16_sve2.a \
+	libparpar_hasher.a libparpar_hasher_sse2.a libparpar_hasher_clmul.a libparpar_hasher_xop.a libparpar_hasher_avx2.a libparpar_hasher_avx512.a libparpar_hasher_avx512vl.a libparpar_hasher_armcrc.a libparpar_hasher_neon.a libparpar_hasher_neoncrc.a libparpar_hasher_sve2.a
+
 libpar2_a_SOURCES = src/crc.cpp src/crc.h \
 	src/creatorpacket.cpp src/creatorpacket.h \
 	src/criticalpacket.cpp src/criticalpacket.h \
@@ -47,8 +50,10 @@ libpar2_a_SOURCES = src/crc.cpp src/crc.h \
 	src/verificationhashtable.cpp src/verificationhashtable.h \
 	src/verificationpacket.cpp src/verificationpacket.h \
 	src/libpar2.cpp src/libpar2.h src/libpar2internal.h
-libpar2_a_DEPENDENCIES = libparpar_gf16.a libparpar_gf16_sse2.a libparpar_gf16_ssse3.a libparpar_gf16_avx.a libparpar_gf16_avx2.a libparpar_gf16_avx512.a libparpar_gf16_vbmi.a libparpar_gf16_gfni.a libparpar_gf16_gfni_avx2.a libparpar_gf16_gfni_avx512.a libparpar_gf16_neon.a libparpar_gf16_sve.a libparpar_gf16_sve2.a
-libpar2_a_LIBADD = parpar/gf16/libparpar_gf16*.o
+libpar2_a_DEPENDENCIES = \
+	libparpar_gf16.a libparpar_gf16_sse2.a libparpar_gf16_ssse3.a libparpar_gf16_avx.a libparpar_gf16_avx2.a libparpar_gf16_avx512.a libparpar_gf16_vbmi.a libparpar_gf16_gfni.a libparpar_gf16_gfni_avx2.a libparpar_gf16_gfni_avx512.a libparpar_gf16_neon.a libparpar_gf16_sve.a libparpar_gf16_sve2.a \
+	libparpar_hasher.a libparpar_hasher_sse2.a libparpar_hasher_clmul.a libparpar_hasher_xop.a libparpar_hasher_avx2.a libparpar_hasher_avx512.a libparpar_hasher_avx512vl.a libparpar_hasher_armcrc.a libparpar_hasher_neon.a libparpar_hasher_neoncrc.a libparpar_hasher_sve2.a
+libpar2_a_LIBADD = parpar/gf16/libparpar_gf16*.o parpar/hasher/libparpar_hasher*.o
 
 libparpar_gf16_a_SOURCES = \
 	parpar/gf16/controller.cpp \
@@ -98,11 +103,11 @@ libparpar_gf16_gfni_a_CFLAGS = $(CFLAGS_GFNI)
 
 libparpar_gf16_gfni_avx2_a_SOURCES = \
 	parpar/gf16/gf16_affine_avx2.c
-libparpar_gf16_gfni_avx2_a_CFLAGS = $(CFLAGS_GFNI_AVX2)
+libparpar_gf16_gfni_avx2_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX2)
 
 libparpar_gf16_gfni_avx512_a_SOURCES = \
 	parpar/gf16/gf16_affine_avx512.c
-libparpar_gf16_gfni_avx512_a_CFLAGS = $(CFLAGS_GFNI_AVX512)
+libparpar_gf16_gfni_avx512_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX512)
 
 libparpar_gf16_neon_a_SOURCES = \
 	parpar/gf16/gf16_shuffle_neon.c \
@@ -122,6 +127,47 @@ libparpar_gf16_sve2_a_SOURCES = \
 	parpar/gf16/gf16_clmul_sve2.c \
 	parpar/gf16/gf_add_sve2.c
 libparpar_gf16_sve2_a_CFLAGS = $(CFLAGS_SVE2)
+
+
+libparpar_hasher_a_SOURCES = \
+	parpar/hasher/crc_zeropad.c \
+	parpar/hasher/hasher.cpp \
+	parpar/hasher/hasher_scalar.cpp \
+	parpar/hasher/md5-final.c
+# these two lines are needed for the right object files to be generated (for some reason)
+libparpar_hasher_a_CFLAGS =
+libparpar_hasher_a_CXXFLAGS =
+
+libparpar_hasher_sse2_a_SOURCES = parpar/hasher/hasher_sse.cpp
+libparpar_hasher_sse2_a_CXXFLAGS = $(CFLAGS_SSE2)
+
+libparpar_hasher_clmul_a_SOURCES = parpar/hasher/hasher_clmul.cpp
+libparpar_hasher_clmul_a_CXXFLAGS = $(CFLAGS_PCLMUL)
+
+libparpar_hasher_xop_a_SOURCES = parpar/hasher/hasher_xop.cpp
+libparpar_hasher_xop_a_CXXFLAGS = $(CFLAGS_XOP)
+
+libparpar_hasher_avx2_a_SOURCES = parpar/hasher/hasher_avx2.cpp
+libparpar_hasher_avx2_a_CXXFLAGS = $(CFLAGS_AVX2)
+
+libparpar_hasher_avx512_a_SOURCES = parpar/hasher/hasher_avx512.cpp
+libparpar_hasher_avx512_a_CXXFLAGS = $(CFLAGS_AVX512F)
+
+libparpar_hasher_avx512vl_a_SOURCES = parpar/hasher/hasher_avx512vl.cpp
+libparpar_hasher_avx512vl_a_CXXFLAGS = $(CFLAGS_AVX512_HASHER)
+
+libparpar_hasher_armcrc_a_SOURCES = parpar/hasher/hasher_armcrc.cpp
+libparpar_hasher_armcrc_a_CXXFLAGS = $(CFLAGS_ARMCRC)
+
+libparpar_hasher_neon_a_SOURCES = parpar/hasher/hasher_neon.cpp
+libparpar_hasher_neon_a_CXXFLAGS = $(CFLAGS_NEON)
+
+libparpar_hasher_neoncrc_a_SOURCES = parpar/hasher/hasher_neoncrc.cpp
+libparpar_hasher_neoncrc_a_CXXFLAGS = $(CFLAGS_NEON) $(CFLAGS_ARMCRC)
+
+libparpar_hasher_sve2_a_SOURCES = parpar/hasher/hasher_sve2.cpp
+libparpar_hasher_sve2_a_CXXFLAGS = $(CFLAGS_SVE2)
+
 
 
 bin_PROGRAMS = par2
@@ -188,8 +234,10 @@ check_PROGRAMS = tests/letype_test tests/crc_test tests/md5_test tests/diskfile_
 tests_letype_test_SOURCES = src/letype_test.cpp src/letype.h
 
 tests_crc_test_SOURCES = src/crc_test.cpp src/crc.cpp src/crc.h
+tests_crc_test_LDADD = libpar2.a
 
 tests_md5_test_SOURCES = src/md5_test.cpp src/md5.cpp src/md5.h
+tests_md5_test_LDADD = libpar2.a
 
 tests_diskfile_test_SOURCES = src/diskfile_test.cpp src/diskfile.cpp src/diskfile.h
 

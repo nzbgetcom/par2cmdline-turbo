@@ -69,6 +69,7 @@ Par2Creator::Par2Creator(std::ostream &sout, std::ostream &serr, const NoiseLeve
 , mttotalsize(0)
 #endif
 {
+  setup_hasher();
 }
 
 Par2Creator::~Par2Creator(void)

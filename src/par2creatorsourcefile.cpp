@@ -317,7 +317,7 @@ void Par2CreatorSourceFile::InitialiseSourceBlocks(vector<DataBlock>::iterator &
 void Par2CreatorSourceFile::UpdateHashes(u32 blocknumber, const void *buffer, size_t length)
 {
   // Compute the crc and hash of the data
-  u32 blockcrc = ~0 ^ CRCUpdateBlock(~0, length, buffer);
+  u32 blockcrc = CRCCompute(length, buffer);
   MD5Context blockcontext;
   blockcontext.Update(buffer, length);
   MD5Hash blockhash;

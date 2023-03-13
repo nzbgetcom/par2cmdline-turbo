@@ -65,40 +65,29 @@ struct MD5Hash
 } PACKED;
 
 // MD5 computation context with 64 byte buffer
-
+#include "../parpar/hasher/hasher.h"
 class MD5Context
 {
+  MD5Single base;
 public:
-  MD5Context(void);
-  ~MD5Context(void) {};
-  void Reset(void);
+  inline void Reset(void) {
+    base.reset();
+  }
 
   // Process data from a buffer
-  void Update(const void *buffer, size_t length);
+  inline void Update(const void *buffer, size_t length) {
+    base.update(buffer, length);
+  }
 
   // Process 0 bytes
-  void Update(size_t length);
+  void Update(size_t length) {
+    base.updateZero(length);
+  }
 
   // Compute the final hash value
-  void Final(MD5Hash &output);
-
-  // Get the Hash value and the total number of bytes processed.
-  MD5Hash Hash(void) const;
-  u64 Bytes(void) const {return bytes;}
-
-  friend ostream& operator<<(ostream &s, const MD5Context &context);
-  string print(void) const;
-
-protected:
-  enum {buffersize = 64};
-  unsigned char block[buffersize];
-  size_t used;
-  u32 state[4]; // 16 byte MD5 computation state
-
-  u64 bytes;
-
-private:
-  void UpdateState(const unsigned char* current);
+  inline void Final(MD5Hash &output) {
+    base.end(output.hash);
+  }
 };
 
 // Compare hash values

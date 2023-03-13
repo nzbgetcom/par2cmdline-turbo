@@ -68,7 +68,7 @@ bool FileCheckSummer::Start(void)
     return false;
 
   // Compute the checksum for the block
-  checksum = ~0 ^ CRCUpdateBlock(~0, (size_t)blocksize, buffer);
+  checksum = CRCCompute((size_t)blocksize, buffer);
 
   return true;
 }
@@ -126,7 +126,7 @@ bool FileCheckSummer::Jump(u64 distance)
     return false;
 
   // Compute the checksum for the block
-  checksum = ~0 ^ CRCUpdateBlock(~0, (size_t)blocksize, buffer);
+  checksum = CRCCompute((size_t)blocksize, buffer);
 
   return true;
 }
@@ -229,14 +229,12 @@ MD5Hash FileCheckSummer::Hash(void)
 
 u32 FileCheckSummer::ShortChecksum(u64 blocklength)
 {
-  u32 crc = CRCUpdateBlock(~0, (size_t)blocklength, outpointer);
+  u32 crc = CRCCompute((size_t)blocklength, outpointer);
 
   if (blocksize > blocklength)
   {
-    crc = CRCUpdateBlock(crc, (size_t)(blocksize-blocklength));
+    crc = ~CRCUpdateBlock(~crc, (size_t)(blocksize-blocklength));
   }
-
-  crc ^= ~0;
 
   return crc;
 }

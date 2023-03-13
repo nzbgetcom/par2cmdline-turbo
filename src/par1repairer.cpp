@@ -63,6 +63,7 @@ Par1Repairer::Par1Repairer(std::ostream &sout, std::ostream &serr, const NoiseLe
 , outputbuffer(0)
 , ignore16kfilehash(false)
 {
+  setup_hasher();
 }
 
 Par1Repairer::~Par1Repairer(void)

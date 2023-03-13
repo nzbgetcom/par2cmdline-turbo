@@ -59,10 +59,7 @@
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)'=='Debug'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)'=='Release'">
+  <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -125,14 +122,12 @@
     </ClCompile>
     <ClCompile Include="gf16\gf16_affine_gfni.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|Win32'">-mssse3 -mgfni %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|x64'">-mssse3 -mgfni %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="gf16\gf16_lookup.c" />
     <ClCompile Include="gf16\gf16_lookup_sse2.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <ClCompile Include="gf16\gf16_shuffle_avx.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
@@ -177,7 +172,6 @@
     </ClCompile>
     <ClCompile Include="gf16\gf16_shuffle_ssse3.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|Win32'">-mssse3 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|x64'">-mssse3 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -193,11 +187,9 @@
     </ClCompile>
     <ClCompile Include="gf16\gf16_xor_sse2.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <ClCompile Include="gf16\gf_add_sse2.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <ClCompile Include="gf16\gf_add_avx2.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>

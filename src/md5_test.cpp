@@ -237,6 +237,7 @@ int test4() {
 
 
 int main() {
+  setup_hasher();
   if (test1()) {
     cerr << "FAILED: test1" << endl;
     return 1;

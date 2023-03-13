@@ -34,14 +34,14 @@
 
 
 // Example usage:
-//   u32 checksum = ~0 ^ CRCUpdateBlock(~0, (size_t)blocksize, buffer);
+//   u32 checksum = CRCCompute((size_t)blocksize, buffer);
 
 
 // compares UpdateBlock(crc, length) to UpdateBlock(crc,buffer,buffersize)
 int test1() {
   unsigned char buffer[] = {0,0,0,0,0,0,0,0};
 
-  u32 checksum1 = ~0 ^ CRCUpdateBlock(~0, sizeof(buffer), buffer);
+  u32 checksum1 = CRCCompute(sizeof(buffer), buffer);
   u32 checksum2 = ~0 ^ CRCUpdateBlock(~0, sizeof(buffer));
 
   if (checksum1 != checksum2) {
@@ -61,7 +61,7 @@ int test2() {
   size_t buffer_length = 9;
   u32 expected_checksum = 0xCBF43926u;
 
-  u32 checksum1 = ~0 ^ CRCUpdateBlock(~0, buffer_length, buffer);
+  u32 checksum1 = CRCCompute(buffer_length, buffer);
 
   if (checksum1 != expected_checksum) {
     cerr << "checksum was not precalculated value: " << hex << checksum1 << dec << endl;
@@ -117,45 +117,6 @@ int test3() {
 }
 
 
-// generate random data.
-// compare char-at-a-time vs block
-// make sure output is the same.
-int test4() {
-  srand(113450911);
-  unsigned char buffer[32*1024];
-
-  for (unsigned int i = 0; i < sizeof(buffer); i++) {
-    buffer[i] = (unsigned char) (rand() % 256);
-  }
-
-  u32 checksum1 = ~0;
-  unsigned int offset = 0;
-  while (offset < sizeof(buffer)) {
-    unsigned int length = (int) (rand() % 256);
-    if (offset + length > sizeof(buffer))
-      length = sizeof(buffer) - offset;
-    checksum1 = CRCUpdateBlock(checksum1, length, buffer + offset);
-    offset += length;
-  }
-  checksum1 = ~0 ^ checksum1;
-
-
-  u32 checksum2 = ~0;
-  for (offset = 0; offset < sizeof(buffer); offset++) {
-    checksum2 = CRCUpdateChar(checksum2, *(buffer + offset));
-  }
-  checksum2 = ~0 ^ checksum2;
-
-  if (checksum1 != checksum2) {
-    cerr << "random checksum1 = " << checksum1 << endl;
-    cerr << "random checksum2 = " << checksum2 << endl;
-    return 1;
-  }
-
-  return 0;
-}
-
-
 
 // check windowing on random buffer
 int test5() {
@@ -173,10 +134,10 @@ int test5() {
 
   int result = 0;
 
-  u32 crc = ~0 ^ CRCUpdateBlock(~0, window, buffer);
+  u32 crc = CRCCompute(window, buffer);
   for (int offset = 0; offset + window < sizeof(buffer) - 1; offset++) {
     // compare against reference
-    u32 othercrc = ~0 ^ CRCUpdateBlock(~0, window, buffer + offset);
+    u32 othercrc = CRCCompute(window, buffer + offset);
     if (crc != othercrc) {
       cerr << "error in window at offset " << offset << endl;
       cerr << "  checksum1 = " << crc << endl;
@@ -196,7 +157,7 @@ int test5() {
 // stolen from:
 // http://www.efg2.com/Lab/Mathematics/CRC.htm
 int test6() {
-  u32 checksum1 = ~0 ^ CRCUpdateBlock(~0, sizeof(ccitttable.table), &ccitttable.table);
+  u32 checksum1 = CRCCompute(sizeof(ccitttable.table), &ccitttable.table);
   u32 expected = 0x6FCF9E13;
   if (checksum1 != expected) {
       cerr << "error when computing checksum of checksum table " << endl;
@@ -213,6 +174,7 @@ int test6() {
 
 
 int main() {
+  setup_hasher();
   if (test1()) {
     cerr << "FAILED: test1" << endl;
     return 1;
@@ -223,10 +185,6 @@ int main() {
   }
   if (test3()) {
     cerr << "FAILED: test3" << endl;
-    return 1;
-  }
-  if (test4()) {
-    cerr << "FAILED: test4" << endl;
     return 1;
   }
   if (test5()) {
