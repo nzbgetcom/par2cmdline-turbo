@@ -81,7 +81,7 @@ protected:
 
   u32    blockcount;    // How many blocks the file will be divided into.
 
-  MD5Context *contextfull; // MD5 context used to calculate the hash of the whole file
+  IHasherInput* hasher;  // hasher context used to calculate block and file hashes
 };
 
 #endif // __PAR2CREATORSOURCEFILE_H__

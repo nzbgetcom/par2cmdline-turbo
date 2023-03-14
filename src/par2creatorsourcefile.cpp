@@ -19,6 +19,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "libpar2internal.h"
+#include "hasher.h"
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -37,7 +38,7 @@ Par2CreatorSourceFile::Par2CreatorSourceFile(void)
   //diskfilename;
   //parfilename;
   blockcount = 0;
-  contextfull = 0;
+  hasher = HasherInput_Create();
 }
 
 Par2CreatorSourceFile::~Par2CreatorSourceFile(void)
@@ -45,7 +46,7 @@ Par2CreatorSourceFile::~Par2CreatorSourceFile(void)
   delete descriptionpacket;
   delete verificationpacket;
   delete diskfile;
-  delete contextfull;
+  hasher->destroy();
 }
 
 // Open the source file, compute the MD5 Hash of the whole file and the first
@@ -117,10 +118,6 @@ bool Par2CreatorSourceFile::Open(NoiseLevel noiselevel, std::ostream &sout, std:
     // Compute the fileid and store it in the verification packet.
     descriptionpacket->ComputeFileId();
     verificationpacket->FileId(descriptionpacket->FileId());
-
-    // Allocate an MD5 context for computing the file hash
-    // during the recovery data generation phase
-    contextfull = new MD5Context;
   }
   else
   {
@@ -135,9 +132,7 @@ bool Par2CreatorSourceFile::Open(NoiseLevel noiselevel, std::ostream &sout, std:
     u32 blocknumber = 0;
     u64 need = blocksize;
 
-    MD5Context filecontext;
-    MD5Context blockcontext;
-    u32        blockcrc = 0;
+    MD5Context hash16kcontext;
 
     // Whilst we have not reached the end of the file
     while (offset < filesize)
@@ -153,26 +148,19 @@ bool Par2CreatorSourceFile::Open(NoiseLevel noiselevel, std::ostream &sout, std:
         return false;
       }
 
-      // If the new data passes the 16k boundary, compute the 16k hash for the file
-      if (offset < 16384 && offset + want >= 16384)
+      // Whilst we haven't passed the 16k boundary, compute the 16k hash
+      if (offset < 16384)
       {
-        filecontext.Update(buffer, (size_t)(16384-offset));
-
-        MD5Context temp = filecontext;
-        MD5Hash hash;
-        temp.Final(hash);
-
-        // Store the 16k hash in the file description packet
-        descriptionpacket->Hash16k(hash);
-
-        if (offset + want > 16384)
+        hash16kcontext.Update(buffer, (size_t)min(want, 16384-offset));
+        // If the new data passes the 16k boundary, compute the 16k hash for the file
+        if (offset + want >= 16384)
         {
-          filecontext.Update(&buffer[16384-offset], (size_t)(offset+want)-16384);
+          MD5Hash hash;
+          hash16kcontext.Final(hash);
+
+          // Store the 16k hash in the file description packet
+          descriptionpacket->Hash16k(hash);
         }
-      }
-      else
-      {
-        filecontext.Update(buffer, want);
       }
 
       // Get ready to update block hashes and crcs
@@ -184,8 +172,7 @@ bool Par2CreatorSourceFile::Open(NoiseLevel noiselevel, std::ostream &sout, std:
         // How much of it can we use for the current block
         u32 use = (u32)min(need, (u64)(want-used));
 
-        blockcrc = ~0 ^ CRCUpdateBlock(~0 ^ blockcrc, use, &buffer[used]);
-        blockcontext.Update(&buffer[used], use);
+        hasher->update(&buffer[used], use);
 
         used += use;
         need -= use;
@@ -194,7 +181,7 @@ bool Par2CreatorSourceFile::Open(NoiseLevel noiselevel, std::ostream &sout, std:
         if (need == 0)
         {
           MD5Hash blockhash;
-          blockcontext.Final(blockhash);
+          u32 blockcrc = HasherGetBlock(hasher, blockhash);
 
           // Store the block hash and block crc in the file verification packet.
           verificationpacket->SetBlockHashAndCRC(blocknumber, blockhash, blockcrc);
@@ -205,9 +192,6 @@ bool Par2CreatorSourceFile::Open(NoiseLevel noiselevel, std::ostream &sout, std:
           if (blocknumber < blockcount)
           {
             need = blocksize;
-
-            blockcontext.Reset();
-            blockcrc = 0;
           }
         }
       }
@@ -238,11 +222,8 @@ bool Par2CreatorSourceFile::Open(NoiseLevel noiselevel, std::ostream &sout, std:
     // Did we finish the last block
     if (need > 0)
     {
-      blockcrc = ~0 ^ CRCUpdateBlock(~0 ^ blockcrc, (size_t)need);
-      blockcontext.Update((size_t)need);
-
       MD5Hash blockhash;
-      blockcontext.Final(blockhash);
+      u32 blockcrc = HasherGetBlock(hasher, blockhash, need);
 
       // Store the block hash and block crc in the file verification packet.
       verificationpacket->SetBlockHashAndCRC(blocknumber, blockhash, blockcrc);
@@ -254,7 +235,7 @@ bool Par2CreatorSourceFile::Open(NoiseLevel noiselevel, std::ostream &sout, std:
 
     // Finish computing the file hash.
     MD5Hash filehash;
-    filecontext.Final(filehash);
+    hasher->end(filehash.hash);
 
     // Store the file hash in the file description packet.
     descriptionpacket->HashFull(filehash);
@@ -316,36 +297,33 @@ void Par2CreatorSourceFile::InitialiseSourceBlocks(vector<DataBlock>::iterator &
 
 void Par2CreatorSourceFile::UpdateHashes(u32 blocknumber, const void *buffer, size_t length)
 {
-  // Compute the crc and hash of the data
-  u32 blockcrc = CRCCompute(length, buffer);
-  MD5Context blockcontext;
-  blockcontext.Update(buffer, length);
-  MD5Hash blockhash;
-  blockcontext.Final(blockhash);
+  // Requires: deferhashcomputation must've been true
 
-  // Store the results in the verification packet
-  verificationpacket->SetBlockHashAndCRC(blocknumber, blockhash, blockcrc);
-
-
-  // Update the full file hash, but don't go beyond the end of the file
+  // Update the hashes, but don't go beyond the end of the file
   const u64 len = filesize - (u64) blocknumber * (u64) length;
+  size_t zeropad = 0;
   if ((u64)length > len)
   {
+    zeropad = length - len;
     length = (size_t)(len);
   }
 
-  assert(contextfull != 0);
+  // Compute the crc and hash of the data
+  hasher->update(buffer, length);
+  MD5Hash blockhash;
+  u32 blockcrc = HasherGetBlock(hasher, blockhash, zeropad);
 
-  contextfull->Update(buffer, length);
+  // Store the results in the verification packet
+  verificationpacket->SetBlockHashAndCRC(blocknumber, blockhash, blockcrc);
 }
 
 void Par2CreatorSourceFile::FinishHashes(void)
 {
-  assert(contextfull != 0);
+  // Requires: deferhashcomputation must've been true
 
   // Finish computation of the full file hash
   MD5Hash hash;
-  contextfull->Final(hash);
+  hasher->end(hash.hash);
 
   // Store it in the description packet
   descriptionpacket->HashFull(hash);

@@ -69,7 +69,7 @@ public:
   u64 Offset(void) const;
 
   // Return the full file hash and the 16k file hash
-  void GetFileHashes(MD5Hash &hashfull, MD5Hash &hash16k) const;
+  void GetFileHashes(MD5Hash &hashfull, MD5Hash &hash16k);
 
   // Which disk file is this
   const DiskFile* GetDiskFile(void) const {return diskfile;}
@@ -90,12 +90,15 @@ protected:
   // File offset for next read
   u64         readoffset;
 
-  // The current checksum
+  // Current block checksum/hash
   u32         checksum;
+  MD5Hash     blockhash;
+  bool        hasblockhash;  // if blockhash is valid
 
   // MD5 hash of whole file and of first 16k
-  MD5Context  contextfull;
-  MD5Context  context16k;
+  MD5Single   contextfull;
+  MD5Single   context16k;
+  IHasherInput* hasher;     // multi-hash context
 
 protected:
   //void ComputeCurrentCRC(void);
@@ -103,6 +106,9 @@ protected:
 
   //// Fill the buffers with more data from disk
   bool Fill(void);
+
+  // Stop using the multi-hash context due to file/block hash desync
+  void StopHasher(void);
 
 private:
   // private copy constructor to prevent any misuse.
@@ -142,6 +148,12 @@ inline bool FileCheckSummer::Step(void)
   // Are we already at the end of the file
   if (currentoffset >= filesize)
     return false;
+
+  // The block hash won't be in sync with the file hash any more
+  StopHasher();
+
+  // We don't have a cached block hash any more
+  hasblockhash = false;
 
   // Advance the file offset and check to see if
   // we have reached the end of the file
