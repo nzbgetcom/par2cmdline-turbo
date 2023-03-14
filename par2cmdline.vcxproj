@@ -256,6 +256,9 @@
     <ProjectReference Include="parpar\gf16.vcxproj">
       <Project>{2a658dc2-a6ea-41d1-ad78-2d02675fab14}</Project>
     </ProjectReference>
+    <ProjectReference Include="parpar\hasher.vcxproj">
+      <Project>{c4657dcb-7b83-4608-a1d5-df38d37c6fcf}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

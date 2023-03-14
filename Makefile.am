@@ -65,7 +65,7 @@ libparpar_gf16_a_SOURCES = \
 	parpar/gf16/gf16_lookup.c \
 	parpar/gf16/gf_add_generic.c
 libparpar_gf16_a_CFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include
-libparpar_gf16_a_CXXFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include
+libparpar_gf16_a_CXXFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include -std=c++11
 
 libparpar_gf16_sse2_a_SOURCES = \
 	parpar/gf16/gf16_xor_sse2.c \
@@ -136,7 +136,7 @@ libparpar_hasher_a_SOURCES = \
 	parpar/hasher/md5-final.c
 # these two lines are needed for the right object files to be generated (for some reason)
 libparpar_hasher_a_CFLAGS =
-libparpar_hasher_a_CXXFLAGS =
+libparpar_hasher_a_CXXFLAGS = -std=c++11
 
 libparpar_hasher_sse2_a_SOURCES = parpar/hasher/hasher_sse.cpp
 libparpar_hasher_sse2_a_CXXFLAGS = $(CFLAGS_SSE2)
