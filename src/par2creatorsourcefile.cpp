@@ -151,7 +151,7 @@ bool Par2CreatorSourceFile::Open(NoiseLevel noiselevel, std::ostream &sout, std:
       // Whilst we haven't passed the 16k boundary, compute the 16k hash
       if (offset < 16384)
       {
-        hash16kcontext.Update(buffer, (size_t)min(want, 16384-offset));
+        hash16kcontext.Update(buffer, (size_t)min(want, (size_t)(16384-offset)));
         // If the new data passes the 16k boundary, compute the 16k hash for the file
         if (offset + want >= 16384)
         {
