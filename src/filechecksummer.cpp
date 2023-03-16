@@ -91,11 +91,7 @@ bool FileCheckSummer::Start(void)
     return false;
 
   // Compute the checksum + hash for the initial block
-  size_t blocklen = (size_t)min(blocksize, filesize);
-  size_t zeropad = blocksize - blocklen;
-  hasher->update(buffer, blocklen);
-  checksum = HasherGetBlock(hasher, blockhash, zeropad);
-  hasblockhash = true;
+  ComputeCurrentChecksum(true);
 
   return true;
 }
@@ -157,9 +153,30 @@ bool FileCheckSummer::Jump(u64 distance)
   outpointer = buffer;
   inpointer = &buffer[blocksize];
 
-  if (!Fill())
-    return false;
+  // If we already have a block of data available, we can compute the hash whilst waiting for the Fill operation
+  if (keep >= blocksize && distance == blocksize)
+  {
+    future<void> asynchash = async(launch::async, [this]() {
+      ComputeCurrentChecksum(true);
+    });
+    bool success = Fill();
+    asynchash.get();
+    return success;
+  }
+  else
+  {
+    if (!Fill())
+      return false;
+    
+    // If we're advancing by a whole block, we'll assume the next block is likely to be valid, so compute the MD5 in advance
+    ComputeCurrentChecksum(distance == blocksize);
+  }
 
+  return true;
+}
+
+void FileCheckSummer::ComputeCurrentChecksum(bool domd5)
+{
   // Compute the checksum/hash for the block
   if (hasher)
   {
@@ -173,8 +190,7 @@ bool FileCheckSummer::Jump(u64 distance)
   else
   {
     // File/block hash not in sync, so can only compute block checksum/hash
-    // If we're advancing by a whole block, we'll assume the next block is likely to be valid, so compute the MD5 in advance
-    if (distance == blocksize)
+    if (domd5)
     {
       checksum = MD5CRC_Calc(buffer, (size_t)blocksize, 0, blockhash.hash);
       hasblockhash = true;
@@ -185,8 +201,6 @@ bool FileCheckSummer::Jump(u64 distance)
       checksum = CRCCompute((size_t)blocksize, buffer);
     }
   }
-
-  return true;
 }
 
 // Fill the buffer from disk

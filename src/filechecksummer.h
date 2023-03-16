@@ -110,6 +110,9 @@ protected:
   // Stop using the multi-hash context due to file/block hash desync
   void StopHasher(void);
 
+  // Compute block hash/checksum after Jump
+  void ComputeCurrentChecksum(bool domd5);
+
 private:
   // private copy constructor to prevent any misuse.
   FileCheckSummer(const FileCheckSummer &);
