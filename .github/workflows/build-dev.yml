@@ -60,7 +60,7 @@ jobs:
 #        with:
 #          target: ${{ matrix.target }}
 #      - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
-#      - run: ./configure ${{ matrix.configure_host }}
+#      - run: ./configure --enable-openmp ${{ matrix.configure_host }}
 #        env:
 #          CC: ${{ steps.musl.outputs.path }}/${{ matrix.target }}-cc
 #          CXX: ${{ steps.musl.outputs.path }}/${{ matrix.target }}-c++
@@ -107,7 +107,7 @@ jobs:
           arch: ${{ matrix.arch }}
         if: ${{ matrix.arch != 'amd64' }}
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
-      - run: ./configure ${{ matrix.configure_host }}
+      - run: ./configure --enable-openmp ${{ matrix.configure_host }}
         env:
           CC: ${{ matrix.xcc }}gcc
           CXX: ${{ matrix.xcc }}g++
@@ -136,10 +136,10 @@ jobs:
     steps:
       - uses: ConorMacBride/install-package@v1
         with:
-          brew: automake llvm
+          brew: automake gcc
       - uses: actions/checkout@v3
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
-      - run: ./configure
+      - run: ./configure --enable-openmp
       - uses: actions/upload-artifact@v3
         with:
           path: ./config.log
@@ -158,21 +158,36 @@ jobs:
 
   build-dev-mac-arm64:
     name: Build arm64 MacOS binary
-    runs-on: ubuntu-latest
+    # avoid OpenSSL 3.0.2 on 22.04: https://github.com/tpoechtrager/osxcross/issues/349
+    runs-on: ubuntu-20.04
     steps:
       - uses: mbround18/setup-osxcross@v1
         with:
           osx-version: "12.3"
+      - run: osxcross-macports install -arm64 libomp
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "12.3"
+          UNATTENDED: 1
+      - run: |
+          OSXCROSS_FOLDER="$(echo "$GITHUB_ACTION_PATH/osxcross" | sed 's/\.\/*//g')"
+          if [ ! -d "$OSXCROSS_FOLDER/target/macports/pkgs/opt/local" ]; then
+            echo "Error! Failed to find ${OSXCROSS_FOLDER}/target/macports/pkgs/opt/local folder!"
+            exit 1
+          fi
+          echo "LIBRARY_PATH=$OSXCROSS_FOLDER/target/macports/pkgs/opt/local/lib/libomp" >> $GITHUB_ENV
+          echo "CPATH=$OSXCROSS_FOLDER/target/macports/pkgs/opt/local/include/libomp" >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
-      - run: ./configure --host=aarch64-macos
+      - run: ./configure --enable-openmp --host=aarch64-macos
         env:
-          CC: oa64e-clang
-          CXX: oa64e-clang++
+          CC: oa64-clang
+          CXX: oa64-clang++
+          AR: arm64-apple-darwin21.4-ar
+          RANLIB: arm64-apple-darwin21.4-ranlib
       - uses: actions/upload-artifact@v3
         with:
           path: ./config.log
-          name: configure-macos-arm64e.log
+          name: configure-macos-arm64.log
           retention-days: 5
         if: ${{ failure() }}
       - run: make
@@ -180,5 +195,5 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           path: ./par2.xz
-          name: par2cmdline-turbo-dev-macos-arm64e.xz
+          name: par2cmdline-turbo-dev-macos-arm64.xz
           retention-days: 5

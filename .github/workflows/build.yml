@@ -77,7 +77,7 @@ jobs:
           arch: ${{ matrix.arch }}
         if: ${{ matrix.arch != 'amd64' }}
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
-      - run: ./configure ${{ matrix.configure_host }}
+      - run: ./configure --enable-openmp ${{ matrix.configure_host }}
         env:
           CC: ${{ matrix.xcc }}gcc
           CXX: ${{ matrix.xcc }}g++
@@ -103,7 +103,7 @@ jobs:
     steps:
       - uses: ConorMacBride/install-package@v1
         with:
-          brew: automake llvm
+          brew: automake gcc
       - uses: actions/checkout@v3
       - name: Get release
         id: get_release
@@ -111,7 +111,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
-      - run: ./configure
+      - run: ./configure --enable-openmp
       - run: make
       - run: ./par2 -h
       - run: make check
@@ -127,11 +127,24 @@ jobs:
 
   build-mac-arm64:
     name: Build arm64 MacOS binary
-    runs-on: ubuntu-latest
+    # avoid OpenSSL 3.0.2 on 22.04: https://github.com/tpoechtrager/osxcross/issues/349
+    runs-on: ubuntu-20.04
     steps:
       - uses: mbround18/setup-osxcross@v1
         with:
           osx-version: "12.3"
+      - run: osxcross-macports install -arm64 libomp
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "12.3"
+          UNATTENDED: 1
+      - run: |
+          OSXCROSS_FOLDER="$(echo "$GITHUB_ACTION_PATH/osxcross" | sed 's/\.\/*//g')"
+          if [ ! -d "$OSXCROSS_FOLDER/target/macports/pkgs/opt/local" ]; then
+            echo "Error! Failed to find ${OSXCROSS_FOLDER}/target/macports/pkgs/opt/local folder!"
+            exit 1
+          fi
+          echo "LIBRARY_PATH=$OSXCROSS_FOLDER/target/macports/pkgs/opt/local/lib/libomp" >> $GITHUB_ENV
+          echo "CPATH=$OSXCROSS_FOLDER/target/macports/pkgs/opt/local/include/libomp" >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - name: Get release
         id: get_release
@@ -139,10 +152,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
-      - run: ./configure --host=aarch64-macos
+      - run: ./configure --enable-openmp --host=aarch64-macos
         env:
-          CC: oa64e-clang
-          CXX: oa64e-clang++
+          CC: oa64-clang
+          CXX: oa64-clang++
+          AR: arm64-apple-darwin21.4-ar
+          RANLIB: arm64-apple-darwin21.4-ranlib
       - run: make
       - run: xz -9e --lzma2 par2 -c > par2.xz
       - uses: actions/upload-release-asset@v1
@@ -151,5 +166,5 @@ jobs:
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }} 
           asset_path: ./par2.xz
-          asset_name: par2cmdline-turbo-${{ steps.get_release.outputs.tag_name }}-macos-arm64e.xz
+          asset_name: par2cmdline-turbo-${{ steps.get_release.outputs.tag_name }}-macos-arm64.xz
           asset_content_type: application/octet-stream
