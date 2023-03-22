@@ -136,7 +136,11 @@ jobs:
     steps:
       - uses: ConorMacBride/install-package@v1
         with:
-          brew: automake gcc
+          brew: automake libomp
+      - run: |
+          echo "LIBRARY_PATH=`brew --prefix`/lib" >> $GITHUB_ENV
+          echo "CC=`brew --prefix llvm`/bin/clang" >> $GITHUB_ENV
+          echo "CXX=`brew --prefix llvm`/bin/clang++" >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure --enable-openmp
@@ -161,7 +165,7 @@ jobs:
     # avoid OpenSSL 3.0.2 on 22.04: https://github.com/tpoechtrager/osxcross/issues/349
     runs-on: ubuntu-20.04
     steps:
-      - uses: mbround18/setup-osxcross@v1
+      - uses: mbround18/setup-osxcross@main  # OSXCROSS_TARGET unavailable in v1.1
         with:
           osx-version: "12.3"
       - run: osxcross-macports install -arm64 libomp
@@ -169,13 +173,12 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: "12.3"
           UNATTENDED: 1
       - run: |
-          OSXCROSS_FOLDER="$(echo "$GITHUB_ACTION_PATH/osxcross" | sed 's/\.\/*//g')"
-          if [ ! -d "$OSXCROSS_FOLDER/target/macports/pkgs/opt/local" ]; then
-            echo "Error! Failed to find ${OSXCROSS_FOLDER}/target/macports/pkgs/opt/local folder!"
+          if [ ! -d "$OSXCROSS_TARGET/macports/pkgs/opt/local" ]; then
+            echo "Error! Failed to find ${OSXCROSS_TARGET}/macports/pkgs/opt/local folder!"
             exit 1
           fi
-          echo "LIBRARY_PATH=$OSXCROSS_FOLDER/target/macports/pkgs/opt/local/lib/libomp" >> $GITHUB_ENV
-          echo "CPATH=$OSXCROSS_FOLDER/target/macports/pkgs/opt/local/include/libomp" >> $GITHUB_ENV
+          echo "LIBRARY_PATH=$OSXCROSS_TARGET/macports/pkgs/opt/local/lib/libomp" >> $GITHUB_ENV
+          echo "CPATH=$OSXCROSS_TARGET/macports/pkgs/opt/local/include/libomp" >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure --enable-openmp --host=aarch64-macos
