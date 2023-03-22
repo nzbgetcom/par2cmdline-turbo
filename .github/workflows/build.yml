@@ -105,9 +105,9 @@ jobs:
         with:
           brew: automake libomp
       - run: |
-          echo "LIBRARY_PATH=`brew --prefix`/lib" >> $GITHUB_ENV
           echo "CC=`brew --prefix llvm`/bin/clang" >> $GITHUB_ENV
           echo "CXX=`brew --prefix llvm`/bin/clang++" >> $GITHUB_ENV
+          echo "LIBOMP_PATH=`brew --prefix llvm`/lib" >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - name: Get release
         id: get_release
@@ -119,14 +119,18 @@ jobs:
       - run: make
       - run: ./par2 -h
       - run: make check
-      - run: xz -9e --x86 --lzma2 par2 -c > par2.xz
+      - run: cp $LIBOMP_PATH/libomp.dylib . && install_name_tool -change $LIBOMP_PATH/libomp.dylib libomp.dylib par2
+      - run: ./par2 -h
+      - run: tar --group=nobody --owner=nobody -Jcf par2.txz par2 libomp.dylib
+        env:
+          XZ_OPT: -9e --x86 --lzma2
       - uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }} 
-          asset_path: ./par2.xz
-          asset_name: par2cmdline-turbo-${{ steps.get_release.outputs.tag_name }}-macos-x64.xz
+          asset_path: ./par2.txz
+          asset_name: par2cmdline-turbo-${{ steps.get_release.outputs.tag_name }}-macos-x64.tar.xz
           asset_content_type: application/octet-stream
 
   build-mac-arm64:
@@ -162,12 +166,15 @@ jobs:
           AR: arm64-apple-darwin21.4-ar
           RANLIB: arm64-apple-darwin21.4-ranlib
       - run: make
-      - run: xz -9e --lzma2 par2 -c > par2.xz
+      - run: cp $LIBRARY_PATH/libomp.dylib . && arm64-apple-darwin21.4-install_name_tool -change $LIBRARY_PATH/libomp.dylib libomp.dylib par2
+      - run: tar --group=nobody --owner=nobody -Jcf par2.txz par2 libomp.dylib
+        env:
+          XZ_OPT: -9e --lzma2
       - uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }} 
-          asset_path: ./par2.xz
-          asset_name: par2cmdline-turbo-${{ steps.get_release.outputs.tag_name }}-macos-arm64.xz
+          asset_path: ./par2.txz
+          asset_name: par2cmdline-turbo-${{ steps.get_release.outputs.tag_name }}-macos-arm64.tar.xz
           asset_content_type: application/octet-stream

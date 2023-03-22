@@ -138,9 +138,9 @@ jobs:
         with:
           brew: automake libomp
       - run: |
-          echo "LIBRARY_PATH=`brew --prefix`/lib" >> $GITHUB_ENV
           echo "CC=`brew --prefix llvm`/bin/clang" >> $GITHUB_ENV
           echo "CXX=`brew --prefix llvm`/bin/clang++" >> $GITHUB_ENV
+          echo "LIBOMP_PATH=`brew --prefix llvm`/lib" >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure --enable-openmp
@@ -153,11 +153,15 @@ jobs:
       - run: make
       - run: ./par2 -h
       - run: make check
-      - run: xz -9e --x86 --lzma2 par2 -c > par2.xz
+      - run: cp $LIBOMP_PATH/libomp.dylib . && install_name_tool -change $LIBOMP_PATH/libomp.dylib libomp.dylib par2
+      - run: ./par2 -h
+      - run: tar --group=nobody --owner=nobody -Jcf par2.txz par2 libomp.dylib
+        env:
+          XZ_OPT: -9e --x86 --lzma2
       - uses: actions/upload-artifact@v3
         with:
-          path: ./par2.xz
-          name: par2cmdline-turbo-dev-macos-x64.xz
+          path: ./par2.txz
+          name: par2cmdline-turbo-dev-macos-x64.txz
           retention-days: 5
 
   build-dev-mac-arm64:
@@ -194,9 +198,12 @@ jobs:
           retention-days: 5
         if: ${{ failure() }}
       - run: make
-      - run: xz -9e --lzma2 par2 -c > par2.xz
+      - run: cp $LIBRARY_PATH/libomp.dylib . && arm64-apple-darwin21.4-install_name_tool -change $LIBRARY_PATH/libomp.dylib libomp.dylib par2
+      - run: tar --group=nobody --owner=nobody -Jcf par2.txz par2 libomp.dylib
+        env:
+          XZ_OPT: -9e --lzma2
       - uses: actions/upload-artifact@v3
         with:
-          path: ./par2.xz
-          name: par2cmdline-turbo-dev-macos-arm64.xz
+          path: ./par2.txz
+          name: par2cmdline-turbo-dev-macos-arm64.txz
           retention-days: 5
