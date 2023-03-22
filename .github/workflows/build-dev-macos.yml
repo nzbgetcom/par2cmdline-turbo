@@ -11,9 +11,9 @@ jobs:
         with:
           brew: automake libomp
       - run: |
-          echo "LIBRARY_PATH=`brew --prefix`/lib" >> $GITHUB_ENV
           echo "CC=`brew --prefix llvm`/bin/clang" >> $GITHUB_ENV
           echo "CXX=`brew --prefix llvm`/bin/clang++" >> $GITHUB_ENV
+          echo "LIBOMP_PATH=`brew --prefix llvm`/lib" >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure --enable-openmp
@@ -24,7 +24,7 @@ jobs:
           retention-days: 5
         if: ${{ failure() }}
       - run: make
-      - run: cp $LIBRARY_PATH/libomp.dylib . && install_name_tool -change $LIBRARY_PATH/libomp.dylib libomp.dylib par2
+      - run: cp $LIBOMP_PATH/libomp.dylib . && install_name_tool -change $LIBOMP_PATH/libomp.dylib libomp.dylib par2
       - run: ./par2 -h
       - run: make check
       - run: tar --group=nobody --owner=nobody -Jcf par2.txz par2 libomp.dylib
