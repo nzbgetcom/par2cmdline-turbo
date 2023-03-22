@@ -155,7 +155,7 @@ jobs:
       - run: make check
       - run: cp $LIBOMP_PATH/libomp.dylib . && install_name_tool -change $LIBOMP_PATH/libomp.dylib libomp.dylib par2
       - run: ./par2 -h
-      - run: tar --group=nobody --owner=nobody -Jcf par2.txz par2 libomp.dylib
+      - run: tar -Jcf par2.txz par2 libomp.dylib
         env:
           XZ_OPT: -9e --x86 --lzma2
       - uses: actions/upload-artifact@v3
