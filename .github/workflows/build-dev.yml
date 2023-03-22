@@ -20,7 +20,7 @@ jobs:
         - platform: ARM64
           bcj: # -mf=ARM64
           name: arm64
-          toolset: v143
+          toolset: v142
           ompdll: vcomp140.dll
     name: Build ${{ matrix.name }} Windows binary
     runs-on: windows-2019
@@ -140,8 +140,6 @@ jobs:
       - uses: actions/checkout@v3
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure
-        env:
-          LDFLAGS: -static
       - uses: actions/upload-artifact@v3
         with:
           path: ./config.log
@@ -171,7 +169,6 @@ jobs:
         env:
           CC: oa64e-clang
           CXX: oa64e-clang++
-          LDFLAGS: -static
       - uses: actions/upload-artifact@v3
         with:
           path: ./config.log

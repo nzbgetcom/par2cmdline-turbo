@@ -24,7 +24,7 @@ jobs:
         - platform: ARM64
           bcj: # -mf=ARM64
           name: arm64
-          toolset: v143
+          toolset: v142
           ompdll: vcomp140.dll
     name: Build ${{ matrix.name }} Windows binary
     runs-on: windows-2019
@@ -112,8 +112,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure
-        env:
-          LDFLAGS: -static
       - run: make
       - run: ./par2 -h
       - run: make check
@@ -145,7 +143,6 @@ jobs:
         env:
           CC: oa64e-clang
           CXX: oa64e-clang++
-          LDFLAGS: -static
       - run: make
       - run: xz -9e --lzma2 par2 -c > par2.xz
       - uses: actions/upload-release-asset@v1
