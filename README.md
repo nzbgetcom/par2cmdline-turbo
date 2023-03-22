@@ -65,7 +65,16 @@ Key reasons to use ParPar over par2cmdline-turbo:
 * features unique to ParPar, such as auto-slice size scaling
 * currently ParPar is more actively maintained than par2cmdline; changes common to these two projects will first be made in ParPar before being ported to par2cmdline-turbo
 
-# Build Notes
+# Installation
+
+Pre-built binaries for common systems are available on the [releases page](https://github.com/animetosho/par2cmdline-turbo/releases).
+Note: MacOS binaries currently reference the OpenMP library in the *current working directory*, which may fail to load if you run *par2* from outside its directory. If someone knows a better way to deal with this, please open an issue.
+
+## Packages
+
+* Arch Linux: [AUR](https://aur.archlinux.org/packages/par2cmdline-turbo) ([git](https://aur.archlinux.org/packages/par2cmdline-turbo-git))
+
+## Building
 
 * Relatively recent compilers are recommended to take advantage of recent SIMD support (e.g. MSVC >=2019, GCC >=10)
 * ParPar backend requires C++11 support
