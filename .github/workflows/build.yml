@@ -117,10 +117,9 @@ jobs:
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure --enable-openmp
       - run: make
+      - run: cp $LIBOMP_PATH/libomp.dylib . && chmod 0644 libomp.dylib && install_name_tool -change $LIBOMP_PATH/libomp.dylib @executable_path/libomp.dylib par2
       - run: ./par2 -h
       - run: make check
-      - run: cp $LIBOMP_PATH/libomp.dylib . && chmod 0644 libomp.dylib && install_name_tool -change $LIBOMP_PATH/libomp.dylib libomp.dylib par2
-      - run: ./par2 -h
       - run: tar -Jcf par2.txz par2 libomp.dylib
         env:
           XZ_OPT: -9e --x86 --lzma2
@@ -166,7 +165,7 @@ jobs:
           AR: arm64-apple-darwin21.4-ar
           RANLIB: arm64-apple-darwin21.4-ranlib
       - run: make
-      - run: cp $LIBRARY_PATH/libomp.dylib . && chmod 0644 libomp.dylib && arm64-apple-darwin21.4-install_name_tool -change $LIBRARY_PATH/libomp.dylib libomp.dylib par2
+      - run: cp $LIBRARY_PATH/libomp.dylib . && chmod 0644 libomp.dylib && arm64-apple-darwin21.4-install_name_tool -change $LIBRARY_PATH/libomp.dylib @executable_path/libomp.dylib par2
       - run: tar --group=nobody --owner=nobody -Jcf par2.txz par2 libomp.dylib
         env:
           XZ_OPT: -9e --lzma2

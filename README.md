@@ -68,7 +68,6 @@ Key reasons to use ParPar over par2cmdline-turbo:
 # Installation
 
 Pre-built binaries for common systems are available on the [releases page](https://github.com/animetosho/par2cmdline-turbo/releases).
-Note: MacOS binaries currently reference the OpenMP library in the *current working directory*, which may fail to load if you run *par2* from outside its directory. If someone knows a better way to deal with this, please open an issue.
 
 ## Packages
 
