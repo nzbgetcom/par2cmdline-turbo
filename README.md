@@ -7,6 +7,7 @@ The original par2cmdline README [can be found here](https://github.com/Parchive/
 par2cmdline-turbo aims to be a *simple* fork, keeping close with its upstream and only differing in the following areas related to performance. As such, the scope of this project covers:
 
 * GF16, MD5 and CRC32 computation, using ParPar’s implementation
+* Use ParPar’s internal checksumming to detect RAM errors during GF16 computation
 * Adopts ParPar’s stitched hashing approach
 
 Note that this fork isn’t intended to change too much of par2cmdline itself, meaning that there’s some degree of performance left on the table.
@@ -49,6 +50,14 @@ I know of two other forks to par2cmdline: [par2cmdline-tbb](https://web.archive.
 * does not add GPU computation (but ParPar has elementary OpenCL support, so might arrive in the future)
 * optimizations for ARM CPUs
 * cross-platform support
+
+## Benchmarks
+
+Some speed comparisons posted by others:
+
+* [PAR2 create](https://github.com/animetosho/par2cmdline-turbo/issues/4#issue-1640569835) (v0.9.0)
+* [PAR2 verification/repair](https://github.com/animetosho/par2cmdline-turbo/issues/4#issuecomment-1493673611) (multiple machines/OSes, v0.9.0)
+* [PAR2 repair](https://github.com/sabnzbd/sabnzbd/issues/420#issuecomment-1470345234)
 
 # Relation with ParPar
 
