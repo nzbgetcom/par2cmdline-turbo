@@ -138,9 +138,15 @@ jobs:
         with:
           brew: automake libomp
       - run: |
-          echo "CC=`brew --prefix llvm`/bin/clang" >> $GITHUB_ENV
-          echo "CXX=`brew --prefix llvm`/bin/clang++" >> $GITHUB_ENV
-          echo "LIBOMP_PATH=`brew --prefix llvm`/lib" >> $GITHUB_ENV
+          if [ -f "`brew --prefix llvm`/bin/clang" ]; then
+            echo "CC=`brew --prefix llvm`/bin/clang" >> $GITHUB_ENV
+            echo "CXX=`brew --prefix llvm`/bin/clang++" >> $GITHUB_ENV
+          fi
+          if [ -d "`brew --prefix llvm`/lib" ]; then
+            echo "LIBOMP_PATH=`brew --prefix llvm`/lib" >> $GITHUB_ENV
+          else
+            echo "LIBOMP_PATH=/usr/local/opt/libomp/lib" >> $GITHUB_ENV
+          fi
       - uses: actions/checkout@v3
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure --enable-openmp
@@ -198,7 +204,13 @@ jobs:
           retention-days: 5
         if: ${{ failure() }}
       - run: make
-      - run: cp $LIBRARY_PATH/libomp.dylib . && chmod 0644 libomp.dylib && arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -rpath `arm64-apple-darwin21.4-otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//'` @executable_path par2
+      - run: |
+          cp $LIBRARY_PATH/libomp.dylib .
+          chmod 0644 libomp.dylib
+          LC_RPATH="$(arm64-apple-darwin21.4-otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')"
+          echo "Current rpath: LC_RPATH"
+          arm64-apple-darwin21.4-otool -L par2
+          arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -rpath "$LC_RPATH" @executable_path par2
       - run: tar --group=nobody --owner=nobody -Jcf par2.txz par2 libomp.dylib
         env:
           XZ_OPT: -9e --lzma2
