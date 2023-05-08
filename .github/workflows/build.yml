@@ -117,7 +117,7 @@ jobs:
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure --enable-openmp
       - run: make
-      - run: cp $LIBOMP_PATH/libomp.dylib . && chmod 0644 libomp.dylib && install_name_tool -change $LIBOMP_PATH/libomp.dylib @executable_path/libomp.dylib par2
+      - run: cp $LIBOMP_PATH/libomp.dylib . && chmod 0644 libomp.dylib && install_name_tool -change $LIBOMP_PATH/libomp.dylib @rpath/libomp.dylib -rpath `otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//'` @executable_path par2
       - run: ./par2 -h
       - run: make check
       - run: tar -Jcf par2.txz par2 libomp.dylib
@@ -164,8 +164,9 @@ jobs:
 #          CXX: oa64-clang++
 #          AR: arm64-apple-darwin21.4-ar
 #          RANLIB: arm64-apple-darwin21.4-ranlib
+#          STRIP: arm64-apple-darwin21.4-strip
 #      - run: make
-#      - run: cp $LIBRARY_PATH/libomp.dylib . && chmod 0644 libomp.dylib && arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @executable_path/libomp.dylib par2
+#      - run: cp $LIBRARY_PATH/libomp.dylib . && chmod 0644 libomp.dylib && arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -rpath `arm64-apple-darwin21.4-otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//'` @executable_path par2
 #      - run: tar --group=nobody --owner=nobody -Jcf par2.txz par2 libomp.dylib
 #        env:
 #          XZ_OPT: -9e --lzma2
