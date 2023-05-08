@@ -160,7 +160,12 @@ jobs:
       - run: |
           cp $LIBOMP_PATH/libomp.dylib .
           chmod 0644 libomp.dylib
-          install_name_tool -change $LIBOMP_PATH/libomp.dylib @rpath/libomp.dylib -rpath "$(otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')" @executable_path par2
+          LC_RPATH="$(otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')"
+          if [ -z "$LC_RPATH" ]; then
+            install_name_tool -change $LIBOMP_PATH/libomp.dylib @rpath/libomp.dylib -add_rpath @executable_path par2
+          else
+            install_name_tool -change $LIBOMP_PATH/libomp.dylib @rpath/libomp.dylib -rpath "$LC_RPATH" @executable_path par2
+          fi
       - if: ${{ failure() }}
         run: |
           otool -L par2
@@ -215,7 +220,12 @@ jobs:
       - run: |
           cp $LIBRARY_PATH/libomp.dylib .
           chmod 0644 libomp.dylib
-          arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -rpath "$(arm64-apple-darwin21.4-otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')" @executable_path par2
+          LC_RPATH="$(arm64-apple-darwin21.4-otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')"
+          if [ -z "$LC_RPATH" ]; then
+            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -add_rpath @executable_path par2
+          else
+            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -rpath "$LC_RPATH" @executable_path par2
+          fi
       - if: ${{ failure() }}
         run: |
           arm64-apple-darwin21.4-otool -L par2

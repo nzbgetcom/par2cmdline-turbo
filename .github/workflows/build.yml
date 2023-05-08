@@ -103,7 +103,7 @@ jobs:
     steps:
       - uses: ConorMacBride/install-package@v1
         with:
-          brew: automake libomp
+          brew: automake libomp llvm
       - run: |
           if [ -f "`brew --prefix llvm`/bin/clang" ]; then
             echo "CC=`brew --prefix llvm`/bin/clang" >> $GITHUB_ENV
@@ -123,7 +123,15 @@ jobs:
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure --enable-openmp
       - run: make
-      - run: cp $LIBOMP_PATH/libomp.dylib . && chmod 0644 libomp.dylib && install_name_tool -change $LIBOMP_PATH/libomp.dylib @rpath/libomp.dylib -rpath `otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//'` @executable_path par2
+      - run: |
+          cp $LIBOMP_PATH/libomp.dylib .
+          chmod 0644 libomp.dylib
+          LC_RPATH="$(otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')"
+          if [ -z "$LC_RPATH" ]; then
+            install_name_tool -change $LIBOMP_PATH/libomp.dylib @rpath/libomp.dylib -add_rpath @executable_path par2
+          else
+            install_name_tool -change $LIBOMP_PATH/libomp.dylib @rpath/libomp.dylib -rpath "$LC_RPATH" @executable_path par2
+          fi
       - run: ./par2 -h
       - run: make check
       - run: tar -Jcf par2.txz par2 libomp.dylib
@@ -172,7 +180,15 @@ jobs:
 #          RANLIB: arm64-apple-darwin21.4-ranlib
 #          STRIP: arm64-apple-darwin21.4-strip
 #      - run: make
-#      - run: cp $LIBRARY_PATH/libomp.dylib . && chmod 0644 libomp.dylib && arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -rpath "$(arm64-apple-darwin21.4-otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')" @executable_path par2
+#      - run: |
+#          cp $LIBRARY_PATH/libomp.dylib .
+#          chmod 0644 libomp.dylib
+#          LC_RPATH="$(arm64-apple-darwin21.4-otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')"
+#          if [ -z "$LC_RPATH" ]; then
+#            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -add_rpath @executable_path par2
+#          else
+#            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -rpath "$LC_RPATH" @executable_path par2
+#          fi
 #      - run: tar --group=nobody --owner=nobody -Jcf par2.txz par2 libomp.dylib
 #        env:
 #          XZ_OPT: -9e --lzma2
