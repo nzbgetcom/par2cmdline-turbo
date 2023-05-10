@@ -185,9 +185,9 @@ jobs:
 #          chmod 0644 libomp.dylib
 #          LC_RPATH="$(arm64-apple-darwin21.4-otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')"
 #          if [ -z "$LC_RPATH" ]; then
-#            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -add_rpath @executable_path par2
+#            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -add_rpath @executable_path/. par2
 #          else
-#            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -rpath "$LC_RPATH" @executable_path par2
+#            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -rpath "$LC_RPATH" @executable_path/. par2
 #          fi
 #      - run: tar --group=nobody --owner=nobody -Jcf par2.txz par2 libomp.dylib
 #        env:
