@@ -15,10 +15,15 @@ PAR2ProcCPUStaging::~PAR2ProcCPUStaging() {
 
 /** initialization **/
 PAR2ProcCPU::PAR2ProcCPU(IF_LIBUV(uv_loop_t* _loop,) int stagingAreas)
-: IPAR2ProcBackend(IF_LIBUV(_loop)), sliceSize(0), numThreads(0), gf(NULL), staging(stagingAreas), memProcessing(NULL), transferThread(PAR2ProcCPU::transfer_chunk) {
+: IPAR2ProcBackend(IF_LIBUV(_loop)), sliceSize(0), numThreads(0), gf(NULL), staging(stagingAreas), memProcessing(NULL), transferThread(PAR2ProcCPU::transfer_slice) {
 	
 	// default number of threads = number of CPUs available
 	setNumThreads(-1);
+	transferThread.name = "gf_transfer";
+#ifdef DEBUG_STAT_THREAD_EMPTY
+	endSignalled = false;
+	statWorkerIdleEvents = 0;
+#endif
 }
 
 void PAR2ProcCPU::setSliceSize(size_t _sliceSize) {
@@ -48,22 +53,27 @@ void PAR2ProcCPU::setNumThreads(int threads) {
 	if(threads < 0) {
 		threads = hardware_concurrency();
 	}
+	numThreads = threads;
+	if(!gf) return;
 	
-	if(gf) {
-		int oldThreads = gfScratch.size();
-		for(int i=oldThreads-1; i>=threads; i--)
-			if(gfScratch[i])
-				gf->mutScratch_free(gfScratch[i]);
-		gfScratch.resize(threads);
-		thWorkers.resize(threads);
-		for(int i=oldThreads; i<threads; i++) {
-			gfScratch[i] = gf->mutScratch_alloc();
-			thWorkers[i].lowPrio = true;
-			thWorkers[i].setCallback(PAR2ProcCPU::compute_worker);
-		}
+	int oldThreads = gfScratch.size();
+	if(threads == oldThreads) return;
+	
+	for(int i=oldThreads-1; i>=threads; i--) {
+		if(gfScratch[i])
+			gf->mutScratch_free(gfScratch[i]);
+		thWorkers[i].end();
+	}
+	gfScratch.resize(threads);
+	thWorkers.resize(threads);
+	for(int i=oldThreads; i<threads; i++) {
+		gfScratch[i] = gf->mutScratch_alloc();
+		thWorkers[i].lowPrio = true;
+		thWorkers[i].name = "gf_worker";
+		thWorkers[i].setCallback(PAR2ProcCPU::compute_worker);
 	}
 	
-	numThreads = threads;
+	if(alignedCurrentSliceSize) calcChunkSize();
 }
 
 bool PAR2ProcCPU::init(Galois16Methods method, unsigned _inputGrouping, size_t _chunkLen) {
@@ -83,8 +93,10 @@ bool PAR2ProcCPU::init(Galois16Methods method, unsigned _inputGrouping, size_t _
 		inputBatchSize -= inputBatchSize % info.idealInputMultiple;
 		if(inputBatchSize < info.idealInputMultiple) inputBatchSize = info.idealInputMultiple;
 	}
+	minInBatchSize = inputBatchSize;
 	
 	alignedSliceSize = gf->alignToStride(sliceSize) + stride; // add extra stride, because checksum requires an extra block
+	alignedCurrentSliceSize = 0;
 	for(auto& area : staging) {
 		// setup indicators to know if buffers are being used
 		area.setIsActive(false);
@@ -97,6 +109,7 @@ bool PAR2ProcCPU::init(Galois16Methods method, unsigned _inputGrouping, size_t _
 	setCurrentSliceSize(sliceSize); // default slice chunk size = declared slice size
 	
 	currentStagingArea = currentStagingInputs = 0;
+	statBatchesStarted = 0;
 	
 	return ret;
 }
@@ -109,6 +122,26 @@ bool PAR2ProcCPU::reallocMemInput() {
 		if(!area.src) ret = false;
 	}
 	return ret;
+}
+
+void PAR2ProcCPU::calcChunkSize() {
+	// split the slice evenly across threads
+	size_t targetThreadChunk = CEIL_DIV(alignedCurrentSliceSize, numThreads);
+	
+	// if the per-thread size is much smaller than our target, scale it up and split by output as well
+	if(targetThreadChunk <= chunkLen/2) {
+		numChunks = ROUND_DIV(alignedCurrentSliceSize, chunkLen);
+		if(numChunks < 1) numChunks = 1;
+	} else {
+		numChunks = ROUND_DIV(targetThreadChunk, chunkLen);
+		if(numChunks < 1) numChunks = 1;
+		numChunks *= numThreads;
+	}
+	
+	chunkLen = gf->alignToStride(CEIL_DIV(alignedCurrentSliceSize, numChunks)); // we'll assume that input chunks are memory aligned here
+	
+	// fix up numChunks with actual number (since it may have changed from aligning/rounding)
+	numChunks = CEIL_DIV(alignedCurrentSliceSize, chunkLen);
 }
 
 bool PAR2ProcCPU::setCurrentSliceSize(size_t newSliceSize) {
@@ -129,14 +162,7 @@ bool PAR2ProcCPU::setCurrentSliceSize(size_t newSliceSize) {
 			}
 		}
 	}
-	
-	// compute chunk size to send to threads
-	numChunks = ROUND_DIV(alignedCurrentSliceSize, chunkLen);
-	if(numChunks < 1) numChunks = 1;
-	chunkLen = gf->alignToStride(CEIL_DIV(alignedCurrentSliceSize, numChunks)); // we'll assume that input chunks are memory aligned here
-	
-	// fix up numChunks with actual number (since it may have changed from aligning/rounding)
-	numChunks = CEIL_DIV(alignedCurrentSliceSize, chunkLen);
+	calcChunkSize();
 	
 	return ret;
 }
@@ -171,6 +197,10 @@ void PAR2ProcCPU::freeProcessingMem() {
 	}
 }
 void PAR2ProcCPU::_deinit() {
+	for(auto& worker : thWorkers)
+		worker.end();
+	// TODO: join threads?
+	
 	freeGf();
 }
 
@@ -204,24 +234,25 @@ struct transfer_data {
 };
 
 // prepare thread process function
-void PAR2ProcCPU::transfer_chunk(void* req) {
-	struct transfer_data* data = static_cast<struct transfer_data*>(req);
-	
-	if(data->finish) {
-		data->cksumSuccess = data->gf->finish_packed_cksum(data->dst, data->src, data->size, data->numBufs, data->index, data->chunkLen);
-		NOTIFY_DONE(data, _queueRecv, data->promOut, data->cksumSuccess);
-	} else {
-		if(data->src)
-			data->gf->prepare_packed_cksum(data->dst, data->src, data->size, data->dstLen, data->numBufs, data->index, data->chunkLen);
-		if(data->submitInBufs) {
-			// queue async compute
-			data->parent->run_kernel(data->inBufId, data->submitInBufs);
+void PAR2ProcCPU::transfer_slice(ThreadMessageQueue<void*>& q) {
+	struct transfer_data* data;
+	while((data = static_cast<struct transfer_data*>(q.pop())) != NULL) {
+		if(data->finish) {
+			data->cksumSuccess = data->gf->finish_packed_cksum(data->dst, data->src, data->size, data->numBufs, data->index, data->chunkLen);
+			NOTIFY_DONE(data, _queueRecv, data->promOut, data->cksumSuccess);
+		} else {
+			if(data->src)
+				data->gf->prepare_packed_cksum(data->dst, data->src, data->size, data->dstLen, data->numBufs, data->index, data->chunkLen);
+			if(data->submitInBufs) {
+				// queue async compute
+				data->parent->run_kernel(data->inBufId, data->submitInBufs);
+			}
+			
+			// signal main thread that prepare has completed
+			NOTIFY_DONE(data, _queueSent, data->promPrep);
 		}
-		
-		// signal main thread that prepare has completed
-		NOTIFY_DONE(data, _queueSent, data->promPrep);
+		IF_NOT_LIBUV(delete data);
 	}
-	IF_NOT_LIBUV(delete data);
 }
 
 #ifdef USE_LIBUV
@@ -277,12 +308,16 @@ FUTURE_RETURN_T PAR2ProcCPU::_addInput(const void* buffer, size_t size, T inputN
 	data->gf = gf;
 	IF_LIBUV(data->cbPrep = cb);
 	
-	data->submitInBufs = (flush || currentStagingInputs == inputBatchSize || (stagingActiveCount_get() == 0 && staging.size() > 1)) ? currentStagingInputs : 0;
+	data->submitInBufs = (flush || currentStagingInputs == inputBatchSize || (
+		// allow submitting early if there's no active processing
+		stagingActiveCount_get() == 0 && staging.size() > 1 && currentStagingInputs >= minInBatchSize
+	)) ? currentStagingInputs : 0;
 	data->inBufId = currentStagingArea;
 	
 	if(data->submitInBufs) {
 		stagingActiveCount_inc();
 		area.setIsActive(true); // lock this buffer until processing is complete
+		statBatchesStarted++;
 		currentStagingInputs = 0;
 		if(++currentStagingArea == staging.size())
 			currentStagingArea = 0;
@@ -304,9 +339,12 @@ void PAR2ProcCPU::dummyInput(uint16_t inputNum, bool flush) {
 	set_coeffs(area, currentStagingInputs, inputNum);
 	currentStagingInputs++;
 	
-	if(flush || currentStagingInputs == inputBatchSize || (stagingActiveCount_get() == 0 && staging.size() > 1)) {
+	if(flush || currentStagingInputs == inputBatchSize || (
+		stagingActiveCount_get() == 0 && staging.size() > 1 && currentStagingInputs >= minInBatchSize
+	)) {
 		stagingActiveCount_inc();
 		area.setIsActive(true); // lock this buffer until processing is complete
+		statBatchesStarted++;
 		
 		run_kernel(currentStagingArea, currentStagingInputs);
 		
@@ -360,6 +398,7 @@ void PAR2ProcCPU::flush() {
 	
 	stagingActiveCount_inc();
 	staging[currentStagingArea].setIsActive(true); // lock this buffer until processing is complete
+	statBatchesStarted++;
 	currentStagingInputs = 0;
 	if(++currentStagingArea == staging.size())
 		currentStagingArea = 0;
@@ -422,67 +461,80 @@ typedef struct __compute_req : PAR2ProcBackendBaseComputeReq<PAR2ProcCPU> {
 	std::atomic<int>* procRefs;
 } compute_req;
 
-void PAR2ProcCPU::compute_worker(void *_req) {
-	compute_req* req = static_cast<compute_req*>(_req);
-	
-	const Galois16MethodInfo& gfInfo = req->gf->info();
-	// compute how many inputs regions get prefetched in a muladd_multi call
-	// TODO: should this be done across all threads?
-	const unsigned MAX_PF_FACTOR = 3;
-	const unsigned pfFactor = gfInfo.prefetchDownscale;
-	unsigned inputsPrefetchedPerInvok = (req->numInputs / gfInfo.idealInputMultiple);
-	unsigned inputPrefetchOutOffset = req->numOutputs;
-	if(inputsPrefetchedPerInvok > (1U<<pfFactor)) { // will inputs ever be prefetched? if all prefetch rounds are spent on outputs, inputs will never prefetch
-		inputsPrefetchedPerInvok -= (1U<<pfFactor); // exclude output fetching rounds
-		inputsPrefetchedPerInvok <<= MAX_PF_FACTOR - pfFactor; // scale appropriately
-		inputPrefetchOutOffset = ((req->numInputs << MAX_PF_FACTOR) + inputsPrefetchedPerInvok-1) / inputsPrefetchedPerInvok;
-		if(req->numOutputs >= inputPrefetchOutOffset)
-			inputPrefetchOutOffset = req->numOutputs - inputPrefetchOutOffset;
-		else
-			inputPrefetchOutOffset = 0;
-	}
-	
-	for(unsigned round = 0; round < req->numChunks; round++) {
-		size_t procSize = MIN(req->len-round*req->chunkSize, req->chunkSize);
-		const char* srcPtr = static_cast<const char*>(req->input) + round*req->chunkSize*req->inputGrouping;
-		for(unsigned out = 0; out < req->numOutputs; out++) {
-			const uint16_t* vals = req->coeffs + out*req->inputGrouping;
-			
-			char* dstPtr = static_cast<char*>(req->output) + out*procSize + round*req->numOutputs*req->chunkSize;
-			if(!req->add) memset(dstPtr, 0, procSize);
-			if(round == req->numChunks-1) {
-				if(out+1 < req->numOutputs) {
-					if(req->outNonZero[out])
-						req->gf->mul_add_multi_packpf(req->inputGrouping, req->numInputs, dstPtr, srcPtr, procSize, vals, req->mutScratch, NULL, dstPtr+procSize);
-					else
-						req->gf->add_multi_packpf(req->inputGrouping, req->numInputs, dstPtr, srcPtr, procSize, NULL, dstPtr+procSize);
-				} else
-					// TODO: this could also be a 0 output, so consider add_multi optimisation?
-					req->gf->mul_add_multi_packed(req->inputGrouping, req->numInputs, dstPtr, srcPtr, procSize, vals, req->mutScratch);
-			} else {
-				const char* pfInput = out >= inputPrefetchOutOffset ? static_cast<const char*>(req->input) + (round+1)*req->chunkSize*req->numInputs + ((inputsPrefetchedPerInvok*(out-inputPrefetchOutOffset)*procSize)>>MAX_PF_FACTOR) : NULL;
-				// procSize input prefetch may be wrong for final round, but it's the closest we've got
-				
-				if(req->outNonZero[out])
-					req->gf->mul_add_multi_packpf(req->inputGrouping, req->numInputs, dstPtr, srcPtr, procSize, vals, req->mutScratch, pfInput, dstPtr+procSize);
+void PAR2ProcCPU::compute_worker(ThreadMessageQueue<void*>& q) {
+	compute_req* req;
+	while((req = static_cast<compute_req*>(q.pop())) != NULL) {
+		
+		const Galois16MethodInfo& gfInfo = req->gf->info();
+		// compute how many inputs regions get prefetched in a muladd_multi call
+		// TODO: should this be done across all threads?
+		unsigned inputsPrefetchedPerInvok = (req->numInputs / gfInfo.idealInputMultiple);
+		unsigned inputPrefetchOutOffset = req->numOutputs-1;
+		const unsigned MAX_PF_FACTOR = 3;
+		{
+			const unsigned pfFactor = gfInfo.prefetchDownscale;
+			if(inputsPrefetchedPerInvok > (1U<<pfFactor)) { // will inputs ever be prefetched? if all prefetch rounds are spent on outputs, inputs will never prefetch
+				inputsPrefetchedPerInvok -= (1U<<pfFactor); // exclude output fetching rounds
+				inputsPrefetchedPerInvok <<= MAX_PF_FACTOR - pfFactor; // scale appropriately
+				// compute number of input prefetch passes needed
+				inputPrefetchOutOffset = CEIL_DIV(req->numInputs << MAX_PF_FACTOR, inputsPrefetchedPerInvok);
+				assert(inputPrefetchOutOffset > 0); // at least one pass needed
+				if(req->numOutputs >= inputPrefetchOutOffset)
+					inputPrefetchOutOffset = req->numOutputs - inputPrefetchOutOffset;
 				else
-					req->gf->add_multi_packpf(req->inputGrouping, req->numInputs, dstPtr, srcPtr, procSize, pfInput, dstPtr+procSize);
+					inputPrefetchOutOffset = 0;
 			}
 		}
-	}
-	
-	// mark that we've done processing this request
-	if(req->procRefs->fetch_sub(1, std::memory_order_relaxed) <= 1) { // relaxed ordering: although we want all prior memory operations to be complete at this point, to send a cross-thread signal requires stricter ordering, so it should be fine by the time the signal is received
-		// signal this input group is done with
-#ifdef USE_LIBUV
-		req->parent->_queueProc.notify(req);
-#else
-		req->parent->stagingActiveCount_dec();
-		req->parent->staging[req->procIdx].setIsActive(false);
-		delete req;
+		
+		for(unsigned round = 0; round < req->numChunks; round++) {
+			size_t procSize = MIN(req->len-round*req->chunkSize, req->chunkSize);
+			const char* srcPtr = static_cast<const char*>(req->input) + round*req->chunkSize*req->inputGrouping;
+			for(unsigned out = 0; out < req->numOutputs; out++) {
+				const uint16_t* vals = req->coeffs + out*req->inputGrouping;
+				
+				char* dstPtr = static_cast<char*>(req->output) + out*procSize + round*req->numOutputs*req->chunkSize;
+				if(!req->add) memset(dstPtr, 0, procSize);
+				if(round == req->numChunks-1) {
+					if(out+1 < req->numOutputs) {
+						if(req->outNonZero[out])
+							req->gf->mul_add_multi_packpf(req->inputGrouping, req->numInputs, dstPtr, srcPtr, procSize, vals, req->mutScratch, NULL, dstPtr+procSize);
+						else
+							req->gf->add_multi_packpf(req->inputGrouping, req->numInputs, dstPtr, srcPtr, procSize, NULL, dstPtr+procSize);
+					} else
+						// TODO: this could also be a 0 output, so consider add_multi optimisation?
+						req->gf->mul_add_multi_packed(req->inputGrouping, req->numInputs, dstPtr, srcPtr, procSize, vals, req->mutScratch);
+				} else {
+					const char* pfInput = out >= inputPrefetchOutOffset ? static_cast<const char*>(req->input) + (round+1)*req->chunkSize*req->inputGrouping + ((inputsPrefetchedPerInvok*(out-inputPrefetchOutOffset)*procSize)>>MAX_PF_FACTOR) : NULL;
+					// procSize input prefetch may be wrong for final round, but it's the closest we've got; TODO: perhaps consider skipping out of prefetching, if the final round has a different region size
+					
+					if(req->outNonZero[out])
+						req->gf->mul_add_multi_packpf(req->inputGrouping, req->numInputs, dstPtr, srcPtr, procSize, vals, req->mutScratch, pfInput, dstPtr+procSize);
+					else
+						req->gf->add_multi_packpf(req->inputGrouping, req->numInputs, dstPtr, srcPtr, procSize, pfInput, dstPtr+procSize);
+				}
+			}
+		}
+		
+		// TODO: allow worker to peek into next queue entry for prefetching?
+		
+#ifdef DEBUG_STAT_THREAD_EMPTY
+		if(q.empty() && !(req->parent->endSignalled IF_NOT_LIBUV(.load(std::memory_order_relaxed))))
+			req->parent->statWorkerIdleEvents.fetch_add(1, std::memory_order_relaxed);
 #endif
-	} else
-		delete req;
+		
+		// mark that we've done processing this request
+		if(req->procRefs->fetch_sub(1, std::memory_order_acq_rel) <= 1) { // ensure all prior memory operations to be complete at this point; even though a cross-thread signal requires stricter ordering, it's only guaranteed on the sending thread
+			// signal this input group is done with
+#ifdef USE_LIBUV
+			req->parent->_queueProc.notify(req);
+#else
+			req->parent->stagingActiveCount_dec();
+			req->parent->staging[req->procIdx].setIsActive(false);
+			delete req;
+#endif
+		} else
+			delete req;
+	}
 }
 
 void PAR2ProcCPU::run_kernel(unsigned inBuf, unsigned numInputs) {
@@ -490,34 +542,86 @@ void PAR2ProcCPU::run_kernel(unsigned inBuf, unsigned numInputs) {
 	
 	auto& area = staging[inBuf];
 	
-	// TODO: better distribution strategy
-	area.procRefs = numChunks;
-	int nextThread = 0; // this needs to be reset to ensure the same output regions get queued to the same thread (required to avoid races, and helps cache locality); this does result in uneven distribution though, so TODO: figure something better out
-	for(unsigned chunk=0; chunk<numChunks; chunk++) {
-		size_t sliceOffset = chunk*chunkLen;
-		size_t thisChunkLen = MIN(alignedCurrentSliceSize-sliceOffset, chunkLen);
+	// currently do static distribution; TODO: consider dynamic scheduling?
+	bool oldProcessingAdd = processingAdd;
+	processingAdd = true;
+	
+	auto makeReq = [&, this](unsigned thread, size_t sliceOffset) -> compute_req* {
 		compute_req* req = new compute_req;
 		req->numInputs = numInputs;
 		req->inputGrouping = inputBatchSize;
-		req->numOutputs = outputExponents.size();
-		req->outNonZero = outputExponents.data();
-		req->coeffs = area.procCoeffs.data();
-		req->len = thisChunkLen; // TODO: consider sending multiple chunks, instead of one at a time? allows for prefetching second chunk; alternatively, allow worker to peek into queue when prefetching?
-		req->chunkSize = thisChunkLen;
-		req->numChunks = 1;
+		req->chunkSize = chunkLen;
 		req->input = static_cast<const char*>(area.src) + sliceOffset*inputBatchSize;
-		req->output = static_cast<char*>(memProcessing) + sliceOffset*req->numOutputs;
-		req->add = processingAdd;
-		req->mutScratch = gfScratch[nextThread]; // TODO: should this be assigned to the thread instead?
+		req->add = oldProcessingAdd;
+		req->mutScratch = gfScratch[thread]; // TODO: should this be assigned to the thread instead?
 		req->gf = gf;
 		req->parent = this;
 		req->procRefs = &(area.procRefs);
 		req->procIdx = inBuf;
+		return req;
+	};
+	
+	// distribute chunks evenly across threads. For remaining chunks, try to distribute the outputs evenly across threads, but don't allow a thread to handle more than one remaining chunk
+	unsigned fullChunksPerThread = numChunks / numThreads;
+	unsigned leftoverChunks = numChunks % numThreads;
+	unsigned chunk = 0;
+	// start off with remaining chunks
+	if(leftoverChunks) {
+		// send each chunk to this many threads
+		unsigned threadsPerChunk = MIN(numThreads / leftoverChunks, outputExponents.size());
+		assert(threadsPerChunk >= 1);
+		// number of outputs to send to a thread (this will be rounded appropriately as it's processed)
+		float outputsPerThread = (float)outputExponents.size() / threadsPerChunk;
+		assert(outputsPerThread >= 1);
+		// number of threads that we'll send remaining chunks to
+		unsigned usedThreads = threadsPerChunk * leftoverChunks;
+		assert((int)usedThreads <= numThreads);
+		area.procRefs.store((fullChunksPerThread ? numThreads : 0) + usedThreads, std::memory_order_relaxed);
 		
-		thWorkers[nextThread++].send(req);
-		if(nextThread >= numThreads) nextThread = 0;
+		unsigned thread = 0;
+		for(; chunk < leftoverChunks; chunk++) {
+			size_t sliceOffset = chunk*chunkLen;
+			size_t reqLen = MIN(alignedCurrentSliceSize-sliceOffset, chunkLen);
+			char* outputBase = static_cast<char*>(memProcessing) + sliceOffset*outputExponents.size();
+			// split this chunk across threads
+			unsigned outputIdx = 0;
+			for(unsigned tc = 0; tc < threadsPerChunk; tc++) {
+				assert(thread < usedThreads);
+				auto req = makeReq(thread, sliceOffset);
+				req->numOutputs = (unsigned)(outputsPerThread*(tc+1) + 0.5) - outputIdx;
+				assert(req->numOutputs >= 1);
+				req->outNonZero = outputExponents.data() + outputIdx;
+				req->coeffs = area.procCoeffs.data() + outputIdx * inputBatchSize;
+				req->len = reqLen;
+				req->numChunks = 1;
+				req->output = outputBase + outputIdx*req->len;
+				
+				outputIdx += req->numOutputs;
+				if(tc == threadsPerChunk-1) assert(outputIdx == outputExponents.size());
+				thWorkers[thread].send(req);
+				thread++;
+			}
+		}
+	} else
+		area.procRefs.store(numThreads, std::memory_order_relaxed);
+	
+	// distribute chunks evenly across threads
+	if(fullChunksPerThread) {
+		for(int thread=0; thread<numThreads; thread++) {
+			size_t sliceOffset = chunk*chunkLen;
+			auto req = makeReq(thread, sliceOffset);
+			req->numOutputs = outputExponents.size();
+			req->outNonZero = outputExponents.data();
+			req->coeffs = area.procCoeffs.data();
+			req->len = MIN(alignedCurrentSliceSize-sliceOffset, chunkLen*fullChunksPerThread);
+			req->numChunks = fullChunksPerThread;
+			req->output = static_cast<char*>(memProcessing) + sliceOffset*outputExponents.size();
+			
+			thWorkers[thread].send(req);
+			chunk += fullChunksPerThread;
+		}
 	}
-	processingAdd = true;
+	assert(chunk == numChunks);
 }
 
 #ifdef USE_LIBUV
@@ -529,21 +633,28 @@ void PAR2ProcCPU::_notifyProc(void* _req) {
 	// if add was blocked, allow adds to continue - calling application will need to listen to this event to know to continue
 	if(progressCb) progressCb(req->numInputs);
 	
+	/*
+	// TODO: implement for non-libuv if we go ahead with this
+	// this is currently pointless while minInBatchSize == inputBatchSize
+	if(currentStagingInputs && stagingActiveCount_get() == 0 && staging.size() > 1 && currentStagingInputs >= minInBatchSize) {
+		// TODO: consider firing off next batch of inputs
+	}
+	*/
+	// TODO: also consider idea of dynamically scaling areas - this removes the notion of a 'full' state, and allows caller to manage maximum outstanding regions
+	
 	delete req;
 }
 #endif
 
 
 void PAR2ProcCPU::processing_finished() {
-	IF_LIBUV(endSignalled = false);
+#if defined(USE_LIBUV) || defined(DEBUG_STAT_THREAD_EMPTY)
+	endSignalled = false;
+#endif
 	// free memInput so that output fetching can use some of it
 	for(auto& area : staging) {
 		if(area.src) ALIGN_FREE(area.src);
 		area.src = nullptr;
 	}
-	
-	// close off worker threads; TODO: is this a good idea? perhaps do it during deinit instead?
-	for(auto& worker : thWorkers)
-		worker.end();
 }
 

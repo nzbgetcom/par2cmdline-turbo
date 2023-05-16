@@ -6,7 +6,6 @@
 # define thread_t uv_thread_t
 # define thread_create(t, f, a) uv_thread_create(&(t), f, a)
 # define thread_join(t) uv_thread_join(&(t))
-# define thread_cb_t uv_thread_cb
 # define mutex_t uv_mutex_t
 # define mutex_init(m) uv_mutex_init(&(m))
 # define mutex_destroy(m) uv_mutex_destroy(&(m))
@@ -21,7 +20,6 @@
 # define thread_t std::thread
 # define thread_create(t, f, a) t = std::thread(f, a)
 # define thread_join(t) t.join()
-# define thread_cb_t std::function<void(void*)>
 # include <mutex>
 # include <memory>
 # define mutex_t std::unique_ptr<std::mutex>
@@ -40,7 +38,7 @@
 template<typename T>
 class ThreadMessageQueue {
 	std::queue<T> q;
-	mutex_t mutex;
+	mutable mutex_t mutex;
 	condvar_t cond;
 	bool skipDestructor;
 	
@@ -127,13 +125,13 @@ public:
 		return notEmpty;
 	}
 	
-	size_t size() {
+	size_t size() const {
 		mutex_lock(mutex);
 		size_t s = q.size();
 		mutex_unlock(mutex);
 		return s;
 	}
-	bool empty() {
+	bool empty() const {
 		mutex_lock(mutex);
 		bool e = q.empty();
 		mutex_unlock(mutex);
@@ -191,6 +189,13 @@ public:
 };
 #endif
 
+#ifdef USE_LIBUV
+typedef void(*thread_cb_t)(ThreadMessageQueue<void*>&);
+#else
+typedef std::function<void(ThreadMessageQueue<void*>&)> thread_cb_t;
+#endif
+
+
 #if defined(_WINDOWS) || defined(__WINDOWS__) || defined(_WIN32) || defined(_WIN64)
 # define NOMINMAX
 # define WIN32_LEAN_AND_MEAN
@@ -200,6 +205,7 @@ public:
 #endif
 #if defined(__linux) || defined(__linux__)
 # include <unistd.h>
+# include <sys/prctl.h>
 #endif
 class MessageThread {
 	ThreadMessageQueue<void*> q;
@@ -210,68 +216,86 @@ class MessageThread {
 	
 	static void thread_func(void* parent) {
 		MessageThread* self = static_cast<MessageThread*>(parent);
-		ThreadMessageQueue<void*>& q = self->q;
-		auto cb = self->cb;
 		
-		void* item;
-		while((item = q.pop()) != NULL) {
-			cb(item);
-		}
-	}
-	
-	static void thread_func_low_prio(void* parent) {
-		#if defined(_WINDOWS) || defined(__WINDOWS__) || defined(_WIN32) || defined(_WIN64)
-		HANDLE hThread = GetCurrentThread();
-		switch(GetThreadPriority(hThread)) {
-			case THREAD_PRIORITY_TIME_CRITICAL:
-				SetThreadPriority(hThread, THREAD_PRIORITY_HIGHEST);
-				break;
-			case THREAD_PRIORITY_HIGHEST:
-				SetThreadPriority(hThread, THREAD_PRIORITY_ABOVE_NORMAL);
-				break;
-			case THREAD_PRIORITY_ABOVE_NORMAL:
-				SetThreadPriority(hThread, THREAD_PRIORITY_NORMAL);
-				break;
-			case THREAD_PRIORITY_NORMAL:
-				SetThreadPriority(hThread, THREAD_PRIORITY_BELOW_NORMAL);
-				break;
-			case THREAD_PRIORITY_BELOW_NORMAL:
-				SetThreadPriority(hThread, THREAD_PRIORITY_LOWEST);
-				break;
-			case THREAD_PRIORITY_LOWEST:
-				SetThreadPriority(hThread, THREAD_PRIORITY_IDLE);
-				break;
-			case THREAD_PRIORITY_IDLE: // can't go lower
-			default: // do nothing
-				break;
-		}
-		#else
-		// it seems that threads cannot have lower priority on POSIX, unless it's scheduled realtime, however we can declare it to be CPU intensive
-		int policy;
-		struct sched_param param;
-		pthread_t self = pthread_self();
-		if(!pthread_getschedparam(self, &policy, &param)) {
-			if(policy == SCHED_OTHER) {
-				#ifdef __MACH__
-				// MacOS doesn't support SCHED_BATCH, but does seem to permit priorities on SCHED_OTHER
-				int min = sched_get_priority_min(policy);
-				if(min < param.sched_priority) {
-					param.sched_priority -= 1;
-					if(param.sched_priority < min) param.sched_priority = min;
-					pthread_setschedparam(self, policy, &param);
-				}
-				#else
-				pthread_setschedparam(self, SCHED_BATCH, &param);
-				#endif
+		if(self->lowPrio) {
+			#if defined(_WINDOWS) || defined(__WINDOWS__) || defined(_WIN32) || defined(_WIN64)
+			HANDLE hThread = GetCurrentThread();
+			switch(GetThreadPriority(hThread)) {
+				case THREAD_PRIORITY_TIME_CRITICAL:
+					SetThreadPriority(hThread, THREAD_PRIORITY_HIGHEST);
+					break;
+				case THREAD_PRIORITY_HIGHEST:
+					SetThreadPriority(hThread, THREAD_PRIORITY_ABOVE_NORMAL);
+					break;
+				case THREAD_PRIORITY_ABOVE_NORMAL:
+					SetThreadPriority(hThread, THREAD_PRIORITY_NORMAL);
+					break;
+				case THREAD_PRIORITY_NORMAL:
+					SetThreadPriority(hThread, THREAD_PRIORITY_BELOW_NORMAL);
+					break;
+				case THREAD_PRIORITY_BELOW_NORMAL:
+					SetThreadPriority(hThread, THREAD_PRIORITY_LOWEST);
+					break;
+				case THREAD_PRIORITY_LOWEST:
+					SetThreadPriority(hThread, THREAD_PRIORITY_IDLE);
+					break;
+				case THREAD_PRIORITY_IDLE: // can't go lower
+				default: // do nothing
+					break;
 			}
+			#else
+			// it seems that threads cannot have lower priority on POSIX, unless it's scheduled realtime, however we can declare it to be CPU intensive
+			int policy;
+			struct sched_param param;
+			pthread_t self = pthread_self();
+			if(!pthread_getschedparam(self, &policy, &param)) {
+				if(policy == SCHED_OTHER) {
+					#ifndef SCHED_BATCH
+					// MacOS doesn't support SCHED_BATCH, but does seem to permit priorities on SCHED_OTHER
+					int min = sched_get_priority_min(policy);
+					if(min < param.sched_priority) {
+						param.sched_priority -= 1;
+						pthread_setschedparam(self, policy, &param);
+					}
+					#else
+					pthread_setschedparam(self, SCHED_BATCH, &param);
+					#endif
+				}
+			}
+			
+			# if defined(__linux) || defined(__linux__)
+			// ...but Linux allows per-thread priority
+			nice(1);
+			# endif
+			#endif
 		}
 		
-		# if defined(__linux) || defined(__linux__)
-		// ...but Linux allows per-thread priority
-		nice(1);
-		# endif
-		#endif
-		thread_func(parent);
+		if(self->name) {
+			#if defined(_WINDOWS) || defined(__WINDOWS__) || defined(_WIN32) || defined(_WIN64)
+			HMODULE h = GetModuleHandleA("kernelbase.dll");
+			if(h) {
+				HRESULT(__stdcall *fnSetTD)(HANDLE, PCWSTR) = (HRESULT(__stdcall *)(HANDLE, PCWSTR))GetProcAddress(h, "SetThreadDescription");
+				if(fnSetTD) {
+					wchar_t nameUCS2[17];
+					//assert(strlen(self->name) <= 16); // always hard-coded string, plus Linux limits it to 16 chars, so shouldn't ever overflow
+					MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, self->name, -1, nameUCS2, 50);
+					fnSetTD(GetCurrentThread(), nameUCS2);
+				}
+			}
+			#elif defined(__linux) || defined(__linux__)
+			prctl(PR_SET_NAME, self->name, 0, 0, 0);
+			#elif defined(__MACH__)
+			pthread_setname_np(self->name);
+			#elif defined(__FreeBSD__) || defined(__DragonFly__)
+			pthread_setname_np(pthread_self(), self->name);
+			#elif defined(__NetBSD__)
+			pthread_setname_np(pthread_self(), self->name, NULL);
+			#elif defined(__OpenBSD__)
+			pthread_set_name_np(pthread_self(), self->name);
+			#endif
+		}
+		
+		self->cb(self->q);
 	}
 	
 	// disable copy constructor
@@ -288,6 +312,8 @@ class MessageThread {
 		threadActive = other.threadActive;
 		threadCreated = other.threadCreated;
 		cb = other.cb;
+		name = other.name;
+		lowPrio = other.lowPrio;
 		
 		other.threadActive = false;
 		other.threadCreated = false;
@@ -295,17 +321,20 @@ class MessageThread {
 	
 public:
 	bool lowPrio;
+	const char* name;
 	MessageThread() {
 		cb = NULL;
 		threadActive = false;
 		threadCreated = false;
 		lowPrio = false;
+		name = NULL;
 	}
 	MessageThread(thread_cb_t callback) {
 		cb = callback;
 		threadActive = false;
 		threadCreated = false;
 		lowPrio = false;
+		name = NULL;
 	}
 	void setCallback(thread_cb_t callback) {
 		cb = callback;
@@ -331,7 +360,7 @@ public:
 		if(threadCreated) // previously created, but end fired, so need to wait for this thread to close before starting another
 			thread_join(thread);
 		threadCreated = true;
-		thread_create(thread, lowPrio ? thread_func_low_prio : thread_func, this);
+		thread_create(thread, thread_func, this);
 	}
 	// item cannot be NULL
 	void send(void* item) {

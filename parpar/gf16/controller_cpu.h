@@ -40,6 +40,8 @@ private:
 	bool reallocMemInput();
 	void* memProcessing; // TODO: break this into chunks, to avoid massive single allocation
 	
+	void calcChunkSize();
+	
 	MessageThread transferThread;
 	
 	void set_coeffs(PAR2ProcCPUStaging& area, unsigned idx, uint16_t inputNum);
@@ -54,8 +56,13 @@ private:
 	void _notifyProc(void* _req) override;
 #endif
 	
-	static void transfer_chunk(void *req);
-	static void compute_worker(void *req);
+	static void transfer_slice(ThreadMessageQueue<void*>& q);
+	static void compute_worker(ThreadMessageQueue<void*>& q);
+	
+#ifdef DEBUG_STAT_THREAD_EMPTY
+	std::atomic<bool> endSignalled;
+	std::atomic<unsigned> statWorkerIdleEvents;
+#endif
 	
 	// disable copy constructor
 	PAR2ProcCPU(const PAR2ProcCPU&);
@@ -77,7 +84,7 @@ public:
 	inline int getNumThreads() const {
 		return numThreads;
 	}
-	inline const void* getMethodName() const {
+	inline const char* getMethodName() const {
 		return gf->info().name;
 	}
 	inline size_t getChunkLen() const {
@@ -108,6 +115,9 @@ public:
 #ifndef USE_LIBUV
 	void waitForAdd() override;
 	FUTURE_RETURN_T endInput() override {
+# ifdef DEBUG_STAT_THREAD_EMPTY
+		endSignalled = true;
+# endif
 		return IPAR2ProcBackend::_endInput(staging);
 	}
 #endif
@@ -118,6 +128,16 @@ public:
 	static inline Galois16MethodInfo info(Galois16Methods method) {
 		return Galois16Mul::info(method);
 	}
+	
+	static inline std::vector<Galois16Methods> availableMethods() {
+		return Galois16Mul::availableMethods(true);
+	}
+	
+#ifdef DEBUG_STAT_THREAD_EMPTY
+	inline unsigned getWorkerIdleCount() const {
+		return statWorkerIdleEvents.load(std::memory_order_relaxed);
+	}
+#endif
 };
 
 #endif // defined(__GF16_CONTROLLER_CPU)

@@ -8,6 +8,9 @@
 #include "controller.h"
 #include "threadqueue.h" // must be placed before CL/cl.hpp for some reason
 #include <CL/cl.hpp>
+#include "gf16mul.h"
+#include <memory>
+
 
 enum Galois16OCLMethods {
 	GF16OCL_AUTO,
@@ -99,7 +102,7 @@ public:
 class PAR2ProcOCL : public IPAR2ProcBackend {
 	bool _initSuccess;
 	// method/input parameters
-	size_t sliceSize;
+	size_t sliceSize, sliceSizeCksum;
 	size_t sliceSizeAligned;
 	// OpenCL stuff
 	cl::Device device;
@@ -118,14 +121,16 @@ class PAR2ProcOCL : public IPAR2ProcBackend {
 	Galois16OCLCoeffType coeffType;
 	cl::Buffer buffer_output;
 	std::vector<cl::Buffer> extra_buffers;
-	// TODO: consider making zeroes static?
-	uint8_t* zeroes; // a chunk of zero'd memory for zeroing device memory (prior to OpenCL 1.2)
 	// to enable slice size adjustments
 	size_t allocatedSliceSize;
 	size_t bytesPerGroup;
 	size_t wgSize;
 	unsigned outputsPerGroup;
 	
+	std::unique_ptr<Galois16Mul> gf;
+	Galois16Methods gfMethod;
+	MessageThread transferThread;
+	static void transfer_slice(ThreadMessageQueue<void*>& q);
 	
 	
 	// remembered setup params
@@ -183,7 +188,7 @@ public:
 	explicit PAR2ProcOCL(IF_LIBUV(uv_loop_t* _loop,) int platformId = -1, int deviceId = -1, int stagingAreas = 2);
 	~PAR2ProcOCL();
 	void setSliceSize(size_t _sliceSize) override;
-	bool init(Galois16OCLMethods method = GF16OCL_AUTO, unsigned targetInputBatch=0, unsigned targetIters=0, unsigned targetGrouping=0);
+	bool init(Galois16OCLMethods method = GF16OCL_AUTO, unsigned targetInputBatch=0, unsigned targetIters=0, unsigned targetGrouping=0, Galois16Methods cksumMethod = GF16_AUTO);
 	PAR2ProcBackendAddResult canAdd() const override;
 	FUTURE_RETURN_T addInput(const void* buffer, size_t size, uint16_t inputNum, bool flush  IF_LIBUV(, const PAR2ProcPlainCb& cb)) override;
 	FUTURE_RETURN_T addInput(const void* buffer, size_t size, const uint16_t* coeffs, bool flush  IF_LIBUV(, const PAR2ProcPlainCb& cb)) override;

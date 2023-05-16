@@ -211,11 +211,34 @@
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM64'">-march=armv8-a+sve2 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="gf16\gf_add_generic.c" />
+    <ClCompile Include="gf16\gf16_cksum_sse2.c">
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <ClCompile Include="gf16\gf16_cksum_avx2.c">
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <ClCompile Include="gf16\gf16_cksum_avx512.c">
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
+      <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|Win32'">-mavx512bw -mavx512vl %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|x64'">-mavx512bw -mavx512vl %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="gf16\gf16_cksum_neon.c">
+      <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM'">-mfpu=neon %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="gf16\gf16_cksum_sve.c">
+      <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM64'">-march=armv8-a+sve %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="gf16\gf16_cksum_generic.c" />
     <ClCompile Include="gf16\opencl-include\cl.c" />
     <ClCompile Include="gf16\controller.cpp" />
     <ClCompile Include="gf16\controller_cpu.cpp" />
     <ClCompile Include="gf16\controller_ocl.cpp" />
     <ClCompile Include="gf16\controller_ocl_init.cpp" />
+    <ClCompile Include="src\platform_warnings.c">
+      <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL'">-mavx2 -mgfni %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gf16\gf16mul.h" />
