@@ -158,6 +158,12 @@ Result Par2Creator::Process(
     sout << "Source block count: " << sourceblockcount << endl;
     sout << "Recovery block count: " << recoveryblockcount << endl;
     sout << "Recovery file count: " << recoveryfilecount << endl;
+    if (noiselevel >= nlDebug)
+    {
+      sout << "[DEBUG] Compute method: " << parparcpu.getMethodName() << endl;
+      sout << "[DEBUG] Compute tile size: " << parparcpu.getChunkLen() << endl;
+      sout << "[DEBUG] Compute block grouping: " << parparcpu.getInputBatchSize() << endl;
+    }
     sout << endl;
   }
 

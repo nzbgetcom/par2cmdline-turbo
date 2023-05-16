@@ -281,6 +281,14 @@ Result Par2Repairer::Process(
           return eMemoryError;
         }
 
+        if (noiselevel >= nlDebug)
+        {
+          sout << "[DEBUG] Compute method: " << parparcpu.getMethodName() << endl;
+          sout << "[DEBUG] Compute tile size: " << parparcpu.getChunkLen() << endl;
+          sout << "[DEBUG] Compute block grouping: " << parparcpu.getInputBatchSize() << endl;
+          sout << endl;
+        }
+
         // Set the total amount of data to be processed.
         progress = 0;
         totaldata = blocksize * sourceblockcount;

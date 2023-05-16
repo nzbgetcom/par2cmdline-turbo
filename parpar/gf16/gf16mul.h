@@ -1,3 +1,6 @@
+#ifndef __GF16MUL_H
+#define __GF16MUL_H
+
 #include <cassert>
 #include "../src/stdint.h"
 #include "../src/hedley.h"
@@ -23,6 +26,8 @@ typedef void(*Galois16AddMultiFunc) (unsigned regions, size_t offset, void *HEDL
 typedef void(*Galois16AddPackedFunc) (unsigned packedRegions, unsigned regions, void *HEDLEY_RESTRICT dst, const void* HEDLEY_RESTRICT src, size_t len);
 typedef void(*Galois16AddPackPfFunc) (unsigned packedRegions, unsigned regions, void *HEDLEY_RESTRICT dst, const void* HEDLEY_RESTRICT src, size_t len, const void* HEDLEY_RESTRICT prefetchIn, const void* HEDLEY_RESTRICT prefetchOut);
 
+typedef void(*Galois16CopyCksum) (void *HEDLEY_RESTRICT dst, const void *HEDLEY_RESTRICT src, size_t srcLen, size_t sliceLen);
+typedef int(*Galois16CopyCksumCheck) (void *HEDLEY_RESTRICT dst, const void *HEDLEY_RESTRICT src, size_t len);
 
 
 enum Galois16Methods {
@@ -95,6 +100,7 @@ typedef struct {
 	size_t idealChunkSize;
 	unsigned idealInputMultiple;
 	unsigned prefetchDownscale;
+	unsigned cksumSize;
 } Galois16MethodInfo;
 
 class Galois16Mul {
@@ -196,6 +202,8 @@ public:
 	Galois16AddMultiFunc add_multi;
 	Galois16AddPackedFunc add_multi_packed;
 	Galois16AddPackPfFunc add_multi_packpf;
+	Galois16CopyCksum copy_cksum;
+	Galois16CopyCksumCheck copy_cksum_check;
 	
 	HEDLEY_MALLOC void* mutScratch_alloc() const;
 	void mutScratch_free(void* mutScratch) const;
@@ -346,3 +354,5 @@ public:
 	}
 	
 };
+
+#endif

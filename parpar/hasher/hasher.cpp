@@ -7,8 +7,8 @@ uint32_t(*MD5CRC_Calc)(const void*, size_t, size_t, void*) = NULL;
 uint32_t(*CRC32_Calc)(const void*, size_t) = NULL;
 struct _CpuCap {
 #ifdef PLATFORM_X86
-	bool hasSSE2, hasXOP, hasAVX2, hasAVX512F, hasAVX512VLBW;
-	_CpuCap() : hasSSE2(false), hasXOP(false), hasAVX2(false), hasAVX512F(false), hasAVX512VLBW(false) {}
+	bool hasSSE2, hasXOP, hasBMI1, hasAVX2, hasAVX512F, hasAVX512VLBW;
+	_CpuCap() : hasSSE2(false), hasXOP(false), hasBMI1(false), hasAVX2(false), hasAVX512F(false), hasAVX512VLBW(false) {}
 #endif
 #ifdef PLATFORM_ARM
 	bool hasNEON, hasSVE2;
@@ -30,7 +30,7 @@ void setup_hasher() {
 	// CPU detection
 #ifdef PLATFORM_X86
 	bool hasClMul = false, hasAVX = false;
-	bool isSmallCore = false;
+	bool isSmallCore = false, isLEASlow = false, isVecRotSlow = false;
 	
 	int cpuInfo[4];
 	int cpuInfoX[4];
@@ -45,9 +45,13 @@ void setup_hasher() {
 	// TODO: check perf on small cores
 	if(family == 6) {
 		isSmallCore = CPU_MODEL_IS_BNL_SLM(model);
+		// Intel Sandy Bridge to Skylake has slow 3-component LEA
+		isLEASlow = (model == 0x2A || model == 0x2D || model == 0x3A || model == 0x3C || model == 0x3D || model == 0x3E || model == 0x3F || model == 0x45 || model == 0x46 || model == 0x47 || model == 0x4E || model == 0x4F || model == 0x55 || model == 0x56 || model == 0x5E || model == 0x66 || model == 0x67 || model == 0x8E || model == 0x9E || model == 0xA5 || model == 0xA6);
 	} else {
 		isSmallCore = CPU_FAMMDL_IS_AMDCAT(family, model);
 	}
+	
+	isVecRotSlow = (family == 0xaf); // vector rotate has 2 cycle latency on Zen4
 	
 #if !defined(_MSC_VER) || _MSC_VER >= 1600
 	_cpuidX(cpuInfoX, 7, 0);
@@ -55,6 +59,7 @@ void setup_hasher() {
 		int xcr = _GET_XCR() & 0xff;
 		if((xcr & 6) == 6) { // AVX enabled
 			hasAVX = cpuInfo[2] & 0x800000;
+			CpuCap.hasBMI1 = hasAVX && (cpuInfoX[1] & 0x08);
 			CpuCap.hasAVX2 = cpuInfoX[1] & 0x20;
 			if((xcr & 0xE0) == 0xE0) {
 				CpuCap.hasAVX512F = ((cpuInfoX[1] & 0x10000) == 0x10000);
@@ -67,22 +72,40 @@ void setup_hasher() {
 	_cpuid(cpuInfo, 0x80000001);
 	CpuCap.hasXOP = hasAVX && (cpuInfo[2] & 0x800);
 	
-	if(CpuCap.hasAVX512VLBW && hasClMul && HasherInput_AVX512::isAvailable)
+	if(CpuCap.hasAVX512VLBW && hasClMul && !isVecRotSlow && HasherInput_AVX512::isAvailable)
 		HasherInput_Create = &HasherInput_AVX512::create;
-	else if(hasClMul && !isSmallCore && HasherInput_ClMulScalar::isAvailable)
-		HasherInput_Create = &HasherInput_ClMulScalar::create;
-	else if(hasClMul && isSmallCore && HasherInput_ClMulSSE::isAvailable)
+	// SSE seems to be faster than scalar on Zen1/2, not Zen3; BMI > SSE on Zen1, unknown on Zen2
+	else if(hasClMul && !isSmallCore && HasherInput_ClMulScalar::isAvailable) {
+		// Gracemont: SSE > scalar, but SSE ~= BMI
+		if(CpuCap.hasBMI1 && HasherInput_BMI1::isAvailable)
+			HasherInput_Create = &HasherInput_BMI1::create;
+		else
+			HasherInput_Create = &HasherInput_ClMulScalar::create;
+	} else if(hasClMul && isSmallCore && HasherInput_ClMulSSE::isAvailable)
 		HasherInput_Create = &HasherInput_ClMulSSE::create;
 	else if(CpuCap.hasSSE2 && isSmallCore && HasherInput_SSE::isAvailable) // TODO: CPU w/o ClMul might all be small enough
 		HasherInput_Create = &HasherInput_SSE::create;
 	
-	if(CpuCap.hasAVX512VLBW && MD5Single_isAvailable_AVX512) {
+	if(CpuCap.hasAVX512VLBW && !isVecRotSlow && MD5Single_isAvailable_AVX512) {
 		MD5Single::_update = &MD5Single_update_AVX512;
 		MD5Single::_updateZero = &MD5Single_updateZero_AVX512;
 	}
+	else if(isLEASlow && hasClMul && MD5Single_isAvailable_NoLEA) {
+		MD5Single::_update = &MD5Single_update_NoLEA;
+		MD5Single::_updateZero = &MD5Single_updateZero_NoLEA;
+	}
+	// for some reason, single MD5 BMI1 seems to be slower on most cores, except Jaguar... unsure why
+	else if(CpuCap.hasBMI1 && isSmallCore && MD5Single_isAvailable_BMI1) {
+		MD5Single::_update = &MD5Single_update_BMI1;
+		MD5Single::_updateZero = &MD5Single_updateZero_BMI1;
+	}
 	
-	if(CpuCap.hasAVX512VLBW && MD5CRC_isAvailable_AVX512)
+	if(CpuCap.hasAVX512VLBW && hasClMul && !isVecRotSlow && MD5CRC_isAvailable_AVX512)
 		MD5CRC_Calc = &MD5CRC_Calc_AVX512;
+	else if(isLEASlow && hasClMul && MD5CRC_isAvailable_NoLEA)
+		MD5CRC_Calc = &MD5CRC_Calc_NoLEA;
+	else if(CpuCap.hasBMI1 && hasClMul && isSmallCore && MD5CRC_isAvailable_BMI1)
+		MD5CRC_Calc = &MD5CRC_Calc_BMI1;
 	else if(hasClMul && MD5CRC_isAvailable_ClMul)
 		MD5CRC_Calc = &MD5CRC_Calc_ClMul;
 	
@@ -142,6 +165,7 @@ bool set_hasherInput(HasherInputMethods method) {
 	if(method == INHASH_SIMD) SET_HASHER(HasherInput_SSE)
 	if(method == INHASH_CRC) SET_HASHER(HasherInput_ClMulScalar)
 	if(method == INHASH_SIMD_CRC) SET_HASHER(HasherInput_ClMulSSE)
+	if(method == INHASH_BMI1) SET_HASHER(HasherInput_BMI1)
 	if(method == INHASH_AVX512) SET_HASHER(HasherInput_AVX512)
 #endif
 #ifdef PLATFORM_ARM
@@ -254,6 +278,7 @@ MD5Multi::MD5Multi(int srcCount) {
 		ADD_LAST_CTX(1, MD5Multi_Scalar)
 		else ADD_LAST_CTX(1, MD5Multi2_Scalar)
 #ifdef PLATFORM_X86
+		// AVX512 hasher would be faster than scalar on Intel, but slower on AMD, so we won't bother trying to do that optimisation
 		else ADD_LAST_CTX(HasherMD5Multi_level == MD5MULT_AVX512VL, MD5Multi_AVX512_128)
 		else ADD_LAST_CTX(HasherMD5Multi_level == MD5MULT_XOP, MD5Multi_XOP)
 		else ADD_LAST_CTX(HasherMD5Multi_level >= MD5MULT_SSE, MD5Multi_SSE)

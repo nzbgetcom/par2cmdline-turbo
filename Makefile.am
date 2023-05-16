@@ -24,7 +24,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 noinst_LIBRARIES = libpar2.a \
 	libparpar_gf16.a libparpar_gf16_sse2.a libparpar_gf16_ssse3.a libparpar_gf16_avx.a libparpar_gf16_avx2.a libparpar_gf16_avx512.a libparpar_gf16_vbmi.a libparpar_gf16_gfni.a libparpar_gf16_gfni_avx2.a libparpar_gf16_gfni_avx512.a libparpar_gf16_neon.a libparpar_gf16_sve.a libparpar_gf16_sve2.a \
-	libparpar_hasher.a libparpar_hasher_sse2.a libparpar_hasher_clmul.a libparpar_hasher_xop.a libparpar_hasher_avx2.a libparpar_hasher_avx512.a libparpar_hasher_avx512vl.a libparpar_hasher_armcrc.a libparpar_hasher_neon.a libparpar_hasher_neoncrc.a libparpar_hasher_sve2.a
+	libparpar_hasher.a libparpar_hasher_sse2.a libparpar_hasher_clmul.a libparpar_hasher_xop.a libparpar_hasher_bmi1.a libparpar_hasher_avx2.a libparpar_hasher_avx512.a libparpar_hasher_avx512vl.a libparpar_hasher_armcrc.a libparpar_hasher_neon.a libparpar_hasher_neoncrc.a libparpar_hasher_sve2.a
 
 libpar2_a_SOURCES = src/crc.cpp src/crc.h \
 	src/creatorpacket.cpp src/creatorpacket.h \
@@ -52,7 +52,7 @@ libpar2_a_SOURCES = src/crc.cpp src/crc.h \
 	src/libpar2.cpp src/libpar2.h src/libpar2internal.h
 libpar2_a_DEPENDENCIES = \
 	libparpar_gf16.a libparpar_gf16_sse2.a libparpar_gf16_ssse3.a libparpar_gf16_avx.a libparpar_gf16_avx2.a libparpar_gf16_avx512.a libparpar_gf16_vbmi.a libparpar_gf16_gfni.a libparpar_gf16_gfni_avx2.a libparpar_gf16_gfni_avx512.a libparpar_gf16_neon.a libparpar_gf16_sve.a libparpar_gf16_sve2.a \
-	libparpar_hasher.a libparpar_hasher_sse2.a libparpar_hasher_clmul.a libparpar_hasher_xop.a libparpar_hasher_avx2.a libparpar_hasher_avx512.a libparpar_hasher_avx512vl.a libparpar_hasher_armcrc.a libparpar_hasher_neon.a libparpar_hasher_neoncrc.a libparpar_hasher_sve2.a
+	libparpar_hasher.a libparpar_hasher_sse2.a libparpar_hasher_clmul.a libparpar_hasher_xop.a libparpar_hasher_bmi1.a libparpar_hasher_avx2.a libparpar_hasher_avx512.a libparpar_hasher_avx512vl.a libparpar_hasher_armcrc.a libparpar_hasher_neon.a libparpar_hasher_neoncrc.a libparpar_hasher_sve2.a
 libpar2_a_LIBADD = parpar/gf16/libparpar_gf16*.o parpar/hasher/libparpar_hasher*.o
 
 libparpar_gf16_a_SOURCES = \
@@ -63,14 +63,16 @@ libparpar_gf16_a_SOURCES = \
 	parpar/gf16/gfmat_coeff.c \
 	parpar/gf16/gf16mul.cpp \
 	parpar/gf16/gf16_lookup.c \
-	parpar/gf16/gf_add_generic.c
+	parpar/gf16/gf_add_generic.c \
+	parpar/gf16/gf16_cksum_generic.c
 libparpar_gf16_a_CFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include
 libparpar_gf16_a_CXXFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include -std=c++11
 
 libparpar_gf16_sse2_a_SOURCES = \
 	parpar/gf16/gf16_xor_sse2.c \
 	parpar/gf16/gf16_lookup_sse2.c \
-	parpar/gf16/gf_add_sse2.c
+	parpar/gf16/gf_add_sse2.c \
+	parpar/gf16/gf16_cksum_sse2.c
 libparpar_gf16_sse2_a_CFLAGS = $(CFLAGS_SSE2)
 
 libparpar_gf16_ssse3_a_SOURCES = \
@@ -84,13 +86,15 @@ libparpar_gf16_avx_a_CFLAGS = $(CFLAGS_AVX)
 libparpar_gf16_avx2_a_SOURCES = \
 	parpar/gf16/gf16_xor_avx2.c \
 	parpar/gf16/gf16_shuffle_avx2.c \
-	parpar/gf16/gf_add_avx2.c
+	parpar/gf16/gf_add_avx2.c \
+	parpar/gf16/gf16_cksum_avx2.c
 libparpar_gf16_avx2_a_CFLAGS = $(CFLAGS_AVX2)
 
 libparpar_gf16_avx512_a_SOURCES = \
 	parpar/gf16/gf16_xor_avx512.c \
 	parpar/gf16/gf16_shuffle_avx512.c \
-	parpar/gf16/gf_add_avx512.c
+	parpar/gf16/gf_add_avx512.c \
+	parpar/gf16/gf16_cksum_avx512.c
 libparpar_gf16_avx512_a_CFLAGS = $(CFLAGS_AVX512)
 
 libparpar_gf16_vbmi_a_SOURCES = \
@@ -102,7 +106,8 @@ libparpar_gf16_gfni_a_SOURCES = \
 libparpar_gf16_gfni_a_CFLAGS = $(CFLAGS_GFNI)
 
 libparpar_gf16_gfni_avx2_a_SOURCES = \
-	parpar/gf16/gf16_affine_avx2.c
+	parpar/gf16/gf16_affine_avx2.c \
+	parpar/src/platform_warnings.c
 libparpar_gf16_gfni_avx2_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX2)
 
 libparpar_gf16_gfni_avx512_a_SOURCES = \
@@ -112,12 +117,14 @@ libparpar_gf16_gfni_avx512_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX512)
 libparpar_gf16_neon_a_SOURCES = \
 	parpar/gf16/gf16_shuffle_neon.c \
 	parpar/gf16/gf16_clmul_neon.c \
-	parpar/gf16/gf_add_neon.c
+	parpar/gf16/gf_add_neon.c \
+	parpar/gf16/gf16_cksum_neon.c
 libparpar_gf16_neon_a_CFLAGS = $(CFLAGS_NEON)
 
 libparpar_gf16_sve_a_SOURCES = \
 	parpar/gf16/gf16_shuffle128_sve.c \
-	parpar/gf16/gf_add_sve.c
+	parpar/gf16/gf_add_sve.c \
+	parpar/gf16/gf16_cksum_sve.c
 libparpar_gf16_sve_a_CFLAGS = $(CFLAGS_SVE)
 
 libparpar_gf16_sve2_a_SOURCES = \
@@ -146,6 +153,9 @@ libparpar_hasher_clmul_a_CXXFLAGS = $(CFLAGS_PCLMUL)
 
 libparpar_hasher_xop_a_SOURCES = parpar/hasher/hasher_xop.cpp
 libparpar_hasher_xop_a_CXXFLAGS = $(CFLAGS_XOP)
+
+libparpar_hasher_bmi1_a_SOURCES = parpar/hasher/hasher_bmi1.cpp
+libparpar_hasher_bmi1_a_CXXFLAGS = $(CFLAGS_BMI1)
 
 libparpar_hasher_avx2_a_SOURCES = parpar/hasher/hasher_avx2.cpp
 libparpar_hasher_avx2_a_CXXFLAGS = $(CFLAGS_AVX2)
