@@ -55,10 +55,10 @@ void setup_hasher() {
 	
 #if !defined(_MSC_VER) || _MSC_VER >= 1600
 	_cpuidX(cpuInfoX, 7, 0);
-	if(cpuInfo[2] & 0x8000000) { // has OSXSAVE
+	if((cpuInfo[2] & 0x1C000000) == 0x1C000000) { // has AVX + OSXSAVE + XSAVE
 		int xcr = _GET_XCR() & 0xff;
 		if((xcr & 6) == 6) { // AVX enabled
-			hasAVX = cpuInfo[2] & 0x800000;
+			hasAVX = true;
 			CpuCap.hasBMI1 = hasAVX && (cpuInfoX[1] & 0x08);
 			CpuCap.hasAVX2 = cpuInfoX[1] & 0x20;
 			if((xcr & 0xE0) == 0xE0) {
@@ -237,12 +237,12 @@ MD5Multi::MD5Multi(int srcCount) {
 			srcCount -= MD5Multi2_##feat::getNumRegions(); \
 		} \
 	}
-	#define ADD_CTX1(feat) if(MD5Multi_##feat::isAvailable) { \
+	#define ADD_CTX1(feat) { if(MD5Multi_##feat::isAvailable) { \
 		while(srcCount >= MD5Multi_##feat::getNumRegions()) { \
 			ctx.push_back(new MD5Multi_##feat()); \
 			srcCount -= MD5Multi_##feat::getNumRegions(); \
 		} \
-	}
+	} }
 #ifdef PLATFORM_X86
 # ifdef PLATFORM_AMD64
 #  define ADD_CTX ADD_CTX2

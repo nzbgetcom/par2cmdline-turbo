@@ -94,7 +94,6 @@ protected:
 	PAR2ProcPlainCb deinitCallback;
 	
 	ThreadNotifyQueue<IPAR2ProcBackend> _queueSent;
-	ThreadNotifyQueue<IPAR2ProcBackend> _queueProc;
 	ThreadNotifyQueue<IPAR2ProcBackend> _queueRecv;
 	virtual void _notifySent(void* _req) = 0;
 	virtual void _notifyRecv(void* _req) = 0;
@@ -102,9 +101,12 @@ protected:
 	inline void stagingActiveCount_inc() {
 		stagingActiveCount++;
 	}
+public:
+	ThreadNotifyQueue<IPAR2ProcBackend> _queueProc;
 	inline void stagingActiveCount_dec() {
 		stagingActiveCount--;
 	}
+protected:
 	inline unsigned stagingActiveCount_get() const {
 		return stagingActiveCount;
 	}
@@ -129,9 +131,11 @@ protected:
 	inline void stagingActiveCount_inc() {
 		stagingActiveCount.fetch_add(1, std::memory_order_relaxed);
 	}
+public:
 	inline void stagingActiveCount_dec() {
 		stagingActiveCount.fetch_sub(1, std::memory_order_relaxed);
 	}
+protected:
 	inline unsigned stagingActiveCount_get() const {
 		return stagingActiveCount.load(std::memory_order_relaxed);
 	}
