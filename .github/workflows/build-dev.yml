@@ -201,6 +201,7 @@ jobs:
           fi
           echo "LIBRARY_PATH=$OSXCROSS_TARGET/macports/pkgs/opt/local/lib/libomp" >> $GITHUB_ENV
           echo "CPATH=$OSXCROSS_TARGET/macports/pkgs/opt/local/include/libomp" >> $GITHUB_ENV
+      - run: wget -O- https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.22.0/apple-codesign-0.22.0-x86_64-unknown-linux-musl.tar.gz | tar zxf -
       - uses: actions/checkout@v3
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure --enable-openmp --host=aarch64-macos
@@ -222,10 +223,11 @@ jobs:
           chmod 0644 libomp.dylib
           LC_RPATH="$(arm64-apple-darwin21.4-otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')"
           if [ -z "$LC_RPATH" ]; then
-            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -add_rpath @executable_path/. par2
+            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -add_rpath @executable_path par2
           else
-            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -rpath "$LC_RPATH" @executable_path/. par2
+            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -rpath "$LC_RPATH" @executable_path par2
           fi
+          apple-codesign-0.22.0-x86_64-unknown-linux-musl/rcodesign sign par2
       - if: ${{ failure() }}
         run: |
           arm64-apple-darwin21.4-otool -L par2
