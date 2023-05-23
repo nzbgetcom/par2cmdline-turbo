@@ -4,7 +4,7 @@ The original par2cmdline README [can be found here](https://github.com/Parchive/
 
 # Differences with par2cmdline
 
-par2cmdline-turbo aims to be a *simple* fork, keeping close with its upstream and only differing in the following areas related to performance. As such, the scope of this project covers:
+par2cmdline-turbo aims to keep close with its upstream and only differs in the following areas related to performance. As such, the scope of this project covers:
 
 * GF16, MD5 and CRC32 computation, using ParPar’s implementation
 * Use ParPar’s internal checksumming to detect RAM errors during GF16 computation
@@ -18,7 +18,7 @@ This fork is also *not* aimed at fixing bugs or functionality improvements - rep
 
 par2cmdline uses OpenMP to manage threading. ParPar’s GF16 backend has its own threading support, using C++11’s `std::thread`, which means that threading will generally be available even if OpenMP is enabled. However, par2cmdline does use OpenMP in a number of other places (such as file processing), which are still present in this fork.
 
-This does have a follow on effect that the `-t` flag and libpar2’s *threads* parameter will be present and work, even if OpenMP is not enabled.
+This does have a flow on effect that the `-t` flag and libpar2’s *threads* parameter will be present and work, even if OpenMP is not enabled.
 
 ## Compared to other par2cmdline forks
 
@@ -55,9 +55,9 @@ I know of two other forks to par2cmdline: [par2cmdline-tbb](https://web.archive.
 
 Some speed comparisons posted by others:
 
+* [PAR2 create](https://github.com/animetosho/ParPar/blob/master/benchmarks/info.md)
 * [PAR2 create](https://github.com/animetosho/par2cmdline-turbo/issues/4#issue-1640569835) (v0.9.0)
-* [PAR2 verification/repair](https://github.com/animetosho/par2cmdline-turbo/issues/4#issuecomment-1493673611) (multiple machines/OSes, v0.9.0)
-* [PAR2 repair](https://github.com/sabnzbd/sabnzbd/issues/420#issuecomment-1470345234)
+* [PAR2 verification/repair](https://gist.github.com/thezoggy/3c243b712f0cc960fa4dd78ff1ab56e7) (multiple machines/OSes)
 
 # Relation with ParPar
 
