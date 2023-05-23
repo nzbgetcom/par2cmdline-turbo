@@ -146,60 +146,60 @@ jobs:
           asset_name: par2cmdline-turbo-${{ steps.get_release.outputs.tag_name }}-macos-x64.tar.xz
           asset_content_type: application/octet-stream
 
-#  build-mac-arm64:
-#    name: Build arm64 MacOS binary
-#    # avoid OpenSSL 3.0.2 on 22.04: https://github.com/tpoechtrager/osxcross/issues/349
-#    runs-on: ubuntu-20.04
-#    steps:
-#      - uses: mbround18/setup-osxcross@main  # OSXCROSS_TARGET unavailable in v1.1
-#        with:
-#          osx-version: "12.3"
-#      - run: osxcross-macports install -arm64 libomp
-#        env:
-#          MACOSX_DEPLOYMENT_TARGET: "12.3"
-#          UNATTENDED: 1
-#      - run: |
-#          if [ ! -d "$OSXCROSS_TARGET/macports/pkgs/opt/local" ]; then
-#            echo "Error! Failed to find ${OSXCROSS_TARGET}/macports/pkgs/opt/local folder!"
-#            exit 1
-#          fi
-#          echo "LIBRARY_PATH=$OSXCROSS_TARGET/macports/pkgs/opt/local/lib/libomp" >> $GITHUB_ENV
-#          echo "CPATH=$OSXCROSS_TARGET/macports/pkgs/opt/local/include/libomp" >> $GITHUB_ENV
-#      - uses: actions/checkout@v3
-#      - name: Get release
-#        id: get_release
-#        uses: bruceadams/get-release@v1.2.3
-#        env:
-#          GITHUB_TOKEN: ${{ github.token }}
-#      - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
-#      - run: ./configure --enable-openmp --host=aarch64-macos
-#        env:
-#          CC: oa64-clang
-#          CXX: oa64-clang++
-#          AR: arm64-apple-darwin21.4-ar
-#          RANLIB: arm64-apple-darwin21.4-ranlib
-#          STRIP: arm64-apple-darwin21.4-strip
-#      - run: make
-#      - run: |
-#          cp $LIBRARY_PATH/libomp.dylib .
-#          chmod 0644 libomp.dylib
-#          LC_RPATH="$(arm64-apple-darwin21.4-otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')"
-#          if [ -z "$LC_RPATH" ]; then
-#            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -add_rpath @executable_path par2
-#          else
-#            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -rpath "$LC_RPATH" @executable_path par2
-#          fi
-#      - run: |
-#          wget -q -O- https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.22.0/apple-codesign-0.22.0-x86_64-unknown-linux-musl.tar.gz | tar zxf -
-#          apple-codesign*/rcodesign sign par2
-#      - run: tar --group=nobody --owner=nobody -Jcf par2.txz par2 libomp.dylib
-#        env:
-#          XZ_OPT: -9e --lzma2
-#      - uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ github.token }}
-#        with:
-#          upload_url: ${{ steps.get_release.outputs.upload_url }} 
-#          asset_path: ./par2.txz
-#          asset_name: par2cmdline-turbo-${{ steps.get_release.outputs.tag_name }}-macos-arm64.tar.xz
-#          asset_content_type: application/octet-stream
+  build-mac-arm64:
+    name: Build arm64 MacOS binary
+    # avoid OpenSSL 3.0.2 on 22.04: https://github.com/tpoechtrager/osxcross/issues/349
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: mbround18/setup-osxcross@main  # OSXCROSS_TARGET unavailable in v1.1
+        with:
+          osx-version: "12.3"
+      - run: osxcross-macports install -arm64 libomp
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "12.3"
+          UNATTENDED: 1
+      - run: |
+          if [ ! -d "$OSXCROSS_TARGET/macports/pkgs/opt/local" ]; then
+            echo "Error! Failed to find ${OSXCROSS_TARGET}/macports/pkgs/opt/local folder!"
+            exit 1
+          fi
+          echo "LIBRARY_PATH=$OSXCROSS_TARGET/macports/pkgs/opt/local/lib/libomp" >> $GITHUB_ENV
+          echo "CPATH=$OSXCROSS_TARGET/macports/pkgs/opt/local/include/libomp" >> $GITHUB_ENV
+      - uses: actions/checkout@v3
+      - name: Get release
+        id: get_release
+        uses: bruceadams/get-release@v1.2.3
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
+      - run: ./configure --enable-openmp --host=aarch64-macos
+        env:
+          CC: oa64-clang
+          CXX: oa64-clang++
+          AR: arm64-apple-darwin21.4-ar
+          RANLIB: arm64-apple-darwin21.4-ranlib
+          STRIP: arm64-apple-darwin21.4-strip
+      - run: make
+      - run: |
+          cp $LIBRARY_PATH/libomp.dylib .
+          chmod 0644 libomp.dylib
+          LC_RPATH="$(arm64-apple-darwin21.4-otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')"
+          if [ -z "$LC_RPATH" ]; then
+            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -add_rpath @executable_path par2
+          else
+            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -rpath "$LC_RPATH" @executable_path par2
+          fi
+      - run: |
+          wget -q -O- https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.22.0/apple-codesign-0.22.0-x86_64-unknown-linux-musl.tar.gz | tar zxf -
+          apple-codesign*/rcodesign sign par2
+      - run: tar --group=nobody --owner=nobody -Jcf par2.txz par2 libomp.dylib
+        env:
+          XZ_OPT: -9e --lzma2
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }} 
+          asset_path: ./par2.txz
+          asset_name: par2cmdline-turbo-${{ steps.get_release.outputs.tag_name }}-macos-arm64.tar.xz
+          asset_content_type: application/octet-stream
