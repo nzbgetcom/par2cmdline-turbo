@@ -222,7 +222,7 @@ bool CommandLine::ReadArgs(int argc, const char * const *argv)
       else if (argv[0] == string("-VV"))
       {
 	showversion();
-	cout << endl;
+	cout << "A par2cmdline version 0.8.1~0.8.2 fork, using a ParPar v0.4.0 processing backend" << endl << endl;
 	banner();
 	return true;
       }
