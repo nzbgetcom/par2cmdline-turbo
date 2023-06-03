@@ -21,6 +21,9 @@
 #ifndef __PAR2CREATORSOURCEFILE_H__
 #define __PAR2CREATORSOURCEFILE_H__
 
+#include <atomic>
+#include <mutex>
+
 class DescriptionPacket;
 class VerificationPacket;
 class DiskFile;
@@ -41,11 +44,7 @@ public:
 
   // Open the source file and compute the Hashes and CRCs.
   //bool Open(NoiseLevel noiselevel, const string &extrafile, u64 blocksize, bool deferhashcomputation, string basepath);
-#ifdef _OPENMP
-  bool Open(NoiseLevel noiselevel, std::ostream &sout, std::ostream &serr, const string &extrafile, u64 blocksize, bool deferhashcomputation, string basepath, u64 totalsize, u64 &totalprogress);
-#else
-  bool Open(NoiseLevel noiselevel, std::ostream &sout, std::ostream &serr, const string &extrafile, u64 blocksize, bool deferhashcomputation, string basepath);
-#endif
+  bool Open(NoiseLevel noiselevel, std::ostream &sout, std::ostream &serr, const string &extrafile, u64 blocksize, bool deferhashcomputation, string basepath, u64 totalsize, atomic<u64> &totalprogress, mutex &output_lock);
   void Close(void);
 
   // Recover the file description and file verification packets

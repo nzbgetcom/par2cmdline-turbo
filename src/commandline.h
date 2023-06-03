@@ -103,9 +103,7 @@ public:
   bool                                GetSkipData(void) const    {return skipdata;}
   u64                                 GetSkipLeaway(void) const  {return skipleaway;}
   u32                          GetNumThreads(void) {return nthreads;}
-#ifdef _OPENMP
   u32                          GetFileThreads(void) {return filethreads;}
-#endif
 
 
   static bool ComputeRecoveryBlockCount(u32 *recoveryblockcount,
@@ -150,9 +148,7 @@ protected:
                                // or repairing.
   string basepath;             // the path par2 is run from
   u32 nthreads;         // Default number of threads
-#ifdef _OPENMP
   u32 filethreads;      // Number of threads for file processing
-#endif
   // NOTE: using the "-t" option to set the number of threads does not
   // end up here, but results in a direct call to "omp_set_num_threads"
 
