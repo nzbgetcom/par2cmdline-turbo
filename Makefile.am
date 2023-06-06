@@ -61,12 +61,13 @@ libparpar_gf16_a_SOURCES = \
 	parpar/gf16/controller_ocl.cpp \
 	parpar/gf16/opencl-include/cl.c \
 	parpar/gf16/gfmat_coeff.c \
+	parpar/gf16/gfmat_inv.cpp \
 	parpar/gf16/gf16mul.cpp \
 	parpar/gf16/gf16_lookup.c \
 	parpar/gf16/gf_add_generic.c \
 	parpar/gf16/gf16_cksum_generic.c
-libparpar_gf16_a_CFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include
-libparpar_gf16_a_CXXFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include -std=c++11
+libparpar_gf16_a_CFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include -DPARPAR_INVERT_SUPPORT
+libparpar_gf16_a_CXXFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include -std=c++11 -DPARPAR_INVERT_SUPPORT
 
 libparpar_gf16_sse2_a_SOURCES = \
 	parpar/gf16/gf16_xor_sse2.c \

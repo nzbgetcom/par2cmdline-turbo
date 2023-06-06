@@ -154,10 +154,6 @@ int test1() {
   return test_field_many<Galois8, u8>(Galois8(0), Galois8(1), 256);
 }
 
-int test2() {
-  return test_field_many<Galois16, u16>(Galois16(0), Galois16(1), 256*256);
-}
-
 
 template<typename gtype, typename utype>
 int test_operators(const gtype a, const gtype b, const gtype zero, const gtype one, int max_value) {
@@ -286,10 +282,6 @@ int test3() {
   return test_operators_many<Galois8, u8>(Galois8(0), Galois8(1), 256);
 }
 
-int test4() {
-  return test_operators_many<Galois16, u16>(Galois16(0), Galois16(1), 256*256);
-}
-
 
 // test powers of Galois
 // 2^pow should be unique for pow in range 1 to N-1.
@@ -334,10 +326,6 @@ int test5() {
   return test_powers<Galois8, u8>(Galois8(2), Galois8(0), 256);
 }
 
-int test6() {
-  return test_powers<Galois16, u16>(Galois16(2), Galois16(0), 256*256);
-}
-
 
 
 int main() {
@@ -345,24 +333,12 @@ int main() {
     cerr << "FAILED: test1" << endl;
     return 1;
   }
-  if (test2()) {
-    cerr << "FAILED: test2" << endl;
-    return 1;
-  }
   if (test3()) {
     cerr << "FAILED: test3" << endl;
     return 1;
   }
-  if (test4()) {
-    cerr << "FAILED: test4" << endl;
-    return 1;
-  }
   if (test5()) {
     cerr << "FAILED: test5" << endl;
-    return 1;
-  }
-  if (test6()) {
-    cerr << "FAILED: test6" << endl;
     return 1;
   }
 

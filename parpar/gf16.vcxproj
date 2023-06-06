@@ -75,7 +75,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;PARPAR_INVERT_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ConformanceMode>true</ConformanceMode>
       <BufferSecurityCheck>true</BufferSecurityCheck>
@@ -92,7 +92,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;PARPAR_INVERT_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ConformanceMode>true</ConformanceMode>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -108,6 +108,7 @@
   <ItemGroup>
     <ClCompile Include="gf16\gf16mul.cpp" />
     <ClCompile Include="gf16\gfmat_coeff.c" />
+    <ClCompile Include="gf16\gfmat_inv.cpp" />
     <ClCompile Include="gf16\gf16_affine_avx512.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
@@ -243,6 +244,7 @@
   <ItemGroup>
     <ClInclude Include="gf16\gf16mul.h" />
     <ClInclude Include="gf16\gfmat_coeff.h" />
+    <ClInclude Include="gf16\gfmat_inv.h" />
     <ClInclude Include="gf16\gf16_affine.h" />
     <ClInclude Include="gf16\gf16_affine2x_x86.h" />
     <ClInclude Include="gf16\gf16_bitdep_init_avx2.h" />
