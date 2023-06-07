@@ -2432,10 +2432,21 @@ bool Par2Repairer::ComputeRSmatrix(void)
   // Set up progress display
   std::function<void(u16, u16)> progressfunc;
   int progress = 0;
+  bool progressStarted = false;
   if (noiselevel > nlQuiet)
   {
     sout << "Computing Reed Solomon matrix." << endl;
     progressfunc = [&](u16 done, u16 total) {
+      if (done == 0)
+      {
+        if(progressStarted)
+        {
+          if (noiselevel > nlQuiet)
+            sout << "Bad recovery block discarded and retrying RS matrix inversion." << endl;
+        }
+        else
+          progressStarted = true;
+      }
       int newprogress = done * 1000 / total;
       if (progress != newprogress)
       {
@@ -2448,7 +2459,7 @@ bool Par2Repairer::ComputeRSmatrix(void)
   // Compute + solve RS matrix
   if (!rs.Compute(present, availableblockcount, recindex, progressfunc))
   {
-    serr << "RS computation error." << endl;
+    serr << "RS computation error (this may be fixable with more recovery blocks)." << endl;
     return false;
   }
 
