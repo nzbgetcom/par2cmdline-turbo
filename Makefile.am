@@ -190,7 +190,7 @@ par2_LDADD = libpar2.a
 LDADD = -lstdc++
 AM_CXXFLAGS = -Wall -std=c++11 $(OPENMP_CXXFLAGS)
 
-EXTRA_DIST = PORTING ROADMAP \
+EXTRA_DIST = ROADMAP \
 			 man/par2.1 \
 			 automake.sh \
 			 tests/flatdata.tar.gz \
