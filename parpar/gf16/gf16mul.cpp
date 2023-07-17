@@ -1219,10 +1219,10 @@ void Galois16Mul::mutScratch_free(void* mutScratch) const {
 }
 
 Galois16Methods Galois16Mul::default_method(size_t regionSizeHint, unsigned /*outputs*/) {
-	const CpuCap caps(true);
 	(void)regionSizeHint;
 	
 #ifdef PLATFORM_X86
+	const CpuCap caps(true);
 	if(caps.hasGFNI) {
 		if(gf16_affine_available_avx512 && caps.hasAVX512VLBW)
 			return GF16_AFFINE_AVX512;
@@ -1260,6 +1260,7 @@ Galois16Methods Galois16Mul::default_method(size_t regionSizeHint, unsigned /*ou
 		return GF16_XOR_SSE2;
 #endif
 #ifdef PLATFORM_ARM
+	const CpuCap caps(true);
 	if(caps.hasSVE2)
 		return gf16_sve_get_size() >= 64 ? GF16_SHUFFLE_512_SVE2 : GF16_CLMUL_SVE2;
 	if(caps.hasSVE && gf16_sve_get_size() > 16)
@@ -1280,8 +1281,8 @@ std::vector<Galois16Methods> Galois16Mul::availableMethods(bool checkCpuid) {
 	if(gf16_lookup3_stride())
 		ret.push_back(GF16_LOOKUP3);
 	
-	const CpuCap caps(checkCpuid);
 #ifdef PLATFORM_X86
+	const CpuCap caps(checkCpuid);
 	if(gf16_shuffle_available_ssse3 && caps.hasSSSE3)
 		ret.push_back(GF16_SHUFFLE_SSSE3);
 	if(gf16_shuffle_available_avx && caps.hasAVX)
@@ -1329,6 +1330,7 @@ std::vector<Galois16Methods> Galois16Mul::availableMethods(bool checkCpuid) {
 	}
 #endif
 #ifdef PLATFORM_ARM
+	const CpuCap caps(checkCpuid);
 	if(gf16_available_neon && caps.hasNEON) {
 		ret.push_back(GF16_SHUFFLE_NEON);
 		ret.push_back(GF16_CLMUL_NEON);
