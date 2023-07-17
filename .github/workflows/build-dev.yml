@@ -5,6 +5,7 @@ on:
 jobs:
   build-dev-win:
     strategy:
+      fail-fast: false
       matrix:
         include:
         - platform: x64
@@ -37,6 +38,7 @@ jobs:
   
 #  build-dev-linux-static:
 #    strategy:
+#      fail-fast: false
 #      matrix:
 #        include:
 #        - target: x86_64-linux-musl
@@ -84,6 +86,7 @@ jobs:
 #          retention-days: 5
   build-dev-linux-static:
     strategy:
+      fail-fast: false
       matrix:
         include:
         - arch: amd64
@@ -98,6 +101,10 @@ jobs:
           xz_bcj: --arm
           xcc: arm-linux-gnueabihf-
           configure_host: --host=armv7l-linux-gnueabihf
+        - arch: riscv64
+          xz_bcj:
+          xcc: riscv64-linux-gnu-
+          configure_host: --host=riscv64-linux-gnu
     name: Build ${{ matrix.arch }} Linux static binary
     runs-on: ubuntu-latest
     steps:
