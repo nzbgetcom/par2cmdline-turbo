@@ -70,6 +70,10 @@ AC_CHECK_FUNCS([strchr] [memcpy])
 
 AC_CHECK_FUNCS([getopt] [getopt_long])
 
+dnl C++11 check
+m4_include([m4/ax_cxx_compile_stdcxx.m4])
+AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
+
 dnl Platform detection / flags supported by compiler
 m4_include([m4/ax_check_compile_flag.m4])
 AX_CHECK_COMPILE_FLAG([-msse2], , , [-Werror])
