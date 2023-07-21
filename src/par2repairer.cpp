@@ -240,6 +240,9 @@ Result Par2Repairer::Process(
         if (!CreateTargetFiles())
           return eFileIOError;
 
+        if (nthreads != 0)
+          rs.setNumThreads(nthreads);
+
         // Work out which data blocks are available, which need to be copied
         // directly to the output, and which need to be recreated, and compute
         // the appropriate Reed Solomon matrix.
@@ -2440,14 +2443,17 @@ bool Par2Repairer::ComputeRSmatrix(void)
       if (done == 0)
       {
         if(progressStarted)
-        {
-          if (noiselevel > nlQuiet)
-            sout << "Bad recovery block discarded and retrying RS matrix inversion." << endl;
-        }
+          sout << "Bad recovery block discarded and retrying RS matrix inversion." << endl;
         else
           progressStarted = true;
+        sout << "Constructing: 0.0%\r" << flush;
+        progress = 0;
+        return;
       }
-      int newprogress = done * 1000 / total;
+      if (done == 1)
+        sout << "Constructing: done." << endl;
+      
+      int newprogress = (done-1) * 1000 / (total-1);
       if (progress != newprogress)
       {
         progress = newprogress;
