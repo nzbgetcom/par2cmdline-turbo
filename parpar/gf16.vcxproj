@@ -233,33 +233,33 @@
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM64'">-march=armv8-a+sve %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="gf16\gf16_cksum_generic.c" />
-    <ClCompile Include="gf16\gf16pmul_clmul_sse.c">
+    <ClCompile Include="gf16\gf16pmul_sse.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|Win32'">-mpclmul %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|x64'">-mpclmul %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <ClCompile Include="gf16\gf16pmul_clmul_avx2.c">
+    <ClCompile Include="gf16\gf16pmul_avx2.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|Win32'">-mavx2 -mpclmul %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|x64'">-mavx2 -mpclmul %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <ClCompile Include="gf16\gf16pmul_clmul_vpclmul.c">
+    <ClCompile Include="gf16\gf16pmul_vpclmul.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|Win32'">-mavx2 -mvpclmulqdq %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|x64'">-mavx2 -mvpclmulqdq %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <ClCompile Include="gf16\gf16pmul_clmul_vpclgfni.c">
+    <ClCompile Include="gf16\gf16pmul_vpclgfni.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|Win32'">-mavx2 -mvpclmulqdq -mgfni %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|x64'">-mavx2 -mvpclmulqdq -mgfni %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <ClCompile Include="gf16\gf16pmul_clmul_neon.c">
+    <ClCompile Include="gf16\gf16pmul_neon.c">
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM'">-mfpu=neon %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <ClCompile Include="gf16\gf16pmul_clmul_sve2.c">
+    <ClCompile Include="gf16\gf16pmul_sve2.c">
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM64'">-march=armv8-a+sve2 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="gf16\opencl-include\cl.c" />
@@ -298,7 +298,7 @@
     <ClInclude Include="gf16\gf16_xor_common.h" />
     <ClInclude Include="gf16\gf16_xor_common_funcs.h" />
     <ClInclude Include="gf16\gf16pmul.h" />
-    <ClInclude Include="gf16\gf16pmul_clmul_x86.h" />
+    <ClInclude Include="gf16\gf16pmul_x86.h" />
     <ClInclude Include="gf16\gf16_clmul_neon.h" />
     <ClInclude Include="gf16\gf16_clmul_sve2.h" />
     <ClInclude Include="gf16\gf_add.h" />

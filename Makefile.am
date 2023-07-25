@@ -116,13 +116,13 @@ libparpar_gf16_gfni_avx512_a_SOURCES = \
 	parpar/gf16/gf16_affine_avx512.c
 libparpar_gf16_gfni_avx512_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX512)
 
-libparpar_gf16_clmul_a_SOURCES = parpar/gf16/gf16pmul_clmul_sse.c
+libparpar_gf16_clmul_a_SOURCES = parpar/gf16/gf16pmul_sse.c
 libparpar_gf16_clmul_a_CFLAGS = $(CFLAGS_PCLMUL)
-libparpar_gf16_avx2_clmul_a_SOURCES = parpar/gf16/gf16pmul_clmul_avx2.c
+libparpar_gf16_avx2_clmul_a_SOURCES = parpar/gf16/gf16pmul_avx2.c
 libparpar_gf16_avx2_clmul_a_CFLAGS = $(CFLAGS_PCLMUL) $(CFLAGS_AVX2)
-libparpar_gf16_vpclmul_a_SOURCES = parpar/gf16/gf16pmul_clmul_vpclmul.c
+libparpar_gf16_vpclmul_a_SOURCES = parpar/gf16/gf16pmul_vpclmul.c
 libparpar_gf16_vpclmul_a_CFLAGS = $(CFLAGS_VPCLMUL)
-libparpar_gf16_vpclgfni_a_SOURCES = parpar/gf16/gf16pmul_clmul_vpclgfni.c
+libparpar_gf16_vpclgfni_a_SOURCES = parpar/gf16/gf16pmul_vpclgfni.c
 libparpar_gf16_vpclgfni_a_CFLAGS = $(CFLAGS_VPCLMUL) $(CFLAGS_GFNI)
 
 libparpar_gf16_neon_a_SOURCES = \
@@ -130,7 +130,7 @@ libparpar_gf16_neon_a_SOURCES = \
 	parpar/gf16/gf16_clmul_neon.c \
 	parpar/gf16/gf_add_neon.c \
 	parpar/gf16/gf16_cksum_neon.c \
-	parpar/gf16/gf16pmul_clmul_neon.c
+	parpar/gf16/gf16pmul_neon.c
 libparpar_gf16_neon_a_CFLAGS = $(CFLAGS_NEON)
 
 libparpar_gf16_sve_a_SOURCES = \
@@ -145,7 +145,7 @@ libparpar_gf16_sve2_a_SOURCES = \
 	parpar/gf16/gf16_shuffle512_sve2.c \
 	parpar/gf16/gf16_clmul_sve2.c \
 	parpar/gf16/gf_add_sve2.c \
-	parpar/gf16/gf16pmul_clmul_sve2.c
+	parpar/gf16/gf16pmul_sve2.c
 libparpar_gf16_sve2_a_CFLAGS = $(CFLAGS_SVE2)
 
 
