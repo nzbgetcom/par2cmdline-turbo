@@ -180,7 +180,7 @@ libparpar_hasher_avx512vl_a_SOURCES = parpar/hasher/hasher_avx512vl.cpp
 libparpar_hasher_avx512vl_a_CXXFLAGS = $(CFLAGS_AVX512_HASHER)
 
 libparpar_hasher_armcrc_a_SOURCES = parpar/hasher/hasher_armcrc.cpp
-libparpar_hasher_armcrc_a_CXXFLAGS = $(CFLAGS_ARMCRC)
+libparpar_hasher_armcrc_a_CXXFLAGS = $(CFLAGS_ARMCRC) $(CFLAGS_ARMCRC_FP)
 
 libparpar_hasher_neon_a_SOURCES = parpar/hasher/hasher_neon.cpp
 libparpar_hasher_neon_a_CXXFLAGS = $(CFLAGS_NEON)
