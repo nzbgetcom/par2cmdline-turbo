@@ -166,8 +166,12 @@
     <ClCompile Include="gf16\gf16_shuffle512_sve2.c">
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM64'">-march=armv8-a+sve2 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="gf16\gf16_shuffle128_rvv.c" />
     <ClCompile Include="gf16\gf16_clmul_neon.c">
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM'">-mfpu=neon %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="gf16\gf16_clmul_sha3.c">
+      <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM64'">-march=armv8.2-a+sha3 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="gf16\gf16_clmul_sve2.c">
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM64'">-march=armv8-a+sve2 %(AdditionalOptions)</AdditionalOptions>
@@ -212,6 +216,7 @@
     <ClCompile Include="gf16\gf_add_sve2.c">
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM64'">-march=armv8-a+sve2 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="gf16\gf_add_rvv.c" />
     <ClCompile Include="gf16\gf_add_generic.c" />
     <ClCompile Include="gf16\gf16_cksum_sse2.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -232,6 +237,7 @@
     <ClCompile Include="gf16\gf16_cksum_sve.c">
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM64'">-march=armv8-a+sve %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="gf16\gf16_cksum_rvv.c" />
     <ClCompile Include="gf16\gf16_cksum_generic.c" />
     <ClCompile Include="gf16\gf16pmul_sse.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -276,18 +282,22 @@
     <ClInclude Include="gf16\gfmat_coeff.h" />
     <ClInclude Include="gf16\gfmat_inv.h" />
     <ClInclude Include="gf16\gf16_affine.h" />
+    <ClInclude Include="gf16\gf16_affine_avx10.h" />
     <ClInclude Include="gf16\gf16_affine2x_x86.h" />
     <ClInclude Include="gf16\gf16_bitdep_init_avx2.h" />
     <ClInclude Include="gf16\gf16_bitdep_init_sse2.h" />
     <ClInclude Include="gf16\gf16_checksum_arm.h" />
+    <ClInclude Include="gf16\gf16_checksum_rvv.h" />
     <ClInclude Include="gf16\gf16_checksum_sve.h" />
     <ClInclude Include="gf16\gf16_checksum_x86.h" />
     <ClInclude Include="gf16\gf16_global.h" />
     <ClInclude Include="gf16\gf16_lookup.h" />
     <ClInclude Include="gf16\gf16_muladd_multi.h" />
     <ClInclude Include="gf16\gf16_clmul.h" />
+    <ClInclude Include="gf16\gf16_clmul_neon_base.h" />
     <ClInclude Include="gf16\gf16_neon_common.h" />
     <ClInclude Include="gf16\gf16_sve_common.h" />
+    <ClInclude Include="gf16\gf16_rvv_common.h" />
     <ClInclude Include="gf16\gf16_shuffle.h" />
     <ClInclude Include="gf16\gf16_shuffle2x_x86.h" />
     <ClInclude Include="gf16\gf16_shuffle_x86.h" />

@@ -45,6 +45,7 @@ enum Galois16Methods {
 	GF16_SHUFFLE_128_SVE2,
 	GF16_SHUFFLE2X_128_SVE2,
 	GF16_SHUFFLE_512_SVE2,
+	GF16_SHUFFLE_128_RVV,
 	GF16_SHUFFLE_SSSE3,
 	GF16_SHUFFLE_AVX,
 	GF16_SHUFFLE_AVX2,
@@ -63,6 +64,7 @@ enum Galois16Methods {
 	GF16_AFFINE2X_AVX2,
 	GF16_AFFINE2X_AVX512,
 	GF16_CLMUL_NEON,
+	GF16_CLMUL_SHA3,
 	GF16_CLMUL_SVE2
 	// TODO: consider non-transforming shuffle/affine
 };
@@ -76,6 +78,7 @@ static const char* Galois16MethodsText[] = {
 	"Shuffle-128 (SVE2)",
 	"Shuffle2x-128 (SVE2)",
 	"Shuffle-512 (SVE2)",
+	"Shuffle-128 (RVV)",
 	"Shuffle (SSSE3)",
 	"Shuffle (AVX)",
 	"Shuffle (AVX2)",
@@ -94,6 +97,7 @@ static const char* Galois16MethodsText[] = {
 	"Affine2x (GFNI+AVX2)",
 	"Affine2x (GFNI+AVX512)",
 	"CLMul (NEON)",
+	"CLMul (SHA3)",
 	"CLMul (SVE2)"
 };
 
@@ -130,9 +134,10 @@ private:
 	static void _finish_none(void *HEDLEY_RESTRICT, size_t) {}
 	static void _prepare_packed_none(void *HEDLEY_RESTRICT dst, const void *HEDLEY_RESTRICT src, size_t srcLen, size_t sliceLen, unsigned inputPackSize, unsigned inputNum, size_t chunkLen);
 	static uint16_t _replace_word(void* data, size_t index, uint16_t newValue) {
-		uint16_t* p = (uint16_t*)data + index;
-		uint16_t oldValue = *p;
-		*p = newValue;
+		uint8_t* p = (uint8_t*)data + index*2;
+		uint16_t oldValue = p[0] | (p[1]<<8);
+		p[0] = newValue & 0xff;
+		p[1] = newValue>>8;
 		return oldValue;
 	}
 	
@@ -187,20 +192,10 @@ public:
 	static Galois16MethodInfo info(Galois16Methods _method);
 	
 	inline HEDLEY_CONST bool isMultipleOfStride(size_t len) const {
-#if defined(_M_ARM64) || defined(__aarch64__)
-		// SVE can have non-power-of-2 strides
-		if(HEDLEY_UNLIKELY((_info.stride & (_info.stride-1)) != 0)) // ...but most of the time, expect stride to be a power of 2
-			return (len % _info.stride) == 0;
-#endif
 		return (len & (_info.stride-1)) == 0;
 	}
 	inline HEDLEY_CONST size_t alignToStride(size_t len) const {
 		size_t alignMask = _info.stride-1;
-#if defined(_M_ARM64) || defined(__aarch64__)
-		if(HEDLEY_UNLIKELY((_info.stride & (_info.stride-1)) != 0)) {
-			return ((len + alignMask) / _info.stride) * _info.stride;
-		}
-#endif
 		return (len + alignMask) & ~alignMask;
 	}
 	

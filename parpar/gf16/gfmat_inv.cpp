@@ -467,7 +467,7 @@ void Galois16RecMatrix::Construct(const std::vector<bool>& inputValid, unsigned 
 	if(recovery.at(0) == 0) { // first recovery having exponent 0 is a common case
 		for(unsigned stripe=0; stripe<numStripes; stripe++) {
 			for(unsigned i=0; i<sw16; i++)
-				mat[stripe * numRec*sw16 + i] = 1;
+				mat[stripe * numRec*sw16 + i] = _LE16(1);
 		}
 		recStart++;
 	}
@@ -488,7 +488,7 @@ void Galois16RecMatrix::Construct(const std::vector<bool>& inputValid, unsigned 
 			for(loopcond) { \
 				uint16_t exp = recovery.at(rec); \
 				for(unsigned i=0; i<GROUP_AMOUNT; i++) { \
-					mat[rec * sw16 + targetCol[i]] = gfmat_coeff_from_log(inputLog[i], exp); \
+					mat[rec * sw16 + targetCol[i]] = _LE16(gfmat_coeff_from_log(inputLog[i], exp)); \
 				} \
 			} \
 		} \
@@ -497,7 +497,7 @@ void Galois16RecMatrix::Construct(const std::vector<bool>& inputValid, unsigned 
 			unsigned targetCol = inputValid.at(input) ? validCol++ : missingCol++; \
 			targetCol = (targetCol/sw16)*sw16*numRec + (targetCol%sw16); \
 			for(loopcond) { \
-				mat[rec * sw16 + targetCol] = gfmat_coeff_from_log(inputLog, recovery.at(rec)); \
+				mat[rec * sw16 + targetCol] = _LE16(gfmat_coeff_from_log(inputLog, recovery.at(rec))); \
 			} \
 		} \
 		assert(validCol == validCount)
@@ -567,7 +567,11 @@ bool Galois16RecMatrix::Compute(const std::vector<bool>& inputValid, unsigned va
 	
 	
 	unsigned matWidth = (unsigned)inputValid.size() * sizeof(uint16_t);
-	Galois16RecMatrixComputeState state(Galois16Mul::default_method(matWidth, (unsigned)inputValid.size(), (unsigned)inputValid.size(), true));
+	if(regionMethod == GF16_AUTO) {
+		regionMethod = Galois16Mul::default_method(matWidth, numRec, numRec, true);
+	}
+	
+	Galois16RecMatrixComputeState state((Galois16Methods)regionMethod);
 	state.validCount = validCount;
 	const auto gfInfo = state.gf.info();
 	state.pfFactor = gfInfo.prefetchDownscale;
@@ -681,11 +685,17 @@ bool Galois16RecMatrix::Compute(const std::vector<bool>& inputValid, unsigned va
 	return true;
 }
 
+const char* Galois16RecMatrix::getPointMulMethodName() const {
+	return gf16pmul_methodName();
+}
+
 Galois16RecMatrix::Galois16RecMatrix() : mat(nullptr) {
 	numThreads = hardware_concurrency();
 	numRec = 0;
 	numStripes = 0;
 	stripeWidth = 0;
+	
+	regionMethod = (int)GF16_AUTO;
 }
 
 Galois16RecMatrix::~Galois16RecMatrix() {
