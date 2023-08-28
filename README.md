@@ -13,6 +13,8 @@ par2cmdline-turbo aims to keep close with its upstream and only differs in the f
 Note that this fork isn’t intended to change too much of par2cmdline itself and hence, is *not* aimed at fixing bugs or functionality improvements. Bug reports and feature requests should be directed at the [upstream project](https://github.com/Parchive/par2cmdline) where relevant.
 The minimalistic nature of this project also means that there’s some degree of performance left on the table, and there’s no focus on improving PAR1 performance.
 
+Note that par2cmdline-turbo may use slightly more memory than par2cmdline, due to increased buffering in ParPar’s backend.
+
 ## Threading & OpenMP
 
 par2cmdline-turbo removes par2cmdline's OpenMP dependency, replacing it with C++11's threads.
@@ -45,9 +47,10 @@ I know of two other forks to par2cmdline: [par2cmdline-tbb](https://web.archive.
 * faster GF16 techniques, taking advantage of modern SIMD extensions, are used instead of MMX
 * faster CRC32 implementations
 * uses stitched MD5+CRC32 hashing
+* accelerates matrix inversion
 * does not add support for async I/O, though it might get some due to the async nature of ParPar’s GF16 backend
 * does not add GPU computation (but ParPar has elementary OpenCL support, so might arrive in the future)
-* optimizations for ARM CPUs
+* optimizations for ARM and RISC-V CPUs
 * cross-platform support
 
 ## Benchmarks
