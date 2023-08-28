@@ -188,9 +188,9 @@ par2_SOURCES = src/par2cmdline.cpp \
 	src/commandline.cpp src/commandline.h
 par2_LDADD = libpar2.a
 
-LDADD = -lstdc++
+LDADD = -lstdc++ $(PTHREAD_LIBS)
 AM_CPPFLAGS = -Wall -DNDEBUG
-AM_CXXFLAGS = $(OPENMP_CXXFLAGS)
+AM_CXXFLAGS = $(PTHREAD_CFLAGS)
 
 EXTRA_DIST = ROADMAP \
 			 man/par2.1 \

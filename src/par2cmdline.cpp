@@ -65,9 +65,7 @@ int main(int argc, char *argv[])
 			    commandline->GetMemoryLimit(),
 			    commandline->GetBasePath(),
 			    commandline->GetNumThreads(),
-#ifdef _OPENMP
 			    commandline->GetFileThreads(),
-#endif
 			    commandline->GetParFilename(),
 			    commandline->GetExtraFiles(),
 
@@ -91,9 +89,7 @@ int main(int argc, char *argv[])
 				  std::cerr,
 				  commandline->GetNoiseLevel(),
 				  commandline->GetMemoryLimit(),
-#ifdef _OPENMP
 				  commandline->GetNumThreads(),
-#endif
 				  commandline->GetParFilename(),
 				  commandline->GetExtraFiles(),
 				  commandline->GetOperation() == CommandLine::opRepair,
@@ -107,9 +103,7 @@ int main(int argc, char *argv[])
 				  commandline->GetMemoryLimit(),
 				  commandline->GetBasePath(),
 				  commandline->GetNumThreads(),
-#ifdef _OPENMP
 				  commandline->GetFileThreads(),
-#endif
 				  commandline->GetParFilename(),
 				  commandline->GetExtraFiles(),
 				  commandline->GetOperation() == CommandLine::opRepair,

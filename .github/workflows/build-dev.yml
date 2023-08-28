@@ -11,25 +11,19 @@ jobs:
         - platform: x64
           bcj: -mf=BCJ2
           name: x64
-          toolset: ClangCL
-          ompdll: libomp.dll
         - platform: Win32
           bcj: -mf=BCJ2
           name: x86
-          toolset: ClangCL
-          ompdll: libomp.dll
         - platform: ARM64
           bcj: # -mf=ARM64
           name: arm64
-          toolset: v142
-          ompdll: vcomp140.dll
     name: Build ${{ matrix.name }} Windows binary
     runs-on: windows-2019
     steps:
       - uses: ilammy/msvc-dev-cmd@v1
       - uses: actions/checkout@v3
-      - run: msbuild -property:PlatformToolset=${{ matrix.toolset }} -property:Configuration=Release -property:Platform=${{ matrix.platform }} par2cmdline.sln
-      - run: move "${{ matrix.platform }}\Release\par2.exe" par2.exe && move "${{ matrix.platform }}\Release\${{ matrix.ompdll }}" ${{ matrix.ompdll }} && 7z a -t7z -mx=9 ${{ matrix.bcj }} par2.7z par2.exe ${{ matrix.ompdll }}
+      - run: msbuild -property:PlatformToolset=ClangCL -property:Configuration=Release -property:Platform=${{ matrix.platform }} par2cmdline.sln
+      - run: move "${{ matrix.platform }}\Release\par2.exe" par2.exe && 7z a -t7z -mx=9 ${{ matrix.bcj }} par2.7z par2.exe
       - uses: actions/upload-artifact@v3
         with:
           path: ./par2.7z
@@ -62,7 +56,7 @@ jobs:
 #        with:
 #          target: ${{ matrix.target }}
 #      - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
-#      - run: ./configure --enable-openmp ${{ matrix.configure_host }}
+#      - run: ./configure ${{ matrix.configure_host }}
 #        env:
 #          CC: ${{ steps.musl.outputs.path }}/${{ matrix.target }}-cc
 #          CXX: ${{ steps.musl.outputs.path }}/${{ matrix.target }}-c++
@@ -84,6 +78,7 @@ jobs:
 #          path: ./par2.xz
 #          name: par2cmdline-turbo-dev-linux-${{ matrix.name }}.xz
 #          retention-days: 5
+
   build-dev-linux-static:
     strategy:
       fail-fast: false
@@ -114,7 +109,7 @@ jobs:
           arch: ${{ matrix.arch }}
         if: ${{ matrix.arch != 'amd64' }}
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
-      - run: ./configure --enable-openmp ${{ matrix.configure_host }}
+      - run: ./configure ${{ matrix.configure_host }}
         env:
           CC: ${{ matrix.xcc }}gcc
           CXX: ${{ matrix.xcc }}g++
@@ -143,20 +138,15 @@ jobs:
     steps:
       - uses: ConorMacBride/install-package@v1
         with:
-          brew: automake libomp llvm
+          brew: automake llvm
       - run: |
           if [ -f "`brew --prefix llvm`/bin/clang" ]; then
             echo "CC=`brew --prefix llvm`/bin/clang" >> $GITHUB_ENV
             echo "CXX=`brew --prefix llvm`/bin/clang++" >> $GITHUB_ENV
           fi
-          if [ -d "`brew --prefix llvm`/lib" ]; then
-            echo "LIBOMP_PATH=`brew --prefix llvm`/lib" >> $GITHUB_ENV
-          else
-            echo "LIBOMP_PATH=/usr/local/opt/libomp/lib" >> $GITHUB_ENV
-          fi
       - uses: actions/checkout@v3
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
-      - run: ./configure --enable-openmp
+      - run: ./configure
       - uses: actions/upload-artifact@v3
         with:
           path: ./config.log
@@ -164,29 +154,13 @@ jobs:
           retention-days: 5
         if: ${{ failure() }}
       - run: make
-      - run: |
-          cp $LIBOMP_PATH/libomp.dylib .
-          chmod 0644 libomp.dylib
-          LC_RPATH="$(otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')"
-          if [ -z "$LC_RPATH" ]; then
-            install_name_tool -change $LIBOMP_PATH/libomp.dylib @rpath/libomp.dylib -add_rpath @executable_path par2
-          else
-            install_name_tool -change $LIBOMP_PATH/libomp.dylib @rpath/libomp.dylib -rpath "$LC_RPATH" @executable_path par2
-          fi
-      - if: ${{ failure() }}
-        run: |
-          otool -L par2
-          otool -l par2
-          echo "$(otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')"
       - run: ./par2 -h
       - run: make check
-      - run: tar -Jcf par2.txz par2 libomp.dylib
-        env:
-          XZ_OPT: -9e --x86 --lzma2
+      - run: xz -9e --x86 --lzma2 par2
       - uses: actions/upload-artifact@v3
         with:
-          path: ./par2.txz
-          name: par2cmdline-turbo-dev-macos-x64.txz
+          path: ./par2.xz
+          name: par2cmdline-turbo-dev-macos-x64.xz
           retention-days: 5
 
   build-dev-mac-arm64:
@@ -197,20 +171,9 @@ jobs:
       - uses: mbround18/setup-osxcross@main  # OSXCROSS_TARGET unavailable in v1.1
         with:
           osx-version: "12.3"
-      - run: osxcross-macports install -arm64 libomp
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "12.3"
-          UNATTENDED: 1
-      - run: |
-          if [ ! -d "$OSXCROSS_TARGET/macports/pkgs/opt/local" ]; then
-            echo "Error! Failed to find ${OSXCROSS_TARGET}/macports/pkgs/opt/local folder!"
-            exit 1
-          fi
-          echo "LIBRARY_PATH=$OSXCROSS_TARGET/macports/pkgs/opt/local/lib/libomp" >> $GITHUB_ENV
-          echo "CPATH=$OSXCROSS_TARGET/macports/pkgs/opt/local/include/libomp" >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
-      - run: ./configure --enable-openmp --host=aarch64-macos
+      - run: ./configure --host=aarch64-macos
         env:
           CC: oa64-clang
           CXX: oa64-clang++
@@ -225,20 +188,6 @@ jobs:
         if: ${{ failure() }}
       - run: make
       - run: |
-          cp $LIBRARY_PATH/libomp.dylib .
-          chmod 0644 libomp.dylib
-          LC_RPATH="$(arm64-apple-darwin21.4-otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')"
-          if [ -z "$LC_RPATH" ]; then
-            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -add_rpath @executable_path par2
-          else
-            arm64-apple-darwin21.4-install_name_tool -change /opt/local/lib/libomp/libomp.dylib @rpath/libomp.dylib -rpath "$LC_RPATH" @executable_path par2
-          fi
-      - if: ${{ failure() }}
-        run: |
-          arm64-apple-darwin21.4-otool -L par2
-          arm64-apple-darwin21.4-otool -l par2
-          echo "$(arm64-apple-darwin21.4-otool -l par2 | grep -A2 LC_RPATH | tail -n1 | sed 's/^ *path //' | sed 's/ (offset .*)$//')"
-      - run: |
           wget -q -O- https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.22.0/apple-codesign-0.22.0-x86_64-unknown-linux-musl.tar.gz | tar zxf -
           apple-codesign*/rcodesign sign par2
       - if: ${{ failure() }}
@@ -246,11 +195,9 @@ jobs:
           ls
           ls apple-codesign*
           find . -name rcodesign
-      - run: tar --group=nobody --owner=nobody -Jcf par2.txz par2 libomp.dylib
-        env:
-          XZ_OPT: -9e --lzma2
+      - run: xz -9e --lzma2 par2
       - uses: actions/upload-artifact@v3
         with:
-          path: ./par2.txz
-          name: par2cmdline-turbo-dev-macos-arm64.txz
+          path: ./par2.xz
+          name: par2cmdline-turbo-dev-macos-arm64.xz
           retention-days: 5

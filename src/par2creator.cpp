@@ -19,6 +19,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "libpar2internal.h"
+#include "foreach_parallel.h"
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -30,9 +31,7 @@ static char THIS_FILE[]=__FILE__;
 
 
 // static variable
-#ifdef _OPENMP
 u32 Par2Creator::filethreads = _FILE_THREADS;
-#endif
 
 
 Par2Creator::Par2Creator(std::ostream &sout, std::ostream &serr, const NoiseLevel noiselevel)
@@ -65,9 +64,7 @@ Par2Creator::Par2Creator(std::ostream &sout, std::ostream &serr, const NoiseLeve
 , totaldata(0)
 
 , deferhashcomputation(false)
-#ifdef _OPENMP
 , mttotalsize(0)
-#endif
 {
   setup_hasher();
 }
@@ -93,9 +90,7 @@ Result Par2Creator::Process(
 			    const size_t memorylimit,
 			    const string &basepath,
 			    const u32 nthreads,
-#ifdef _OPENMP
 			    const u32 _filethreads,
-#endif
 			    const string &parfilename,
 			    const vector<string> &_extrafiles,
 			    const u64 _blocksize,
@@ -104,9 +99,7 @@ Result Par2Creator::Process(
 			    const u32 _recoveryfilecount,
 			    const u32 _recoveryblockcount)
 {
-#ifdef _OPENMP
   filethreads = _filethreads;
-#endif
 
   // Get information from commandline
   blocksize = _blocksize;
@@ -340,68 +333,49 @@ bool Par2Creator::CalculateProcessBlockSize(size_t memorylimit)
 // the results in the file verification and file description packets.
 bool Par2Creator::OpenSourceFiles(const vector<string> &extrafiles, string basepath)
 {
-#ifdef _OPENMP
-  bool openfailed = false;
-  u64 totalprogress = 0;
+  atomic<bool> openfailed(false);
+  atomic<u64> totalprogress(0);
 
   //Total size of files for mt-progress line
   for (size_t i=0; i<extrafiles.size(); ++i)
     mttotalsize += DiskFile::GetFileSize(extrafiles[i]);
-#endif
 
-  #pragma omp parallel for schedule(dynamic) num_threads(Par2Creator::GetFileThreads())
-  for (int i=0; i< static_cast<int>(extrafiles.size()); ++i)
-  {
-#ifdef _OPENMP
-    if (openfailed)
-      continue;
-#endif
-
+  mutex output_lock, packet_lock;
+  foreach_parallel<string>(extrafiles, Par2Creator::GetFileThreads(), [&, this](const string& extrafile) {
+    if (openfailed.load(memory_order_relaxed)) return;
     Par2CreatorSourceFile *sourcefile = new Par2CreatorSourceFile;
 
     string name;
-    DiskFile::SplitRelativeFilename(extrafiles[i], basepath, name);
-
+    DiskFile::SplitRelativeFilename(extrafile, basepath, name);
     if (noiselevel > nlSilent)
     {
-      #pragma omp critical
+      lock_guard<mutex> lock(output_lock);
       sout << "Opening: " << name << endl;
     }
 
     // Open the source file and compute its Hashes and CRCs.
-#ifdef _OPENMP
-    if (!sourcefile->Open(noiselevel, sout, serr, extrafiles[i], blocksize, deferhashcomputation, basepath, mttotalsize, totalprogress))
-#else
-    if (!sourcefile->Open(noiselevel, sout, serr, extrafiles[i], blocksize, deferhashcomputation, basepath))
-#endif
+    if (!sourcefile->Open(noiselevel, sout, serr, extrafile, blocksize, deferhashcomputation, basepath, mttotalsize, totalprogress, output_lock))
     {
       delete sourcefile;
-#ifdef _OPENMP
-      openfailed = true;
-      continue;
-#else
-      return false;
-#endif
+      openfailed.store(true, memory_order_relaxed);
+      return;
     }
 
     // Record the file verification and file description packets
     // in the critical packet list.
-    #pragma omp critical
     {
-    sourcefile->RecordCriticalPackets(criticalpackets);
-
-    // Add the source file to the sourcefiles array.
-    sourcefiles.push_back(sourcefile);
+      lock_guard<mutex> lock(packet_lock);
+      sourcefile->RecordCriticalPackets(criticalpackets);
+      
+      // Add the source file to the sourcefiles array.
+      sourcefiles.push_back(sourcefile);
     }
     // Close the source file until its needed
     sourcefile->Close();
+  });
 
-  }
-
-#ifdef _OPENMP
-  if (openfailed)
+  if (openfailed.load(memory_order_relaxed))
     return false;
-#endif
 
   return true;
 }

@@ -22,6 +22,8 @@
 #define __PAR2REPAIRER_H__
 
 #include "../parpar/gf16/controller_cpu.h"
+#include <atomic>
+#include <mutex>
 
 class Par2Repairer
 {
@@ -32,9 +34,7 @@ public:
   Result Process(const size_t memorylimit,
 		 const string &basepath,
 		 const u32 nthreads,
-#ifdef _OPENMP
 		 const u32 filethreads,
-#endif
 		 string parfilename,
 		 const vector<string> &extrafiles,
 		 const bool dorepair,   // derived from operation
@@ -91,7 +91,7 @@ protected:
   bool VerifyExtraFiles(const vector<string> &extrafiles, const string &basepath);
 
   // Attempt to match the data in the DiskFile with the source file
-  bool VerifyDataFile(DiskFile *diskfile, Par2RepairerSourceFile *sourcefile, const string &basepath);
+  bool VerifyDataFile(DiskFile *diskfile, Par2RepairerSourceFile *sourcefile, const string &basepath, mutex& output_lock);
 
   // Perform a sliding window scan of the DiskFile looking for blocks of data that
   // might belong to any of the source files (for which a verification packet was
@@ -104,7 +104,8 @@ protected:
                     MatchType               &matchtype,  // [out]    The type of match
                     MD5Hash                 &hashfull,   // [out]    The full hash of the file
                     MD5Hash                 &hash16k,    // [out]    The hash of the first 16k
-                    u32                     &count);     // [out]    The number of blocks found
+                    u32                     &count,      // [out]    The number of blocks found
+                    mutex                   &output_lock);
 
   // Find out how much data we have found
   void UpdateVerificationResults(void);
@@ -140,9 +141,7 @@ protected:
   bool RemoveBackupFiles(void);
   bool RemoveParFiles(void);
 
-#ifdef _OPENMP
   static u32                          GetFileThreads(void) {return filethreads;}
-#endif
 
 protected:
   std::ostream &sout; // stream for output (for commandline, this is cout)
@@ -154,9 +153,7 @@ protected:
 
   std::string               basepath;
 
-#ifdef _OPENMP
   static u32 filethreads;      // Number of threads for file processing
-#endif
 
   bool                      skipdata;                // Should we skip data whilst scanning
   u64                       skipleaway;              // The leaway +/- we should allow whilst scanning
@@ -209,12 +206,10 @@ protected:
 
   u64                       progress;                // How much data has been processed.
   u64                       totaldata;               // Total amount of data to be processed.
-#ifdef _OPENMP
   u64                       mttotalsize;             // Total size of files for mt-progress line
   u64                       mttotalextrasize;        // Total size of extra files for mt-progress line
-  u64                       mttotalprogress;         // MT total progress
+  atomic<u64>               mttotalprogress;         // MT total progress
   bool                      mtprocessingextrafiles;  // Are we currently processing extra files
-#endif
 };
 
 #endif // __PAR2REPAIRER_H__

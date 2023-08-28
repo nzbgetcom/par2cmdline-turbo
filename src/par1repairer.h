@@ -29,10 +29,8 @@ public:
 
   Result Process(const size_t memorylimit,
 		 // basepath is not used by Par1
-#ifdef _OPENMP
 		 const u32 nthreads,
 		 // filethreads is not used by Par1
-#endif
 		 string parfilename,
 		 const vector<string> &extrafiles,
 		 const bool dorepair,   // derived from operation

@@ -15,9 +15,9 @@ The minimalistic nature of this project also means that there’s some degree of
 
 ## Threading & OpenMP
 
-par2cmdline uses OpenMP to manage threading. ParPar’s GF16 backend has its own threading support, using C++11’s `std::thread`, which means that threading will generally be available even if OpenMP is enabled. However, par2cmdline does use OpenMP in a number of other places (such as file processing), which are still present in this fork.
+par2cmdline-turbo removes par2cmdline's OpenMP dependency, replacing it with C++11's threads.
 
-This does have a flow on effect that the `-t` flag and libpar2’s *threads* parameter will be present and work, even if OpenMP is not enabled.
+This does have a flow on effect that the `-t`/`-T` flags and libpar2’s *threads* related parameters will be present and work, regardless of OpenMP presence (in par2cmdline, these would differ depending on whether OpenMP support was compiled in).
 
 ## Compared to other par2cmdline forks
 

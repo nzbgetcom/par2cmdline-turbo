@@ -80,26 +80,19 @@
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <OpenMPSupport>true</OpenMPSupport>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <PrecompiledHeaderFile>src\libpar2internal.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <AdditionalOptions Condition="'$(PlatformToolset)'=='ClangCL'">/openmp %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)par2.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)par2cmdline.pdb</ProgramDatabaseFile>
       <SubSystem>Console</SubSystem>
-      <AdditionalOptions Condition="'$(PlatformToolset)'=='ClangCL'">-fopenmp %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies Condition="'$(PlatformToolset)'=='ClangCL'">$(LLVMInstallDir)\lib\libomp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <TargetMachine>MachineX86</TargetMachine>
     </Link>
-    <PostBuildEvent>
-      <Command Condition="'$(PlatformToolset)'=='ClangCL'">copy "$(LLVMInstallDir)\bin\libomp.dll" "$(OutDir)"</Command>
-      <Command Condition="'$(PlatformToolset)'!='ClangCL'">copy "$(DebugCppRuntimeFilesPath.Substring(0,$(DebugCppRuntimeFilesPath.IndexOf(';'))))\Microsoft.VC$(PlatformToolsetVersion).DebugOpenMP\vcomp140d.dll" "$(OutDir)"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
@@ -116,8 +109,6 @@
       <PrecompiledHeaderFile>src\libpar2internal.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <OpenMPSupport>true</OpenMPSupport>
-      <AdditionalOptions Condition="'$(PlatformToolset)'=='ClangCL'">/openmp %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)par2.exe</OutputFile>
@@ -125,13 +116,7 @@
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalOptions Condition="'$(PlatformToolset)'=='ClangCL'">-fopenmp %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies Condition="'$(PlatformToolset)'=='ClangCL'">$(LLVMInstallDir)\lib\libomp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PostBuildEvent>
-      <Command Condition="'$(PlatformToolset)'=='ClangCL'">copy "$(LLVMInstallDir)\bin\libomp.dll" "$(OutDir)"</Command>
-      <Command Condition="'$(PlatformToolset)'!='ClangCL'">copy "$(CppRuntimeFilesPath.Substring(0,$(CppRuntimeFilesPath.IndexOf(';'))))\Microsoft.VC$(PlatformToolsetVersion).OpenMP\vcomp140.dll" "$(OutDir)"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\commandline.cpp" />

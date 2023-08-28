@@ -142,9 +142,7 @@ Result par2create(std::ostream &sout,
 			  const size_t memorylimit,
 			  const std::string &basepath,
 			  const u32 nthreads,
-#ifdef _OPENMP
 			  const u32 filethreads,
-#endif
 			  const std::string &parfilename,
 			  const std::vector<std::string> &extrafiles,
 			  const u64 blocksize,
@@ -161,9 +159,7 @@ Result par2repair(std::ostream &sout,
 		  const size_t memorylimit,
 		  const std::string &basepath,
 		  const u32 nthreads,
-#ifdef _OPENMP
 		  const u32 filethreads,
-#endif
 		  const std::string &parfilename,
 		  const std::vector<std::string> &extrafiles,
 		  const bool dorepair,   // derived from operation
@@ -178,10 +174,8 @@ Result par1repair(std::ostream &sout,
 		  const NoiseLevel noiselevel,
 		  const size_t memorylimit,
 		  // basepath is not used by Par1
-#ifdef _OPENMP
 		  const u32 nthreads,
 		  // filethreads is not used by Par1
-#endif
 		  const std::string &parfilename,
 		  const std::vector<std::string> &extrafiles,
 		  const bool dorepair,   // derived from operation

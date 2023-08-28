@@ -32,12 +32,7 @@ static char THIS_FILE[]=__FILE__;
 #endif
 #endif
 
-// OpenMP
-#ifdef _OPENMP
-# include <omp.h>
-#else
-# include <thread>
-#endif
+#include <thread>
 
 CommandLine::CommandLine(void)
 : filesize_cache()
@@ -46,9 +41,7 @@ CommandLine::CommandLine(void)
 , memorylimit(0)
 , basepath()
 , nthreads(0) // 0 means use default number
-#ifdef _OPENMP
 , filethreads( _FILE_THREADS ) // default from header file
-#endif
 , parfilename()
 , rawfilenames()
 , extrafiles()
@@ -113,15 +106,10 @@ void CommandLine::usage(void)
     "  -v [-v]  : Be more verbose\n"
     "  -q [-q]  : Be more quiet (-q -q gives silence)\n"
     "  -m<n>    : Memory (in MB) to use\n";
-#ifdef _OPENMP
   cout <<
-    "  -t<n>    : Number of threads used for main processing (" << omp_get_max_threads() << " detected)\n"
+    "  -t<n>    : Number of threads used for main processing (" << thread::hardware_concurrency() << " detected)\n"
     "  -T<n>    : Number of files hashed in parallel\n"
     "             (" << _FILE_THREADS << " are the default)\n";
-#else
-  cout <<
-    "  -t<n>    : Number of threads used for main processing (" << thread::hardware_concurrency() << " detected)\n";
-#endif
   cout <<
     "  --       : Treat all following arguments as filenames\n"
     "Options: (verify or repair)\n"
@@ -410,7 +398,6 @@ bool CommandLine::ReadArgs(int argc, const char * const *argv)
           }
           break;
 
-#ifdef _OPENMP
         case 'T':  // Set amount of file threads
           {
             filethreads = 0;
@@ -429,7 +416,6 @@ bool CommandLine::ReadArgs(int argc, const char * const *argv)
             }
           }
           break;
-#endif
 
         case 'r':  // Set the amount of redundancy required
           {
