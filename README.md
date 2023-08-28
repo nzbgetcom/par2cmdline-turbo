@@ -10,9 +10,8 @@ par2cmdline-turbo aims to keep close with its upstream and only differs in the f
 * Use ParPar’s internal checksumming to detect RAM errors during GF16 computation
 * Adopts ParPar’s stitched hashing approach
 
-Note that this fork isn’t intended to change too much of par2cmdline itself, meaning that there’s some degree of performance left on the table.
-
-This fork is also *not* aimed at fixing bugs or functionality improvements - reports and requests should be directed at the [upstream project](https://github.com/Parchive/par2cmdline).
+Note that this fork isn’t intended to change too much of par2cmdline itself and hence, is *not* aimed at fixing bugs or functionality improvements. Bug reports and feature requests should be directed at the [upstream project](https://github.com/Parchive/par2cmdline) where relevant.
+The minimalistic nature of this project also means that there’s some degree of performance left on the table, and there’s no focus on improving PAR1 performance.
 
 ## Threading & OpenMP
 

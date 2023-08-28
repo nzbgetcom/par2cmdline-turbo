@@ -65,67 +65,68 @@ libparpar_gf16_a_SOURCES = \
 	parpar/gf16/gf16_lookup.c \
 	parpar/gf16/gf_add_generic.c \
 	parpar/gf16/gf16_cksum_generic.c
-libparpar_gf16_a_CFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include
-libparpar_gf16_a_CXXFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include -std=c++11
+libparpar_gf16_a_CFLAGS = -std=c99 -D_POSIX_C_SOURCE=200112L -D_GNU_SOURCE
+libparpar_gf16_a_CPPFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include
+libparpar_gf16_a_CXXFLAGS = 
 
 libparpar_gf16_sse2_a_SOURCES = \
 	parpar/gf16/gf16_xor_sse2.c \
 	parpar/gf16/gf16_lookup_sse2.c \
 	parpar/gf16/gf_add_sse2.c \
 	parpar/gf16/gf16_cksum_sse2.c
-libparpar_gf16_sse2_a_CFLAGS = $(CFLAGS_SSE2)
+libparpar_gf16_sse2_a_CFLAGS = $(CFLAGS_SSE2) -std=c99 -D_POSIX_C_SOURCE=200112L -D_GNU_SOURCE
 
 libparpar_gf16_ssse3_a_SOURCES = \
 	parpar/gf16/gf16_shuffle_ssse3.c
-libparpar_gf16_ssse3_a_CFLAGS = $(CFLAGS_SSSE3)
+libparpar_gf16_ssse3_a_CFLAGS = $(CFLAGS_SSSE3) -std=c99 -D_POSIX_C_SOURCE=200112L -D_GNU_SOURCE
 
 libparpar_gf16_avx_a_SOURCES = \
 	parpar/gf16/gf16_shuffle_avx.c
-libparpar_gf16_avx_a_CFLAGS = $(CFLAGS_AVX)
+libparpar_gf16_avx_a_CFLAGS = $(CFLAGS_AVX) -std=c99 -D_POSIX_C_SOURCE=200112L -D_GNU_SOURCE
 
 libparpar_gf16_avx2_a_SOURCES = \
 	parpar/gf16/gf16_xor_avx2.c \
 	parpar/gf16/gf16_shuffle_avx2.c \
 	parpar/gf16/gf_add_avx2.c \
 	parpar/gf16/gf16_cksum_avx2.c
-libparpar_gf16_avx2_a_CFLAGS = $(CFLAGS_AVX2)
+libparpar_gf16_avx2_a_CFLAGS = $(CFLAGS_AVX2) -std=c99 -D_POSIX_C_SOURCE=200112L -D_GNU_SOURCE
 
 libparpar_gf16_avx512_a_SOURCES = \
 	parpar/gf16/gf16_xor_avx512.c \
 	parpar/gf16/gf16_shuffle_avx512.c \
 	parpar/gf16/gf_add_avx512.c \
 	parpar/gf16/gf16_cksum_avx512.c
-libparpar_gf16_avx512_a_CFLAGS = $(CFLAGS_AVX512)
+libparpar_gf16_avx512_a_CFLAGS = $(CFLAGS_AVX512) -std=c99 -D_POSIX_C_SOURCE=200112L -D_GNU_SOURCE
 
 libparpar_gf16_vbmi_a_SOURCES = \
 	parpar/gf16/gf16_shuffle_vbmi.c
-libparpar_gf16_vbmi_a_CFLAGS = $(CFLAGS_VBMI)
+libparpar_gf16_vbmi_a_CFLAGS = $(CFLAGS_VBMI) -std=c99 -D_POSIX_C_SOURCE=200112L -D_GNU_SOURCE
 
 libparpar_gf16_gfni_a_SOURCES = \
 	parpar/gf16/gf16_affine_gfni.c
-libparpar_gf16_gfni_a_CFLAGS = $(CFLAGS_GFNI)
+libparpar_gf16_gfni_a_CFLAGS = $(CFLAGS_GFNI) -std=c99 -D_POSIX_C_SOURCE=200112L -D_GNU_SOURCE
 
 libparpar_gf16_gfni_avx2_a_SOURCES = \
 	parpar/gf16/gf16_affine_avx2.c \
 	parpar/src/platform_warnings.c
-libparpar_gf16_gfni_avx2_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX2)
+libparpar_gf16_gfni_avx2_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX2) -std=c99 -D_POSIX_C_SOURCE=200112L -D_GNU_SOURCE
 
 libparpar_gf16_gfni_avx512_a_SOURCES = \
 	parpar/gf16/gf16_affine_avx512.c
-libparpar_gf16_gfni_avx512_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX512)
+libparpar_gf16_gfni_avx512_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX512) -std=c99 -D_POSIX_C_SOURCE=200112L -D_GNU_SOURCE
 
 libparpar_gf16_neon_a_SOURCES = \
 	parpar/gf16/gf16_shuffle_neon.c \
 	parpar/gf16/gf16_clmul_neon.c \
 	parpar/gf16/gf_add_neon.c \
 	parpar/gf16/gf16_cksum_neon.c
-libparpar_gf16_neon_a_CFLAGS = $(CFLAGS_NEON)
+libparpar_gf16_neon_a_CFLAGS = $(CFLAGS_NEON) -std=c99 -D_POSIX_C_SOURCE=200112L -D_GNU_SOURCE
 
 libparpar_gf16_sve_a_SOURCES = \
 	parpar/gf16/gf16_shuffle128_sve.c \
 	parpar/gf16/gf_add_sve.c \
 	parpar/gf16/gf16_cksum_sve.c
-libparpar_gf16_sve_a_CFLAGS = $(CFLAGS_SVE)
+libparpar_gf16_sve_a_CFLAGS = $(CFLAGS_SVE) -std=c99 -D_POSIX_C_SOURCE=200112L -D_GNU_SOURCE
 
 libparpar_gf16_sve2_a_SOURCES = \
 	parpar/gf16/gf16_shuffle128_sve2.c \
@@ -133,7 +134,7 @@ libparpar_gf16_sve2_a_SOURCES = \
 	parpar/gf16/gf16_shuffle512_sve2.c \
 	parpar/gf16/gf16_clmul_sve2.c \
 	parpar/gf16/gf_add_sve2.c
-libparpar_gf16_sve2_a_CFLAGS = $(CFLAGS_SVE2)
+libparpar_gf16_sve2_a_CFLAGS = $(CFLAGS_SVE2) -std=c99 -D_POSIX_C_SOURCE=200112L -D_GNU_SOURCE
 
 
 libparpar_hasher_a_SOURCES = \
@@ -142,8 +143,8 @@ libparpar_hasher_a_SOURCES = \
 	parpar/hasher/hasher_scalar.cpp \
 	parpar/hasher/md5-final.c
 # these two lines are needed for the right object files to be generated (for some reason)
-libparpar_hasher_a_CFLAGS =
-libparpar_hasher_a_CXXFLAGS = -std=c++11
+libparpar_hasher_a_CFLAGS = -std=c99 -D_POSIX_C_SOURCE=200112L
+libparpar_hasher_a_CXXFLAGS = 
 
 libparpar_hasher_sse2_a_SOURCES = parpar/hasher/hasher_sse.cpp
 libparpar_hasher_sse2_a_CXXFLAGS = $(CFLAGS_SSE2)
@@ -188,9 +189,10 @@ par2_SOURCES = src/par2cmdline.cpp \
 par2_LDADD = libpar2.a
 
 LDADD = -lstdc++ $(PTHREAD_LIBS)
-AM_CXXFLAGS = -Wall -std=c++11 $(PTHREAD_CFLAGS)
+AM_CPPFLAGS = -Wall -DNDEBUG
+AM_CXXFLAGS = $(PTHREAD_CFLAGS)
 
-EXTRA_DIST = PORTING ROADMAP \
+EXTRA_DIST = ROADMAP \
 			 man/par2.1 \
 			 automake.sh \
 			 tests/flatdata.tar.gz \
