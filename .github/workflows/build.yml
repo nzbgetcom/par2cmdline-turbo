@@ -75,7 +75,7 @@ jobs:
         env:
           CC: ${{ matrix.xcc }}gcc
           CXX: ${{ matrix.xcc }}g++
-          LDFLAGS: -static
+          LDFLAGS: -static -s
       - run: make
       - run: ./par2 -h
         if: ${{ matrix.arch == 'amd64' }}
@@ -111,6 +111,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure
+          LDFLAGS: -s
       - run: make
       - run: ./par2 -h
       - run: make check
@@ -146,6 +147,7 @@ jobs:
           AR: arm64-apple-darwin21.4-ar
           RANLIB: arm64-apple-darwin21.4-ranlib
           STRIP: arm64-apple-darwin21.4-strip
+          LDFLAGS: -s
       - run: make
       - run: |
           wget -q -O- https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.22.0/apple-codesign-0.22.0-x86_64-unknown-linux-musl.tar.gz | tar zxf -

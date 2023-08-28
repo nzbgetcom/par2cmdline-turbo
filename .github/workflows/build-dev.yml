@@ -60,7 +60,7 @@ jobs:
 #        env:
 #          CC: ${{ steps.musl.outputs.path }}/${{ matrix.target }}-cc
 #          CXX: ${{ steps.musl.outputs.path }}/${{ matrix.target }}-c++
-#          LDFLAGS: -static
+#          LDFLAGS: -static -s
 #      - uses: actions/upload-artifact@v3
 #        with:
 #          path: ./config.log
@@ -113,7 +113,7 @@ jobs:
         env:
           CC: ${{ matrix.xcc }}gcc
           CXX: ${{ matrix.xcc }}g++
-          LDFLAGS: -static
+          LDFLAGS: -static -s
       - uses: actions/upload-artifact@v3
         with:
           path: ./config.log
@@ -147,6 +147,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure
+          LDFLAGS: -s
       - uses: actions/upload-artifact@v3
         with:
           path: ./config.log
@@ -180,6 +181,7 @@ jobs:
           AR: arm64-apple-darwin21.4-ar
           RANLIB: arm64-apple-darwin21.4-ranlib
           STRIP: arm64-apple-darwin21.4-strip
+          LDFLAGS: -s
       - uses: actions/upload-artifact@v3
         with:
           path: ./config.log
