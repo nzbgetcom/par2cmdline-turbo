@@ -38,9 +38,7 @@ public:
   Result Process(const size_t memorylimit,
 		 const string &basepath,
 		 const u32 nthreads,
-#ifdef _OPENMP
 		 const u32 filethreads,
-#endif
 		 const string &parfilename,
 		 const vector<string> &extrafiles,
 		 const u64 blocksize,
@@ -97,9 +95,7 @@ protected:
   // Close all files.
   bool CloseFiles(void);
 
-#ifdef _OPENMP
   static u32                          GetFileThreads(void) {return filethreads;}
-#endif
 
 protected:
   std::ostream &sout; // stream for output (for commandline, this is cout)
@@ -107,9 +103,7 @@ protected:
 
   const NoiseLevel noiselevel; // How noisy we should be
 
-#ifdef _OPENMP
   static u32 filethreads;      // Number of threads for file processing
-#endif
 
   u64 blocksize;      // The size of each block.
   size_t chunksize;   // How much of each block will be processed at a
@@ -158,9 +152,7 @@ protected:
                              // in one pass, then we can defer the computation of
                              // the full file hash and block crc and hashes until
                              // the recovery data is computed.
-#ifdef _OPENMP
   u64 mttotalsize;           // Total size of files for mt-progress line
-#endif
 };
 
 #endif // __PAR2CREATOR_H__

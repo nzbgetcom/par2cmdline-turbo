@@ -60,8 +60,9 @@ AC_C_INLINE
 AC_SYS_LARGEFILE
 AC_FUNC_FSEEKO
 
-dnl Check for OpenMP
-AC_OPENMP
+dnl Check for pthreads
+m4_include([m4/acx_pthread.m4])
+ACX_PTHREAD
 
 dnl Checks for library functions.
 AC_FUNC_MEMCMP

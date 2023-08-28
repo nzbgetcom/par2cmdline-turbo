@@ -53,11 +53,7 @@ Par2CreatorSourceFile::~Par2CreatorSourceFile(void)
 // 16k of the file, and then compute the FileId and store the results
 // in a file description packet and a file verification packet.
 
-#ifdef _OPENMP
-bool Par2CreatorSourceFile::Open(NoiseLevel noiselevel, std::ostream &sout, std::ostream &serr, const string &extrafile, u64 blocksize, bool deferhashcomputation, string basepath, u64 totalsize, u64 &totalprogress)
-#else
-bool Par2CreatorSourceFile::Open(NoiseLevel noiselevel, std::ostream &sout, std::ostream &serr, const string &extrafile, u64 blocksize, bool deferhashcomputation, string basepath)
-#endif
+bool Par2CreatorSourceFile::Open(NoiseLevel noiselevel, std::ostream &sout, std::ostream &serr, const string &extrafile, u64 blocksize, bool deferhashcomputation, string basepath, u64 totalsize, atomic<u64> &totalprogress, mutex &output_lock)
 {
   // Get the filename and filesize
   diskfilename = extrafile;
@@ -199,19 +195,13 @@ bool Par2CreatorSourceFile::Open(NoiseLevel noiselevel, std::ostream &sout, std:
       if (noiselevel > nlQuiet)
       {
         // Display progress
-#ifdef _OPENMP
-        u32 oldfraction = (u32)(1000 * totalprogress / totalsize);
-        #pragma omp atomic
-        totalprogress += want;
-        u32 newfraction = (u32)(1000 * totalprogress / totalsize);
-#else
-        u32 oldfraction = (u32)(1000 * offset / filesize);
-        u32 newfraction = (u32)(1000 * (offset + want) / filesize);
-#endif
+        u64 progress = totalprogress.fetch_add(want, memory_order_relaxed);
+        u32 oldfraction = (u32)(1000 * progress / totalsize);
+        u32 newfraction = (u32)(1000 * (progress + want) / totalsize);
 
         if (oldfraction != newfraction)
         {
-          #pragma omp critical
+          lock_guard<mutex> lock(output_lock);
           sout << newfraction/10 << '.' << newfraction%10 << "%\r" << flush;
         }
       }
