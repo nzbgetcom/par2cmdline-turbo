@@ -333,6 +333,5 @@ inline GaloisLongMultiplyTable<g>::GaloisLongMultiplyTable(void)
 #endif
 
 typedef Galois<8,0x11D,u8> Galois8;
-typedef Galois<16,0x1100B,u16> Galois16;
 
 #endif // __GALOIS_H__

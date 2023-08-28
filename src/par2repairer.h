@@ -22,6 +22,11 @@
 #define __PAR2REPAIRER_H__
 
 #include "../parpar/gf16/controller_cpu.h"
+#ifndef PARPAR_INVERT_SUPPORT
+# define PARPAR_INVERT_SUPPORT 1
+#endif
+#include "../parpar/gf16/gfmat_inv.h"
+
 #include <atomic>
 #include <mutex>
 
@@ -198,7 +203,7 @@ protected:
   vector<DataBlock*>        copyblocks;              // Which DataBlocks will copied back to disk
   vector<DataBlock*>        outputblocks;            // Which DataBlocks have to calculated using RS
 
-  ReedSolomon<Galois16>     rs;                      // The Reed Solomon matrix.
+  Galois16RecMatrix         rs;                      // The Reed Solomon matrix.
   PAR2Proc parpar;                                   // Main ParPar backend
   PAR2ProcCPU parparcpu;                             // ParPar CPU sub-backend
 

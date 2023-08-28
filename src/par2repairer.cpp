@@ -233,6 +233,9 @@ Result Par2Repairer::Process(
         if (!CreateTargetFiles())
           return eFileIOError;
 
+        if (nthreads != 0)
+          rs.setNumThreads(nthreads);
+
         // Work out which data blocks are available, which need to be copied
         // directly to the output, and which need to be recreated, and compute
         // the appropriate Reed Solomon matrix.
@@ -2358,46 +2361,89 @@ bool Par2Repairer::ComputeRSmatrix(void)
     ++pres;
   }
 
-  // Set the number of source blocks and which of them are present
-  if (!rs.SetInput(present, sout, serr))
-    return false;
-
-  // Start iterating through the available recovery packets
-  map<u32,RecoveryPacket*>::iterator rp = recoverypacketmap.begin();
-
-  // Continue to fill the remaining list of data blocks to be read
-  while (inputblock != inputblocks.end())
-  {
-    // Get the next available recovery packet
-    u32 exponent = rp->first;
-    RecoveryPacket* recoverypacket = rp->second;
-
-    // Get the DataBlock from the recovery packet
-    DataBlock *recoveryblock = recoverypacket->GetDataBlock();
-
-    //// Make sure the file is open
-    //if (!recoveryblock->Open())
-    //  return false;
-
-    // Add the recovery block to the list of blocks that will be read
-    *inputblock = recoveryblock;
-
-    // Record that the corresponding exponent value is the next one
-    // to use in the RS matrix
-    if (!rs.SetOutput(true, (u16)exponent))
-      return false;
-
-    ++inputblock;
-    ++rp;
-  }
-
   // If we need to, compute and solve the RS matrix
   if (missingblockcount == 0)
     return true;
 
-  bool success = rs.Compute(noiselevel, sout, serr);
+  // Create a list of available recovery exponents
+  vector<u16> recindex;
+  recindex.reserve(recoverypacketmap.size());
+  for (auto rp = recoverypacketmap.begin(); rp != recoverypacketmap.end(); rp++)
+    recindex.push_back(rp->first);
 
-  return success;
+  // Set up progress display
+  std::function<void(u16, u16)> progressfunc;
+  int progress = 0;
+  bool progressStarted = false;
+  if (noiselevel > nlQuiet)
+  {
+    sout << "Computing Reed Solomon matrix." << endl;
+    progressfunc = [&](u16 done, u16 total) {
+      if (done == 0)
+      {
+        if(progressStarted)
+          sout << "Bad recovery block discarded and retrying RS matrix inversion." << endl;
+        else
+          progressStarted = true;
+        sout << "Constructing: 0.0%\r" << flush;
+        progress = 0;
+        return;
+      }
+      if (done == 1)
+        sout << "Constructing: done." << endl;
+      
+      int newprogress = (done-1) * 1000 / (total-1);
+      if (progress != newprogress)
+      {
+        progress = newprogress;
+        sout << "Solving: " << progress/10 << '.' << progress%10 << "%\r" << flush;
+      }
+    };
+  }
+
+  // Compute + solve RS matrix
+  if (!rs.Compute(present, availableblockcount, recindex, progressfunc))
+  {
+    serr << "RS computation error (this may be fixable with more recovery blocks)." << endl;
+    return false;
+  }
+
+  if (noiselevel > nlQuiet)
+    sout << "Solving: done." << endl;
+
+  if (noiselevel >= nlDebug)
+  {
+    for (unsigned int row=0; row<missingblockcount; row++)
+    {
+      bool lastrow = row==missingblockcount-1;
+      sout << ((row==0) ? "/"    : lastrow ? "\\"    : "|");
+      for (unsigned int col=0; col<sourceblockcount; col++)
+      {
+        sout << " "
+             << hex << setw(4) << setfill('0')
+             << (unsigned int)rs.GetFactor(col, row);
+      }
+      sout << ((row==0) ? " \\"   : lastrow ? " /"    : " |");
+      sout << endl;
+
+      sout << dec << setw(0) << setfill(' ');
+    }
+  }
+
+  // Start iterating through the selected recovery packets
+  for (u16 exponent : recindex) {
+    // Get the selected recovery packet
+    RecoveryPacket* recoverypacket = recoverypacketmap.at(exponent);
+
+    // Get the DataBlock from the recovery packet
+    DataBlock *recoveryblock = recoverypacket->GetDataBlock();
+
+    // Add the recovery block to the list of blocks that will be read
+    *inputblock = recoveryblock;
+    ++inputblock;
+  }
+
+  return true;
 }
 
 // Allocate memory buffers for reading and writing data to disk.

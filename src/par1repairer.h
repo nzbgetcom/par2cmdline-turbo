@@ -21,6 +21,8 @@
 #ifndef __PAR1REPAIRER_H__
 #define __PAR1REPAIRER_H__
 
+#include "reedsolomon.h"
+
 class Par1Repairer
 {
 public:
