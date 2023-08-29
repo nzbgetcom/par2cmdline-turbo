@@ -277,11 +277,14 @@ Result Par2Repairer::Process(
           return eMemoryError;
         }
 
-        if (noiselevel >= nlDebug)
+        if (noiselevel >= nlNoisy)
         {
-          sout << "[DEBUG] Compute method: " << parparcpu.getMethodName() << endl;
-          sout << "[DEBUG] Compute tile size: " << parparcpu.getChunkLen() << endl;
-          sout << "[DEBUG] Compute block grouping: " << parparcpu.getInputBatchSize() << endl;
+          sout << "Multiply method: " << parparcpu.getMethodName() << endl;
+          if (noiselevel >= nlDebug)
+          {
+            sout << "[DEBUG] Compute tile size: " << parparcpu.getChunkLen() << endl;
+            sout << "[DEBUG] Compute block grouping: " << parparcpu.getInputBatchSize() << endl;
+          }
           sout << endl;
         }
 
@@ -1184,7 +1187,15 @@ static bool SortSourceFilesByFileName(Par2RepairerSourceFile *low,
 bool Par2Repairer::VerifySourceFiles(const std::string& basepath, std::vector<string>& extrafiles)
 {
   if (noiselevel > nlQuiet)
-    sout << endl << "Verifying source files:" << endl << endl;
+  {
+    sout << endl << "Verifying source files:" << endl;
+    if (noiselevel >= nlNoisy)
+    {
+      sout << "Data hash method: " << hasherInput_methodName() << endl;
+      sout << "MD5/CRC32 method: " << md5crc_methodName() << endl;
+    }
+    sout << endl;
+  }
 
   atomic<bool> finalresult(true);
 
@@ -2384,7 +2395,14 @@ bool Par2Repairer::ComputeRSmatrix(void)
         if(progressStarted)
           sout << "Bad recovery block discarded and retrying RS matrix inversion." << endl;
         else
+        {
           progressStarted = true;
+          if (noiselevel >= nlNoisy)
+          {
+            sout << "Construction accel: " << rs.getPointMulMethodName() << endl;
+            sout << "Inversion method: " << Galois16Mul::methodToText((Galois16Methods)rs.regionMethod) << endl;
+          }
+        }
         sout << "Constructing: 0.0%\r" << flush;
         progress = 0;
         return;
