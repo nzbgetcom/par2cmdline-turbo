@@ -136,7 +136,7 @@ libparpar_gf16_neon_a_CFLAGS = $(CFLAGS_NEON) -std=c99 $(CFLAGS_POSIX_SOURCE) -D
 
 libparpar_gf16_neonsha3_a_SOURCES = \
 	parpar/gf16/gf16_clmul_sha3.c
-libparpar_gf16_neonsha3_a_CFLAGS = $(CFLAGS_NEONSHA3)
+libparpar_gf16_neonsha3_a_CFLAGS = $(CFLAGS_NEONSHA3) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
 
 libparpar_gf16_sve_a_SOURCES = \
 	parpar/gf16/gf16_shuffle128_sve.c \
