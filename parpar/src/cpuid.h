@@ -16,8 +16,8 @@
 # else
 	#include <cpuid.h>
 	/* GCC seems to support this, I assume everyone else does too? */
-	#define _cpuid(ar, eax) __cpuid(eax, ar[0], ar[1], ar[2], ar[3])
-	#define _cpuidX(ar, eax, ecx) __cpuid_count(eax, ecx, ar[0], ar[1], ar[2], ar[3])
+	#define _cpuid(ar, eax) __cpuid(eax, (ar)[0], (ar)[1], (ar)[2], (ar)[3])
+	#define _cpuidX(ar, eax, ecx) __cpuid_count(eax, ecx, (ar)[0], (ar)[1], (ar)[2], (ar)[3])
 	
 	static inline int _GET_XCR() {
 		int xcr0;
@@ -46,7 +46,9 @@
 #  include <cpu-features.h>
 # elif defined(_WIN32)
 #  define WIN32_LEAN_AND_MEAN
-#  define NOMINMAX
+#  ifndef NOMINMAX
+#   define NOMINMAX
+#  endif
 #  include <Windows.h>
 # elif defined(__APPLE__)
 #  include <sys/types.h>
