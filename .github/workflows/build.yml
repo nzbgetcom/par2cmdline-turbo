@@ -111,6 +111,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure
+        env:
           LDFLAGS: -s
       - run: make
       - run: ./par2 -h

@@ -147,6 +147,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: aclocal && automake --warnings=all --add-missing && autoconf --warnings=all
       - run: ./configure
+        env:
           LDFLAGS: -s
       - uses: actions/upload-artifact@v3
         with:
