@@ -17,7 +17,7 @@ Note that par2cmdline-turbo may use slightly more memory than par2cmdline, due t
 
 ## Threading & OpenMP
 
-par2cmdline-turbo removes par2cmdline's OpenMP dependency, replacing it with C++11's threads.
+par2cmdline-turbo removes par2cmdline's [OpenMP dependency](https://github.com/jkansanen/par2cmdline-mt), replacing it with C++11's threads. This change enables fully static builds, as a number of environments can only dynamically link to the OpenMP runtime.
 
 This does have a flow on effect that the `-t`/`-T` flags and libpar2’s *threads* related parameters will be present and work, regardless of OpenMP presence (in par2cmdline, these would differ depending on whether OpenMP support was compiled in).
 
@@ -32,7 +32,7 @@ I know of two other forks to par2cmdline: [par2cmdline-tbb](https://web.archive.
 * adds support for concurrency during creation/verification/repair
 * adds experimental CUDA (GPU) support
 * async I/O
-* only available on x86 platforms, due to use of Intel TBB and x86 assembly
+* only available on x86 platforms, due to use of [Intel TBB](https://www.intel.com/content/www/us/en/developer/articles/guide/get-started-with-tbb.html) and x86 assembly
 
 **phpar2**
 
@@ -98,3 +98,8 @@ If you have an issue, please test with the original par2cmdline. If the issue is
 
 Similarly, questions should also be directed to the par2cmdline repository, unless it *specifically* relates to par2cmdline-turbo.
 
+# Other Resources
+
+* [MultiPar](https://hp.vector.co.jp/authors/VA021385/)
+* [Parchive](https://parchive.github.io/)
+* [Wikipedia](https://en.wikipedia.org/wiki/Parchive)
