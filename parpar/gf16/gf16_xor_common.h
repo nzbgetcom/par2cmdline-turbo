@@ -24,6 +24,7 @@ extern void gf16_xor256_jit_stub(intptr_t src, intptr_t dEnd, intptr_t dest, int
 extern void gf16_xor256_jit_multi_stub(intptr_t dst, intptr_t dstEnd, const void** src, void* fn);
 #  endif
 # else
+#  define CALL_PTR "callq *%q"
 #  ifdef DBG_XORDEP
 #   include <stdio.h>
 #   define WRITE_JIT(l) { \
@@ -38,7 +39,7 @@ extern void gf16_xor256_jit_multi_stub(intptr_t dst, intptr_t dstEnd, const void
 static HEDLEY_ALWAYS_INLINE void gf16_xor_jit_stub(intptr_t src, intptr_t dEnd, intptr_t dest, intptr_t pf, void* fn) {
 	WRITE_JIT(2048)
 	__asm__ volatile(
-		"callq *%q[f]\n"
+		CALL_PTR "[f]\n"
 		: "+a"(src), "+d"(dest), "+S"(pf) : "c"(dEnd), [f]"r"(fn)
 		: "%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6", "%xmm7", "%xmm8", "%xmm9", "%xmm10", "%xmm11", "%xmm12", "%xmm13", "%xmm14", "%xmm15", "memory"
 	);
@@ -47,7 +48,7 @@ static HEDLEY_ALWAYS_INLINE void gf16_xor_jit_stub(intptr_t src, intptr_t dEnd, 
 static HEDLEY_ALWAYS_INLINE void gf16_xor256_jit_stub(intptr_t src, intptr_t dEnd, intptr_t dest, intptr_t pf, void* fn) {
 	WRITE_JIT(2048)
 	__asm__ volatile(
-		"callq *%q[f]\n"
+		CALL_PTR "[f]\n"
 		: "+a"(src), "+d"(dest), "+S"(pf) : "c"(dEnd), [f]"r"(fn)
 		: "memory" // GCC pre 4.9 doesn't accept YMM registers
 #   if HEDLEY_GCC_VERSION_CHECK(4,9,0) || !defined(HEDLEY_GCC_VERSION)
@@ -60,7 +61,7 @@ static HEDLEY_ALWAYS_INLINE void gf16_xor256_jit_stub(intptr_t src, intptr_t dEn
 static HEDLEY_ALWAYS_INLINE void gf16_xor512_jit_stub(intptr_t src, intptr_t dEnd, intptr_t dest, intptr_t pf, void* fn) {
 	WRITE_JIT(2048)
 	__asm__ volatile(
-		"callq *%q[f]\n"
+		CALL_PTR "[f]\n"
 		: "+a"(src), "+d"(dest), "+S"(pf) : "c"(dEnd), [f]"r"(fn)
 		: "%zmm1", "%zmm2", "%zmm3", "%zmm16", "%zmm17", "%zmm18", "%zmm19", "%zmm20", "%zmm21", "%zmm22", "%zmm23", "%zmm24", "%zmm25", "%zmm26", "%zmm27", "%zmm28", "%zmm29", "%zmm30", "%zmm31", "memory"
 	);
@@ -69,24 +70,46 @@ static HEDLEY_ALWAYS_INLINE void gf16_xor512_jit_multi_stub(
 	intptr_t dst, intptr_t dstEnd, const void** src, void* fn
 ) {
 	WRITE_JIT(8192)
-	__asm__ volatile(
-		"movq 8(%%rdx), %%rsi\n"
-		"movq 16(%%rdx), %%rdi\n"
-		"movq 24(%%rdx), %%r8\n"
-		"movq 32(%%rdx), %%r9\n"
-		"movq 40(%%rdx), %%r10\n"
-		"movq 48(%%rdx), %%r11\n"
-		"movq 56(%%rdx), %%rbx\n"
-		"movq 64(%%rdx), %%r14\n"
-		"movq 72(%%rdx), %%r15\n"
-		"movq (%%rdx), %%rdx\n"
-		"callq *%q[f]\n"
-		: "+a"(dst), "+d"(src)
-		: "c"(dstEnd), [f]"r"(fn)
-		: "%rbx", "%rsi", "%rdi", "%r8", "%r9", "%r10", "%r11", "%r14", "%r15", "%zmm0", "%zmm1", "%zmm2", "%zmm3", "%zmm4", "%zmm5", "%zmm6", "%zmm7", "%zmm8", "%zmm9", "%zmm10", "%zmm11", "%zmm12", "%zmm13", "%zmm14", "%zmm15", "%zmm16", "%zmm17", "%zmm18", "%zmm19", "%zmm20", "%zmm21", "%zmm22", "%zmm23", "%zmm24", "%zmm25", "%zmm26", "%zmm27", "%zmm28", "%zmm29", "%zmm30", "%zmm31", "memory"
-	);
+	if(sizeof(*src) == 8) {
+		__asm__ volatile(
+			"movq 8(%%rdx), %%rsi\n"
+			"movq 16(%%rdx), %%rdi\n"
+			"movq 24(%%rdx), %%r8\n"
+			"movq 32(%%rdx), %%r9\n"
+			"movq 40(%%rdx), %%r10\n"
+			"movq 48(%%rdx), %%r11\n"
+			"movq 56(%%rdx), %%rbx\n"
+			"movq 64(%%rdx), %%r14\n"
+			"movq 72(%%rdx), %%r15\n"
+			"movq (%%rdx), %%rdx\n"
+			CALL_PTR "[f]\n"
+			: "+a"(dst), "+d"(src)
+			: "c"(dstEnd), [f]"r"(fn)
+			: "%rbx", "%rsi", "%rdi", "%r8", "%r9", "%r10", "%r11", "%r14", "%r15", "%zmm0", "%zmm1", "%zmm2", "%zmm3", "%zmm4", "%zmm5", "%zmm6", "%zmm7", "%zmm8", "%zmm9", "%zmm10", "%zmm11", "%zmm12", "%zmm13", "%zmm14", "%zmm15", "%zmm16", "%zmm17", "%zmm18", "%zmm19", "%zmm20", "%zmm21", "%zmm22", "%zmm23", "%zmm24", "%zmm25", "%zmm26", "%zmm27", "%zmm28", "%zmm29", "%zmm30", "%zmm31", "memory"
+		);
+	} else { // x32
+		assert(sizeof(*src) == 4);
+		
+		__asm__ volatile(
+			"movl 4(%%rdx), %%esi\n"
+			"movl 8(%%rdx), %%edi\n"
+			"movl 12(%%rdx), %%r8d\n"
+			"movl 16(%%rdx), %%r9d\n"
+			"movl 20(%%rdx), %%r10d\n"
+			"movl 24(%%rdx), %%r11d\n"
+			"movl 28(%%rdx), %%ebx\n"
+			"movl 32(%%rdx), %%r14d\n"
+			"movl 36(%%rdx), %%r15d\n"
+			"movl (%%rdx), %%edx\n"
+			CALL_PTR "[f]\n"
+			: "+a"(dst), "+d"(src)
+			: "c"(dstEnd), [f]"r"(fn)
+			: "%rbx", "%rsi", "%rdi", "%r8", "%r9", "%r10", "%r11", "%r14", "%r15", "%zmm0", "%zmm1", "%zmm2", "%zmm3", "%zmm4", "%zmm5", "%zmm6", "%zmm7", "%zmm8", "%zmm9", "%zmm10", "%zmm11", "%zmm12", "%zmm13", "%zmm14", "%zmm15", "%zmm16", "%zmm17", "%zmm18", "%zmm19", "%zmm20", "%zmm21", "%zmm22", "%zmm23", "%zmm24", "%zmm25", "%zmm26", "%zmm27", "%zmm28", "%zmm29", "%zmm30", "%zmm31", "memory"
+		);
+	}
 }
 #  endif
+#  undef CALL_PTR
 #  undef WRITE_JIT
 # endif
 #else
