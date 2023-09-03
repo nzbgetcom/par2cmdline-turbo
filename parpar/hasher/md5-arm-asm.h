@@ -8,6 +8,7 @@
 #if __BYTE_ORDER__ != __ORDER_BIG_ENDIAN__
 # define REV(R)
 #else
+// requires ARMv6
 # define REV(R) "rev " REG(R) ", " REG(R) "\n"
 #endif
 
@@ -41,8 +42,8 @@ static HEDLEY_ALWAYS_INLINE void md5_process_block_scalar(uint32_t* HEDLEY_RESTR
 #  define SETI_L(dst, x) "movw %[" STR(dst) "], #" STR(x) "\n"
 #  define SETI_H(dst, x) "movt %[" STR(dst) "], #" STR(x) "\n"
 # else
-#  define SETI_L(dst, x) "mov %[" dst "], #" STR(x) " & 0xff\n orr %[" dst "], #" STR(x) " & 0xff00\n"
-#  define SETI_H(dst, x) "orr %[" dst "], #(" STR(x) " & 0xff)<<16\n orr %[" dst "], #(" STR(x) " & 0xff00)<<16\n"
+#  define SETI_L(dst, x) "mov %[" STR(dst) "], #" STR(x) " & 0xff\n orr %[" STR(dst) "], #" STR(x) " & 0xff00\n"
+#  define SETI_H(dst, x) "orr %[" STR(dst) "], #(" STR(x) " & 0xff)<<16\n orr %[" STR(dst) "], #(" STR(x) " & 0xff00)<<16\n"
 # endif
 
 # define REG(x) "%[" STR(x) "]"
@@ -174,11 +175,11 @@ static HEDLEY_ALWAYS_INLINE void md5_process_block_scalar(uint32_t* HEDLEY_RESTR
 		ROUND_I_LAST(B, C, D, A, 0xd391, 0xeb86, 11)
 	:
 #ifdef ARM_THUMB_LIMIT_REGS
-	[A]"+&r"(A), [B]"+&r"(B), [C]"+&r"(C), [D]"+&r"(D),
+	[A]"+&l"(A), [B]"+&l"(B), [C]"+&l"(C), [D]"+&l"(D),
 #else
-	[A]"=&r"(A), [B]"=&r"(B), [C]"=&r"(C), [D]"=&r"(D),
+	[A]"=&l"(A), [B]"=&l"(B), [C]"=&l"(C), [D]"=&l"(D),
 #endif
-	  [TMP1]"=&r"(tmp1), [TMP2]"=&r"(tmp2), [TMP3]"=&r"(tmp3)
+	  [TMP1]"=&l"(tmp1), [TMP2]"=&l"(tmp2), [TMP3]"=&l"(tmp3)
 	:
 		[in]"r"(_in) // Clang doesn't seem to like "m" references (over allocates registers? causes "assembly requires more registers than available" errors)
 		, "m"(*(const uint32_t (*)[16])_in) // ensure the memory is written before we try to run this
