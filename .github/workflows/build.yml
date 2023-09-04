@@ -66,7 +66,7 @@ jobs:
         uses: bruceadams/get-release@v1.2.3
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - uses: junelife/gha-ubuntu-cross@v4
+      - uses: junelife/gha-ubuntu-cross@v6
         with:
           arch: ${{ matrix.arch }}
         if: ${{ matrix.arch != 'amd64' }}
