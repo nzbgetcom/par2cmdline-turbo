@@ -139,6 +139,11 @@ AM_COND_IF([HAS_RV32V], [AC_SUBST(CFLAGS_RV32V, "-march=rv32gcv")])
 
 AC_CHECK_DECLS([posix_memalign], [], [AC_SUBST(CFLAGS_POSIX_SOURCE, "-D_POSIX_C_SOURCE=200112L")], [[#include <stdlib.h>]])
 
+m4_include([m4/ax_check_link_flag.m4])
+AX_CHECK_LINK_FLAG([-latomic])
+AM_CONDITIONAL([HAS_LIBATOMIC], [test x$ax_cv_check_ldflags___latomic = xyes])
+AM_COND_IF([HAS_LIBATOMIC], [AC_SUBST(LDFLAGS_LIBATOMIC, "-latomic")])
+
 AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
