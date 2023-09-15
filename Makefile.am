@@ -209,7 +209,7 @@ man_MANS = man/par2.1
 
 par2_SOURCES = src/par2cmdline.cpp \
 	src/commandline.cpp src/commandline.h
-par2_LDADD = libpar2.a
+par2_LDADD = libpar2.a -lstdc++ $(PTHREAD_LIBS) $(LDFLAGS_LIBATOMIC)
 
 LDADD = -lstdc++ $(PTHREAD_LIBS) $(LDFLAGS_LIBATOMIC)
 AM_CPPFLAGS = -Wall -DNDEBUG
