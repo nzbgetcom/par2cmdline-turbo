@@ -100,10 +100,10 @@ jobs:
           xz_bcj:
           xcc: riscv64-linux-gnu-
           configure_host: --host=riscv64-linux-gnu
-        - arch: powerpc
+        - arch: ppc64el
           xz_bcj:
-          xcc: powerpc-linux-gnu-
-          configure_host: --host=powerpc-linux-gnu
+          xcc: powerpc64-linux-gnu-
+          configure_host: --host=ppc64-linux-gnu
     name: Build ${{ matrix.arch }} Linux static binary
     runs-on: ubuntu-latest
     steps:
