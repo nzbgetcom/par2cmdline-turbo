@@ -22,6 +22,9 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 .DELETE_ON_ERROR:
 
+AM_CPPFLAGS = -Wall -DNDEBUG -DPARPAR_ENABLE_HASHER_MD5CRC -DPARPAR_INVERT_SUPPORT -DPARPAR_SLIM_GF16
+AM_CXXFLAGS = -std=c++11 $(PTHREAD_CFLAGS)
+
 noinst_LIBRARIES = libpar2.a \
 	libparpar_gf16.a libparpar_gf16_sse2.a libparpar_gf16_ssse3.a libparpar_gf16_avx.a libparpar_gf16_avx2.a libparpar_gf16_avx512.a libparpar_gf16_vbmi.a libparpar_gf16_gfni.a libparpar_gf16_gfni_avx2.a libparpar_gf16_gfni_avx512.a libparpar_gf16_clmul.a libparpar_gf16_avx2_clmul.a libparpar_gf16_vpclmul.a libparpar_gf16_vpclgfni.a libparpar_gf16_neon.a libparpar_gf16_neonsha3.a libparpar_gf16_sve.a libparpar_gf16_sve2.a libparpar_gf16_rvv.a \
 	libparpar_hasher.a libparpar_hasher_sse2.a libparpar_hasher_clmul.a libparpar_hasher_xop.a libparpar_hasher_bmi1.a libparpar_hasher_avx2.a libparpar_hasher_avx512.a libparpar_hasher_avx512vl.a libparpar_hasher_armcrc.a libparpar_hasher_neon.a libparpar_hasher_neoncrc.a libparpar_hasher_sve2.a
@@ -66,7 +69,7 @@ libparpar_gf16_a_SOURCES = \
 	parpar/gf16/gf_add_generic.c \
 	parpar/gf16/gf16_cksum_generic.c
 libparpar_gf16_a_CFLAGS = -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
-libparpar_gf16_a_CPPFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include -DPARPAR_INVERT_SUPPORT -DPARPAR_SLIM_GF16
+libparpar_gf16_a_CPPFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include $(AM_CPPFLAGS)
 libparpar_gf16_a_CXXFLAGS = -std=c++11
 
 libparpar_gf16_sse2_a_SOURCES = \
@@ -74,46 +77,46 @@ libparpar_gf16_sse2_a_SOURCES = \
 	parpar/gf16/gf16_lookup_sse2.c \
 	parpar/gf16/gf_add_sse2.c \
 	parpar/gf16/gf16_cksum_sse2.c
-libparpar_gf16_sse2_a_CFLAGS = $(CFLAGS_SSE2) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_sse2_a_CFLAGS = $(CFLAGS_SSE2) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_ssse3_a_SOURCES = \
 	parpar/gf16/gf16_shuffle_ssse3.c
-libparpar_gf16_ssse3_a_CFLAGS = $(CFLAGS_SSSE3) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_ssse3_a_CFLAGS = $(CFLAGS_SSSE3) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_avx_a_SOURCES = \
 	parpar/gf16/gf16_shuffle_avx.c
-libparpar_gf16_avx_a_CFLAGS = $(CFLAGS_AVX) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_avx_a_CFLAGS = $(CFLAGS_AVX) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_avx2_a_SOURCES = \
 	parpar/gf16/gf16_xor_avx2.c \
 	parpar/gf16/gf16_shuffle_avx2.c \
 	parpar/gf16/gf_add_avx2.c \
 	parpar/gf16/gf16_cksum_avx2.c
-libparpar_gf16_avx2_a_CFLAGS = $(CFLAGS_AVX2) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_avx2_a_CFLAGS = $(CFLAGS_AVX2) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_avx512_a_SOURCES = \
 	parpar/gf16/gf16_xor_avx512.c \
 	parpar/gf16/gf16_shuffle_avx512.c \
 	parpar/gf16/gf_add_avx512.c \
 	parpar/gf16/gf16_cksum_avx512.c
-libparpar_gf16_avx512_a_CFLAGS = $(CFLAGS_AVX512) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_avx512_a_CFLAGS = $(CFLAGS_AVX512) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_vbmi_a_SOURCES = \
 	parpar/gf16/gf16_shuffle_vbmi.c
-libparpar_gf16_vbmi_a_CFLAGS = $(CFLAGS_VBMI) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_vbmi_a_CFLAGS = $(CFLAGS_VBMI) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_gfni_a_SOURCES = \
 	parpar/gf16/gf16_affine_gfni.c
-libparpar_gf16_gfni_a_CFLAGS = $(CFLAGS_GFNI) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_gfni_a_CFLAGS = $(CFLAGS_GFNI) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_gfni_avx2_a_SOURCES = \
 	parpar/gf16/gf16_affine_avx2.c \
 	parpar/src/platform_warnings.c
-libparpar_gf16_gfni_avx2_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX2) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_gfni_avx2_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX2) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_gfni_avx512_a_SOURCES = \
 	parpar/gf16/gf16_affine_avx512.c
-libparpar_gf16_gfni_avx512_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX512) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_gfni_avx512_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX512) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_clmul_a_SOURCES = parpar/gf16/gf16pmul_sse.c
 libparpar_gf16_clmul_a_CFLAGS = $(CFLAGS_PCLMUL)
@@ -130,17 +133,17 @@ libparpar_gf16_neon_a_SOURCES = \
 	parpar/gf16/gf_add_neon.c \
 	parpar/gf16/gf16_cksum_neon.c \
 	parpar/gf16/gf16pmul_neon.c
-libparpar_gf16_neon_a_CFLAGS = $(CFLAGS_NEON) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_neon_a_CFLAGS = $(CFLAGS_NEON) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_neonsha3_a_SOURCES = \
 	parpar/gf16/gf16_clmul_sha3.c
-libparpar_gf16_neonsha3_a_CFLAGS = $(CFLAGS_NEONSHA3) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_neonsha3_a_CFLAGS = $(CFLAGS_NEONSHA3) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_sve_a_SOURCES = \
 	parpar/gf16/gf16_shuffle128_sve.c \
 	parpar/gf16/gf_add_sve.c \
 	parpar/gf16/gf16_cksum_sve.c
-libparpar_gf16_sve_a_CFLAGS = $(CFLAGS_SVE) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_sve_a_CFLAGS = $(CFLAGS_SVE) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_sve2_a_SOURCES = \
 	parpar/gf16/gf16_shuffle128_sve2.c \
@@ -149,7 +152,7 @@ libparpar_gf16_sve2_a_SOURCES = \
 	parpar/gf16/gf16_clmul_sve2.c \
 	parpar/gf16/gf_add_sve2.c \
 	parpar/gf16/gf16pmul_sve2.c
-libparpar_gf16_sve2_a_CFLAGS = $(CFLAGS_SVE2) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_sve2_a_CFLAGS = $(CFLAGS_SVE2) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_rvv_a_SOURCES = \
 	parpar/gf16/gf16_cksum_rvv.c \
@@ -212,9 +215,6 @@ par2_SOURCES = src/par2cmdline.cpp \
 par2_LDADD = libpar2.a -lstdc++ $(PTHREAD_LIBS) $(LDFLAGS_LIBATOMIC)
 
 LDADD = -lstdc++ $(PTHREAD_LIBS) $(LDFLAGS_LIBATOMIC)
-AM_CPPFLAGS = -Wall -DNDEBUG
-AM_CXXFLAGS = $(PTHREAD_CFLAGS)
-AM_CPPFLAGS = -DPARPAR_ENABLE_HASHER_MD5CRC
 
 EXTRA_DIST = ROADMAP \
 			 man/par2.1 \
