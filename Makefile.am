@@ -22,6 +22,9 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 .DELETE_ON_ERROR:
 
+AM_CPPFLAGS = -Wall -DPARPAR_ENABLE_HASHER_MD5CRC -DPARPAR_INVERT_SUPPORT -DPARPAR_SLIM_GF16
+AM_CXXFLAGS = -std=c++11 $(PTHREAD_CFLAGS)
+
 noinst_LIBRARIES = libpar2.a \
 	libparpar_gf16.a libparpar_gf16_sse2.a libparpar_gf16_ssse3.a libparpar_gf16_avx.a libparpar_gf16_avx2.a libparpar_gf16_avx512.a libparpar_gf16_vbmi.a libparpar_gf16_gfni.a libparpar_gf16_gfni_avx2.a libparpar_gf16_gfni_avx512.a libparpar_gf16_clmul.a libparpar_gf16_avx2_clmul.a libparpar_gf16_vpclmul.a libparpar_gf16_vpclgfni.a libparpar_gf16_neon.a libparpar_gf16_neonsha3.a libparpar_gf16_sve.a libparpar_gf16_sve2.a libparpar_gf16_rvv.a \
 	libparpar_hasher.a libparpar_hasher_sse2.a libparpar_hasher_clmul.a libparpar_hasher_xop.a libparpar_hasher_bmi1.a libparpar_hasher_avx2.a libparpar_hasher_avx512.a libparpar_hasher_avx512vl.a libparpar_hasher_armcrc.a libparpar_hasher_neon.a libparpar_hasher_neoncrc.a libparpar_hasher_sve2.a
@@ -66,7 +69,7 @@ libparpar_gf16_a_SOURCES = \
 	parpar/gf16/gf_add_generic.c \
 	parpar/gf16/gf16_cksum_generic.c
 libparpar_gf16_a_CFLAGS = -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
-libparpar_gf16_a_CPPFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include -DPARPAR_INVERT_SUPPORT -DPARPAR_SLIM_GF16
+libparpar_gf16_a_CPPFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include $(AM_CPPFLAGS)
 libparpar_gf16_a_CXXFLAGS = -std=c++11
 
 libparpar_gf16_sse2_a_SOURCES = \
@@ -212,8 +215,6 @@ par2_SOURCES = src/par2cmdline.cpp \
 par2_LDADD = libpar2.a
 
 LDADD = -lstdc++
-AM_CXXFLAGS = -Wall -std=c++11 $(OPENMP_CXXFLAGS)
-AM_CPPFLAGS = -DPARPAR_ENABLE_HASHER_MD5CRC
 
 EXTRA_DIST = PORTING ROADMAP \
 			 man/par2.1 \
