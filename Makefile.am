@@ -77,46 +77,46 @@ libparpar_gf16_sse2_a_SOURCES = \
 	parpar/gf16/gf16_lookup_sse2.c \
 	parpar/gf16/gf_add_sse2.c \
 	parpar/gf16/gf16_cksum_sse2.c
-libparpar_gf16_sse2_a_CFLAGS = $(CFLAGS_SSE2) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_sse2_a_CFLAGS = $(CFLAGS_SSE2) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_ssse3_a_SOURCES = \
 	parpar/gf16/gf16_shuffle_ssse3.c
-libparpar_gf16_ssse3_a_CFLAGS = $(CFLAGS_SSSE3) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_ssse3_a_CFLAGS = $(CFLAGS_SSSE3) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_avx_a_SOURCES = \
 	parpar/gf16/gf16_shuffle_avx.c
-libparpar_gf16_avx_a_CFLAGS = $(CFLAGS_AVX) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_avx_a_CFLAGS = $(CFLAGS_AVX) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_avx2_a_SOURCES = \
 	parpar/gf16/gf16_xor_avx2.c \
 	parpar/gf16/gf16_shuffle_avx2.c \
 	parpar/gf16/gf_add_avx2.c \
 	parpar/gf16/gf16_cksum_avx2.c
-libparpar_gf16_avx2_a_CFLAGS = $(CFLAGS_AVX2) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_avx2_a_CFLAGS = $(CFLAGS_AVX2) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_avx512_a_SOURCES = \
 	parpar/gf16/gf16_xor_avx512.c \
 	parpar/gf16/gf16_shuffle_avx512.c \
 	parpar/gf16/gf_add_avx512.c \
 	parpar/gf16/gf16_cksum_avx512.c
-libparpar_gf16_avx512_a_CFLAGS = $(CFLAGS_AVX512) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_avx512_a_CFLAGS = $(CFLAGS_AVX512) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_vbmi_a_SOURCES = \
 	parpar/gf16/gf16_shuffle_vbmi.c
-libparpar_gf16_vbmi_a_CFLAGS = $(CFLAGS_VBMI) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_vbmi_a_CFLAGS = $(CFLAGS_VBMI) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_gfni_a_SOURCES = \
 	parpar/gf16/gf16_affine_gfni.c
-libparpar_gf16_gfni_a_CFLAGS = $(CFLAGS_GFNI) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_gfni_a_CFLAGS = $(CFLAGS_GFNI) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_gfni_avx2_a_SOURCES = \
 	parpar/gf16/gf16_affine_avx2.c \
 	parpar/src/platform_warnings.c
-libparpar_gf16_gfni_avx2_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX2) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_gfni_avx2_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX2) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_gfni_avx512_a_SOURCES = \
 	parpar/gf16/gf16_affine_avx512.c
-libparpar_gf16_gfni_avx512_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX512) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_gfni_avx512_a_CFLAGS = $(CFLAGS_GFNI) $(CFLAGS_AVX512) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_clmul_a_SOURCES = parpar/gf16/gf16pmul_sse.c
 libparpar_gf16_clmul_a_CFLAGS = $(CFLAGS_PCLMUL)
@@ -133,17 +133,17 @@ libparpar_gf16_neon_a_SOURCES = \
 	parpar/gf16/gf_add_neon.c \
 	parpar/gf16/gf16_cksum_neon.c \
 	parpar/gf16/gf16pmul_neon.c
-libparpar_gf16_neon_a_CFLAGS = $(CFLAGS_NEON) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_neon_a_CFLAGS = $(CFLAGS_NEON) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_neonsha3_a_SOURCES = \
 	parpar/gf16/gf16_clmul_sha3.c
-libparpar_gf16_neonsha3_a_CFLAGS = $(CFLAGS_NEONSHA3) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_neonsha3_a_CFLAGS = $(CFLAGS_NEONSHA3) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_sve_a_SOURCES = \
 	parpar/gf16/gf16_shuffle128_sve.c \
 	parpar/gf16/gf_add_sve.c \
 	parpar/gf16/gf16_cksum_sve.c
-libparpar_gf16_sve_a_CFLAGS = $(CFLAGS_SVE) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_sve_a_CFLAGS = $(CFLAGS_SVE) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_sve2_a_SOURCES = \
 	parpar/gf16/gf16_shuffle128_sve2.c \
@@ -152,7 +152,7 @@ libparpar_gf16_sve2_a_SOURCES = \
 	parpar/gf16/gf16_clmul_sve2.c \
 	parpar/gf16/gf_add_sve2.c \
 	parpar/gf16/gf16pmul_sve2.c
-libparpar_gf16_sve2_a_CFLAGS = $(CFLAGS_SVE2) -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_sve2_a_CFLAGS = $(CFLAGS_SVE2) $(libparpar_gf16_a_CFLAGS)
 
 libparpar_gf16_rvv_a_SOURCES = \
 	parpar/gf16/gf16_cksum_rvv.c \
