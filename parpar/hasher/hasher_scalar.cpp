@@ -19,17 +19,15 @@
 #define md5mb_alignment md5mb_alignment_scalar
 #define CLEAR_VEC (void)0
 
-#include "hasher_base.h"
+#include "hasher_input_base.h"
+#include "hasher_md5crc_base.h"
+#include "hasher_md5mb_base.h"
 
 
-#undef HasherInput
-#undef MD5SingleVer
-#undef MD5CRC
-#undef CRC32Impl
 #undef MD5Multi
 #undef _FNMD5mb2
 #define MD5Multi MD5Multi2_Scalar
 #define _FNMD5mb2(f) f##2_scalar
 #define md5mb_interleave 2
 
-#include "hasher_base.h"
+#include "hasher_md5mb_base.h"

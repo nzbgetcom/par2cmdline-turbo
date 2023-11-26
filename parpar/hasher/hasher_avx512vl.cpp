@@ -13,14 +13,12 @@
 # include "crc_clmul.h"
 # include "md5x2-sse.h"
 # include "md5-avx512.h"
-# include "hasher_base.h"
+# include "hasher_input_base.h"
+# include "hasher_md5crc_base.h"
 #else
-# include "hasher_stub.h"
+# include "hasher_input_stub.h"
+# include "hasher_md5crc_stub.h"
 #endif
-
-#undef MD5SingleVer
-#undef MD5CRC
-#undef HasherInput
 
 
 #define MD5Multi MD5Multi_AVX512_128
@@ -32,9 +30,9 @@
 
 #if defined(__AVX512VL__) && defined(__AVX512BW__)
 # include "md5mb-sse.h"
-# include "hasher_base.h"
+# include "hasher_md5mb_base.h"
 #else
-# include "hasher_stub.h"
+# include "hasher_md5mb_stub.h"
 #endif
 
 #undef MD5Multi
@@ -52,8 +50,8 @@
 #define CLEAR_VEC _mm256_zeroupper()
 
 #if defined(__AVX512VL__) && defined(__AVX512BW__)
-# include "hasher_base.h"
+# include "hasher_md5mb_base.h"
 #else
-# include "hasher_stub.h"
+# include "hasher_md5mb_stub.h"
 #endif
 

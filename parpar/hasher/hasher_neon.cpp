@@ -15,12 +15,13 @@
 #ifdef __ARM_NEON
 # include "md5x2-neon.h"
 # include "md5mb-neon.h"
-# include "hasher_base.h"
+# include "hasher_input_base.h"
+# include "hasher_md5mb_base.h"
 #else
-# include "hasher_stub.h"
+# include "hasher_input_stub.h"
+# include "hasher_md5mb_stub.h"
 #endif
 
-#undef HasherInput
 #undef MD5Multi
 #undef _FNMD5mb2
 #define MD5Multi MD5Multi2_NEON
@@ -28,7 +29,7 @@
 #define md5mb_interleave 2
 
 #ifdef __ARM_NEON
-# include "hasher_base.h"
+# include "hasher_md5mb_base.h"
 #else
-# include "hasher_stub.h"
+# include "hasher_md5mb_stub.h"
 #endif

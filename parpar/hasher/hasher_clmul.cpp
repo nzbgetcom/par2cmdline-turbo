@@ -8,9 +8,9 @@
 #if defined(__PCLMUL__) && defined(__SSSE3__) && defined(__SSE4_1__)
 # include "crc_clmul.h"
 # include "md5x2-sse.h"
-# include "hasher_base.h"
+# include "hasher_input_base.h"
 #else
-# include "hasher_stub.h"
+# include "hasher_input_stub.h"
 #endif
 
 #undef HasherInput
@@ -24,13 +24,13 @@
 #if defined(__PCLMUL__) && defined(__SSSE3__) && defined(__SSE4_1__)
 # include "md5x2-scalar.h"
 # include "md5-scalar.h"
-# include "hasher_base.h"
+# include "hasher_input_base.h"
+# include "hasher_md5crc_base.h"
 #else
-# include "hasher_stub.h"
+# include "hasher_input_stub.h"
+# include "hasher_md5crc_stub.h"
 #endif
 
-#undef HasherInput
-#undef _FNMD5x2
 #undef MD5CRC
 #undef _FNMD5
 #undef CRC32Impl
@@ -41,7 +41,7 @@
 #define _FNMD5(f) f##_nolea
 
 #if defined(__PCLMUL__) && defined(__SSSE3__) && defined(__SSE4_1__) && defined(MD5_HAS_NOLEA)
-# include "hasher_base.h"
+# include "hasher_md5crc_base.h"
 #else
-# include "hasher_stub.h"
+# include "hasher_md5crc_stub.h"
 #endif
