@@ -58,8 +58,6 @@ libpar2_a_LIBADD = parpar/gf16/libparpar_gf16*.o parpar/hasher/libparpar_hasher*
 libparpar_gf16_a_SOURCES = \
 	parpar/gf16/controller.cpp \
 	parpar/gf16/controller_cpu.cpp \
-	parpar/gf16/controller_ocl.cpp \
-	parpar/gf16/opencl-include/cl.c \
 	parpar/gf16/gfmat_coeff.c \
 	parpar/gf16/gfmat_inv.cpp \
 	parpar/gf16/gf16pmul.cpp \
@@ -67,9 +65,9 @@ libparpar_gf16_a_SOURCES = \
 	parpar/gf16/gf16_lookup.c \
 	parpar/gf16/gf_add_generic.c \
 	parpar/gf16/gf16_cksum_generic.c
-libparpar_gf16_a_CFLAGS = -std=c99 -DPARPAR_INVERT_SUPPORT $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
-libparpar_gf16_a_CPPFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include
-libparpar_gf16_a_CXXFLAGS = -DPARPAR_INVERT_SUPPORT
+libparpar_gf16_a_CFLAGS = -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_a_CPPFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include -DPARPAR_INVERT_SUPPORT -DPARPAR_SLIM_GF16
+libparpar_gf16_a_CXXFLAGS = -std=c++11
 
 libparpar_gf16_sse2_a_SOURCES = \
 	parpar/gf16/gf16_xor_sse2.c \
@@ -164,6 +162,8 @@ libparpar_hasher_a_SOURCES = \
 	parpar/hasher/crc_zeropad.c \
 	parpar/hasher/hasher.cpp \
 	parpar/hasher/hasher_scalar.cpp \
+	parpar/hasher/hasher_input.cpp \
+	parpar/hasher/hasher_md5crc.cpp \
 	parpar/hasher/md5-final.c
 # these two lines are needed for the right object files to be generated (for some reason)
 libparpar_hasher_a_CFLAGS = -std=c99 $(CFLAGS_POSIX_SOURCE)
@@ -214,6 +214,7 @@ par2_LDADD = libpar2.a -lstdc++ $(PTHREAD_LIBS) $(LDFLAGS_LIBATOMIC)
 LDADD = -lstdc++ $(PTHREAD_LIBS) $(LDFLAGS_LIBATOMIC)
 AM_CPPFLAGS = -Wall -DNDEBUG
 AM_CXXFLAGS = $(PTHREAD_CFLAGS)
+AM_CPPFLAGS = -DPARPAR_ENABLE_HASHER_MD5CRC
 
 EXTRA_DIST = ROADMAP \
 			 man/par2.1 \
