@@ -67,9 +67,9 @@ libparpar_gf16_a_SOURCES = \
 	parpar/gf16/gf16_lookup.c \
 	parpar/gf16/gf_add_generic.c \
 	parpar/gf16/gf16_cksum_generic.c
-libparpar_gf16_a_CFLAGS = -std=c99 -DPARPAR_INVERT_SUPPORT $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
-libparpar_gf16_a_CPPFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include
-libparpar_gf16_a_CXXFLAGS = -std=c++11 -DPARPAR_INVERT_SUPPORT
+libparpar_gf16_a_CFLAGS = -std=c99 $(CFLAGS_POSIX_SOURCE) -D_DARWIN_C_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
+libparpar_gf16_a_CPPFLAGS = -Iparpar/gf16 -Iparpar/gf16/opencl-include -DPARPAR_INVERT_SUPPORT -DPARPAR_SLIM_GF16
+libparpar_gf16_a_CXXFLAGS = -std=c++11
 
 libparpar_gf16_sse2_a_SOURCES = \
 	parpar/gf16/gf16_xor_sse2.c \
@@ -168,6 +168,7 @@ libparpar_hasher_a_SOURCES = \
 # these two lines are needed for the right object files to be generated (for some reason)
 libparpar_hasher_a_CFLAGS = -std=c99 $(CFLAGS_POSIX_SOURCE)
 libparpar_hasher_a_CXXFLAGS = -std=c++11
+libparpar_hasher_a_CPPFLAGS = -DPARPAR_ENABLE_HASHER_MD5CRC
 
 libparpar_hasher_sse2_a_SOURCES = parpar/hasher/hasher_sse.cpp
 libparpar_hasher_sse2_a_CXXFLAGS = $(CFLAGS_SSE2)
