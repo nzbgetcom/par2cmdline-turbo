@@ -104,6 +104,8 @@
     <ClCompile Include="hasher\crc_zeropad.c" />
     <ClCompile Include="hasher\hasher.cpp" />
     <ClCompile Include="hasher\hasher_scalar.cpp" />
+    <ClCompile Include="hasher\hasher_input.cpp" />
+    <ClCompile Include="hasher\hasher_md5crc.cpp" />
     <ClCompile Include="hasher\md5-final.c" />
     <ClCompile Include="hasher/hasher_sse.cpp">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -162,8 +164,15 @@
     <ClInclude Include="hasher\crc_slice4.h" />
     <ClInclude Include="hasher\crc_zeropad.h" />
     <ClInclude Include="hasher\hasher.h" />
-    <ClInclude Include="hasher\hasher_base.h" />
-    <ClInclude Include="hasher\hasher_impl.h" />
+    <ClInclude Include="hasher\hasher_input.h" />
+    <ClInclude Include="hasher\hasher_input_base.h" />
+    <ClInclude Include="hasher\hasher_input_impl.h" />
+    <ClInclude Include="hasher\hasher_input_stub.h" />
+    <ClInclude Include="hasher\hasher_md5crc.h" />
+    <ClInclude Include="hasher\hasher_md5crc_base.h" />
+    <ClInclude Include="hasher\hasher_md5crc_impl.h" />
+    <ClInclude Include="hasher\hasher_md5crc_stub.h" />
+    <ClInclude Include="hasher\hasher_stub.h" />
     <ClInclude Include="hasher\hasher_stub.h" />
     <ClInclude Include="hasher\md5-avx512.h" />
     <ClInclude Include="hasher\md5-base.h" />

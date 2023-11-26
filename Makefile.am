@@ -58,8 +58,6 @@ libpar2_a_LIBADD = parpar/gf16/libparpar_gf16*.o parpar/hasher/libparpar_hasher*
 libparpar_gf16_a_SOURCES = \
 	parpar/gf16/controller.cpp \
 	parpar/gf16/controller_cpu.cpp \
-	parpar/gf16/controller_ocl.cpp \
-	parpar/gf16/opencl-include/cl.c \
 	parpar/gf16/gfmat_coeff.c \
 	parpar/gf16/gfmat_inv.cpp \
 	parpar/gf16/gf16pmul.cpp \
@@ -164,11 +162,12 @@ libparpar_hasher_a_SOURCES = \
 	parpar/hasher/crc_zeropad.c \
 	parpar/hasher/hasher.cpp \
 	parpar/hasher/hasher_scalar.cpp \
+	parpar/hasher/hasher_input.cpp \
+	parpar/hasher/hasher_md5crc.cpp \
 	parpar/hasher/md5-final.c
 # these two lines are needed for the right object files to be generated (for some reason)
 libparpar_hasher_a_CFLAGS = -std=c99 $(CFLAGS_POSIX_SOURCE)
 libparpar_hasher_a_CXXFLAGS = -std=c++11
-libparpar_hasher_a_CPPFLAGS = -DPARPAR_ENABLE_HASHER_MD5CRC
 
 libparpar_hasher_sse2_a_SOURCES = parpar/hasher/hasher_sse.cpp
 libparpar_hasher_sse2_a_CXXFLAGS = $(CFLAGS_SSE2)
@@ -214,6 +213,7 @@ par2_LDADD = libpar2.a
 
 LDADD = -lstdc++
 AM_CXXFLAGS = -Wall -std=c++11 $(OPENMP_CXXFLAGS)
+AM_CPPFLAGS = -DPARPAR_ENABLE_HASHER_MD5CRC
 
 EXTRA_DIST = PORTING ROADMAP \
 			 man/par2.1 \
