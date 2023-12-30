@@ -102,7 +102,7 @@ jobs:
           configure_host: --host=riscv64-linux-gnu
         - arch: ppc64el
           xz_bcj:
-          xcc: powerpc64-linux-gnu-
+          xcc: powerpc64le-linux-gnu-
           configure_host: --host=ppc64-linux-gnu
     name: Build ${{ matrix.arch }} Linux static binary
     runs-on: ubuntu-latest
