@@ -129,9 +129,15 @@ jobs:
 
   build-mac-arm64:
     name: Build arm64 MacOS binary
-    # avoid OpenSSL 3.0.2 on 22.04: https://github.com/tpoechtrager/osxcross/issues/349
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
+      # workaround issue with OpenSSL 3.0.2 on 22.04: https://github.com/tpoechtrager/osxcross/issues/349
+      # issue is fixed in 3.0.7, so grab 3.0.8 from Ubuntu 23.04
+      - run: |
+          echo 'deb http://archive.ubuntu.com/ubuntu/ lunar main' >>/etc/apt/sources.list.d/lunar.list
+          echo 'APT::Default-Release "jammy";' >>/etc/apt/apt.conf
+          apt update
+          apt -t=lunar -y install openssl
       - uses: mbround18/setup-osxcross@main  # OSXCROSS_TARGET unavailable in v1.1
         with:
           osx-version: "12.3"
