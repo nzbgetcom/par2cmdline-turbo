@@ -141,8 +141,8 @@ Result Par2Creator::Process(
 
   // If there aren't many input blocks, restrict the submission batch size
   u32 inputbatch = 0;
-  if (sourceblockcount < NUM_PARPAR_BUFFERS)
-    inputbatch = sourceblockcount;
+  if (sourceblockcount < NUM_PARPAR_BUFFERS*2)
+    inputbatch = (sourceblockcount + 1) / 2;
   if (!parparcpu.init(GF16_AUTO, inputbatch))
     return eMemoryError;
 
@@ -317,7 +317,7 @@ bool Par2Creator::CalculateProcessBlockSize(size_t memorylimit)
   else
   {
     // We use intermediary buffers to transfer data with, so include those in the limit calculation
-    u32 blockoverhead = NUM_TRANSFER_BUFFERS + NUM_PARPAR_BUFFERS;
+    u32 blockoverhead = NUM_TRANSFER_BUFFERS + min((u32)NUM_PARPAR_BUFFERS*2, sourceblockcount+1);
 
     // Would single pass processing use too much memory
     if (blocksize * (recoveryblockcount + blockoverhead) > memorylimit)
