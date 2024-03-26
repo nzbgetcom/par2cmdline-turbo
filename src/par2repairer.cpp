@@ -2481,6 +2481,12 @@ bool Par2Repairer::AllocateBuffers(size_t memorylimit)
     chunksize = (size_t)blocksize;
   }
 
+  if (MAX_CHUNK_SIZE && chunksize > MAX_CHUNK_SIZE)
+    chunksize = MAX_CHUNK_SIZE;
+
+  if (noiselevel >= nlDebug)
+    sout << "[DEBUG] Process chunk size: " << chunksize << endl;
+
   // Allocate buffer
   transferbuffer = new u8[(size_t)chunksize * NUM_TRANSFER_BUFFERS];
 

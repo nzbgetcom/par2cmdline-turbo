@@ -192,6 +192,7 @@ char *strchr(), *strrchr();
 #define _FILE_THREADS 2
 #define NUM_TRANSFER_BUFFERS 2 // must be >= 2
 #define NUM_PARPAR_BUFFERS 12 // maximum number of internal ParPar staging buffers
+#define MAX_CHUNK_SIZE 32*1048576 // too large chunks are likely detrimental to performance; set to 0 to disable
 
 #define LONGMULTIPLY
 
