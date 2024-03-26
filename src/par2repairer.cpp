@@ -275,7 +275,7 @@ Result Par2Repairer::Process(
 
         // If there aren't many input blocks, restrict the submission batch size
         u32 inputbatch = 0;
-        if (sourceblockcount < 12)
+        if (sourceblockcount < NUM_PARPAR_BUFFERS)
           inputbatch = sourceblockcount;
 
         if (!parparcpu.init(GF16_AUTO, inputbatch) || !parpar.setRecoverySlices(missingblockcount))
@@ -2510,11 +2510,14 @@ bool Par2Repairer::ComputeRSmatrix(void)
 // Allocate memory buffers for reading and writing data to disk.
 bool Par2Repairer::AllocateBuffers(size_t memorylimit)
 {
+  // We use intermediary buffers to transfer data with, so include those in the limit calculation
+  u32 blockoverhead = NUM_TRANSFER_BUFFERS + NUM_PARPAR_BUFFERS;
+
   // Would single pass processing use too much memory
-  if (blocksize * missingblockcount > memorylimit)
+  if (blocksize * (missingblockcount + blockoverhead) > memorylimit)
   {
     // Pick a size that is small enough
-    chunksize = ~3 & (memorylimit / missingblockcount);
+    chunksize = ~3 & (memorylimit / (missingblockcount + blockoverhead));
   }
   else
   {

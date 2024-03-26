@@ -190,7 +190,8 @@ char *strchr(), *strrchr();
 #endif
 
 #define _FILE_THREADS 2
-#define NUM_TRANSFER_BUFFERS 4 // must be >= 2
+#define NUM_TRANSFER_BUFFERS 2 // must be >= 2
+#define NUM_PARPAR_BUFFERS 12 // maximum number of internal ParPar staging buffers
 
 #define LONGMULTIPLY
 
