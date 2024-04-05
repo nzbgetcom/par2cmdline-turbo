@@ -91,6 +91,7 @@ static HEDLEY_ALWAYS_INLINE void gf_add_x_neon(
 }
 #endif
 
+#ifdef PARPAR_INCLUDE_BASIC_OPS
 void gf_add_multi_neon(unsigned regions, size_t offset, void *HEDLEY_RESTRICT dst, const void* const*HEDLEY_RESTRICT src, size_t len) {
 #ifdef __ARM_NEON
 	gf16_muladd_multi(NULL, &gf_add_x_neon, 4, regions, offset, dst, src, len, NULL);
@@ -100,7 +101,7 @@ void gf_add_multi_neon(unsigned regions, size_t offset, void *HEDLEY_RESTRICT ds
 }
 
 void gf_add_multi_packed_shuffle_neon(unsigned packedRegions, unsigned regions, void *HEDLEY_RESTRICT dst, const void* HEDLEY_RESTRICT src, size_t len) {
-#ifdef __ARM_NEON
+#if defined(__ARM_NEON) && !defined(PARPAR_SLIM_GF16)
 # ifdef __aarch64__
 	gf16_muladd_multi_packed(NULL, &gf_add_x_neon, 2, 8, packedRegions, regions, dst, src, len, sizeof(uint8x16_t)*2, NULL);
 # else
@@ -121,9 +122,10 @@ void gf_add_multi_packed_clmul_neon(unsigned packedRegions, unsigned regions, vo
 	UNUSED(packedRegions); UNUSED(regions); UNUSED(dst); UNUSED(src); UNUSED(len);
 #endif
 }
+#endif
 
 void gf_add_multi_packpf_shuffle_neon(unsigned packedRegions, unsigned regions, void *HEDLEY_RESTRICT dst, const void* HEDLEY_RESTRICT src, size_t len, const void* HEDLEY_RESTRICT prefetchIn, const void* HEDLEY_RESTRICT prefetchOut) {
-#ifdef __ARM_NEON
+#if defined(__ARM_NEON) && !defined(PARPAR_SLIM_GF16)
 # ifdef __aarch64__
 	gf16_muladd_multi_packpf(NULL, &gf_add_x_neon, 2, 8, packedRegions, regions, dst, src, len, sizeof(uint8x16_t)*2, NULL, 1, prefetchIn, prefetchOut);
 # else

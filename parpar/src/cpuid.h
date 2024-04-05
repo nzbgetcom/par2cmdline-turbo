@@ -33,6 +33,17 @@
 # define CPU_MODEL_IS_GLM(model) ((model == 0x5C || model == 0x5F) || (model == 0x7A))
 //  Tremont
 # define CPU_MODEL_IS_TMT(model) (model == 0x86 || model == 0x96 || model == 0x9C)
+// Sandy Bridge to Cannonlake
+# define CPU_MODEL_IS_SNB_CNL(model) ( \
+	(model == 0x2A || model == 0x2D) /*Sandy Bridge*/ \
+	|| (model == 0x3A || model == 0x3E) /*Ivy Bridge*/ \
+	|| (model == 0x3C || model == 0x3F || model == 0x45 || model == 0x46) /*Haswell*/ \
+	|| (model == 0x3D || model == 0x47 || model == 0x4F || model == 0x56) /*Broadwell*/ \
+	|| (model == 0x4E || model == 0x5E || model == 0x8E || model == 0x9E || model == 0xA5 || model == 0xA6) /*Skylake*/ \
+	|| (model == 0x55) /*Skylake-X/Cascadelake/Cooper*/ \
+	|| (model == 0x66) /*Cannonlake*/ \
+	|| (model == 0x67) /*Skylake/Cannonlake?*/ \
+)
 
 // AMD Fam 14h (Bobcat) and 16h (Jaguar/Puma)
 # define CPU_FAMMDL_IS_AMDCAT(family, model) ((family == 0x5f && (model == 0 || model == 1 || model == 2)) || (family == 0x6f && (model == 0 || model == 0x10 || model == 0x20 || model == 0x30)))
@@ -121,15 +132,16 @@ static unsigned long getauxval(unsigned long cap) {
 #   endif
 #  elif defined(_WIN32)
 #   undef CPU_HAS_NEON
-#   undef CPU_HAS_ARMCRC
 #   define CPU_HAS_NEON (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
+#   undef CPU_HAS_ARMCRC
 #   define CPU_HAS_ARMCRC (IsProcessorFeaturePresent(PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE))
 #  elif defined(__APPLE__)
 #   undef CPU_HAS_NEON
-#   undef CPU_HAS_ARMCRC
 #   define CPU_HAS_NEON (cpuHasFeature("hw.optional.neon"))
+#   undef CPU_HAS_ARMCRC
 #   define CPU_HAS_ARMCRC (cpuHasFeature("hw.optional.armv8_crc32"))
-#   define CPU_HAS_NEON_SHA3 (cpuHasFeature("hw.optional.armv8_2_sha3"))
+#   undef CPU_HAS_NEON_SHA3
+#   define CPU_HAS_NEON_SHA3 (cpuHasFeature("hw.optional.armv8_2_sha3") || cpuHasFeature("hw.optional.arm.FEAT_SHA3"))
 	static inline bool cpuHasFeature(const char* feature) {
 		int supported = 0;
 		size_t len = sizeof(supported);
@@ -157,20 +169,52 @@ static unsigned long getauxval(unsigned long cap) {
 #    include <asm/hwcap.h>
 #   endif
 #  endif
+#  if __has_include(<asm/hwprobe.h>)
+#   include <asm/hwprobe.h>
+#   include <asm/unistd.h>
+#   include <unistd.h>
+#  endif
 # endif
 
 # ifdef PARPAR_SKIP_AUX_CHECK
 #  define CPU_HAS_GC true
 #  define CPU_HAS_VECTOR true
+#  define CPU_HAS_Zvbc true
+#  define CPU_HAS_Zbkc true
 # else
 #  define CPU_HAS_GC false
 #  define CPU_HAS_VECTOR false
+#  define CPU_HAS_Zvbc false
+#  define CPU_HAS_Zbkc false
 
 #  if defined(AT_HWCAP)
 #   undef CPU_HAS_GC
 #   define CPU_HAS_GC ((getauxval(AT_HWCAP) & 4397) == 4397) // 4397 = IMAFDC; TODO: how to detect Z* features of 'G'?
 #   undef CPU_HAS_VECTOR
 #   define CPU_HAS_VECTOR (getauxval(AT_HWCAP) & (1 << ('V'-'A')))
+#  endif
+#  ifdef RISCV_HWPROBE_KEY_IMA_EXT_0
+#   undef CPU_HAS_Zvbc
+#   undef CPU_HAS_Zbkc
+static uint64_t pp_hwprobe(uint64_t k) {
+	struct riscv_hwprobe p;
+	p.key = k;
+	if(syscall(__NR_riscv_hwprobe, &p, 1, 0, NULL, 0)) return 0;
+	return p.value;
+}
+// Linux RISC-V extension constants: https://github.com/torvalds/linux/blob/master/arch/riscv/include/uapi/asm/hwprobe.h
+#   define CPU_HAS_Zvbc (pp_hwprobe(RISCV_HWPROBE_KEY_IMA_EXT_0) & (1 << 18) /*RISCV_HWPROBE_EXT_ZVBC*/)
+#   define CPU_HAS_Zbkc (pp_hwprobe(RISCV_HWPROBE_KEY_IMA_EXT_0) & ((1 << 7) /*RISCV_HWPROBE_EXT_ZBC*/ | (1 << 9) /*RISCV_HWPROBE_EXT_ZBKC*/))
+#  else
+#   ifdef RISCV_ISA_EXT_ZVBC
+// TODO: RISCV_ISA_EXT_ZVBC is defined as 57 -> this doesn't work on RV32? [ref https://github.com/torvalds/linux/blob/master/arch/riscv/include/asm/hwcap.h]
+#    undef CPU_HAS_Zvbc
+#    define CPU_HAS_Zvbc (getauxval(AT_HWCAP) & (1 << RISCV_ISA_EXT_ZVBC))
+#   endif
+#   if defined(RISCV_ISA_EXT_ZBC) && defined(RISCV_ISA_EXT_ZBKC)
+#    undef CPU_HAS_Zbkc
+#    define CPU_HAS_Zbkc (getauxval(AT_HWCAP) & ((1 << RISCV_ISA_EXT_ZBC) | (1 << RISCV_ISA_EXT_ZBKC)))
+#   endif
 #  endif
 # endif
 

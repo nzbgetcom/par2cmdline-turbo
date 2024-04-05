@@ -48,18 +48,21 @@ const static char _ocl_defines[] =
 "#endif\n"
 "#if VECT_WIDTH == 1\n"
 " #define VECT_ONE 0x0001u\n"
+" #define SPREAD_POLY(v) (((short)(v) >> 15) & GF16_POLYNOMIAL)\n"
 " #define nat_ushort4 ushort4\n"
 " #define nat_uint ushort\n"
 " #define nat_int short\n"
 " #define NAT_BITS 16\n"
 "#elif VECT_WIDTH == 2\n"
 " #define VECT_ONE 0x00010001ul\n"
+" #define SPREAD_POLY(v) mul24(((v) >> 15) & VECT_ONE, GF16_POLYNOMIAL & 0xffff)\n"
 " #define nat_ushort4 uint2\n"
 " #define nat_uint uint\n"
 " #define nat_int int\n"
 " #define NAT_BITS 32\n"
 "#elif VECT_WIDTH == 4 || VECT_WIDTH == 8\n"
 " #define VECT_ONE (ulong)0x0001000100010001ull\n" // Nvidia driver on Linux for 8400GS seems to need the explicit ulong cast
+" #define SPREAD_POLY(v) ((((v) >> 15) & VECT_ONE) * (GF16_POLYNOMIAL & 0xffff))\n"
 " #define nat_ushort4 ulong\n"
 " #define nat_uint ulong\n"
 " #define nat_int long\n"
@@ -101,7 +104,7 @@ const static char _ocl_method_by2[] =
 		val_t res = SHIFT_TOP_BIT(btmp) & a;
 		) "\n#pragma unroll\n" STRINGIFY(
 		for(int i=0; i<15; i++) {
-			val_t poly = ((res >> 15) & VECT_ONE) * (GF16_POLYNOMIAL & 0xffff);
+			val_t poly = SPREAD_POLY(res);
 			res = ((res + res) & ~VECT_ONE) ^ poly;
 			btmp <<= 1;
 			res ^= SHIFT_TOP_BIT(btmp) & a;
@@ -111,10 +114,15 @@ const static char _ocl_method_by2[] =
 );
 const static char _ocl_method_lh[] =
 "#define LUT_REF(name, idx) ((__local ushort*)(name) + (idx)*512)\n"
+"#define LUT_REF_X2(name, idx) ((__local uint*)(name) + (idx)*512)\n"
 "#define LUT_DECLARATION(name, size) __local ushort name[512 * (size)] __attribute__ ((aligned (VECT_WIDTH*2)))\n"
+"#define LUT_DECLARATION_X2(name, size) __local uint name[512 * (size)] __attribute__ ((aligned (VECT_WIDTH*2)))\n"
+"#define LUT_DECLARATION_X2_1(name, src) __local ushort* name = (__local ushort*)(src)\n"
 "#define LUT_GENERATE compute_lhtable\n"
+"#define LUT_GENERATE_X2 compute_lhtable_x2\n"
 "#define LUT_GENERATE_HAS_BARRIER\n"
 "#define LUT_MULTIPLY lhtable_multiply\n"
+"#define LUT_MULTIPLY_X2 lhtable_multiply_x2\n"
 STRINGIFY(
 	ushort gf16_multiply_256(ushort v) {
 		return (v << 8) ^ mul256poly[v >> 8];
@@ -123,9 +131,22 @@ STRINGIFY(
 	// always writes 4 entries to table
 	// requires val < 256 (used for lhtable calculation)
 	void gf16_multiply_write_lh(__local nat_uint* table, nat_uint val, nat_uint coeff, nat_ushort4 coeff256) {
+		nat_int b = coeff << (NAT_BITS - 16);
+		) "\n#if VECT_WIDTH >= 2\n" STRINGIFY(
+		
+		nat_uint prod = 0;
+		// do a clmul, then use a lookup to do the reduction
+		) "\n#pragma unroll\n" STRINGIFY(
+		for(uint i=1; i<256; i<<=1)
+			prod ^= mul24((uint)(val & i), (uint)coeff);
+		prod ^= mul256poly[prod >> 16];
+		// align to top to be compatible with old code (also conveniently discards upper bits)
+		prod <<= NAT_BITS - 16;
+		
+		) "\n#else\n" STRINGIFY(
+		
 		// align a and b to the top so that the top-bit can be replicated with a single arithmetic right-shift
 		nat_int a = val << (NAT_BITS - 8);
-		nat_int b = coeff << (NAT_BITS - 16);
 		nat_int prod = SHIFT_TOP_BIT(a) & b;
 		) "\n#pragma unroll\n" STRINGIFY(
 		for(int i=0; i<7; i++) {
@@ -134,6 +155,8 @@ STRINGIFY(
 			a <<= 1;
 			prod ^= SHIFT_TOP_BIT(a) & b;
 		}
+		
+		) "\n#endif\n" STRINGIFY(
 		
 		// multiply b by 2 (aligned to top)
 		nat_uint b2 = (b << 1) ^ (SHIFT_TOP_BIT(b) & ((nat_uint)(GF16_POLYNOMIAL & 0xffff) << (NAT_BITS-16)));
@@ -250,6 +273,114 @@ STRINGIFY(
 		return result;
 		) "\n#endif\n" STRINGIFY(
 	}
+	
+	) "\n#if VECT_WIDTH==2 && defined(WRITE_GRP2)\n" STRINGIFY(
+	// LookupGrp2 stuff
+	
+	inline uint lh_mul256_x2(uint val) {
+		uint val256 = upsample(
+			mul256poly[val >> 24],
+			mul256poly[(val >> 8) & 0xff]
+		);
+		return ((val & 0xff00ff) << 8) ^ val256;
+	}
+	
+	// writes two (low+high) entries
+	void gf16_multiply_write_lh_x2(__local nat_uint* table, nat_uint val, uint coeffPair, uint coeff256Pair) {
+		// align `a` to the top so that the top-bit can be replicated with a single arithmetic right-shift
+		nat_int a = val << (NAT_BITS - 8);
+		uint prod = SHIFT_TOP_BIT(a) & coeffPair;
+		) "\n#pragma unroll\n" STRINGIFY(
+		for(int i=0; i<7; i++) {
+			uint poly = SPREAD_POLY(prod);
+			prod = ((prod + prod) & ~VECT_ONE) ^ poly;
+			a <<= 1;
+			prod ^= SHIFT_TOP_BIT(a) & coeffPair;
+		}
+		
+		uint coeff2Pair = ((coeffPair + coeffPair) & ~VECT_ONE) ^ SPREAD_POLY(coeffPair);
+		table[val] = prod;
+		table[val+1] = prod ^ coeffPair;
+		table[val+2] = prod ^ coeff2Pair;
+		table[val+3] = prod ^ coeff2Pair ^ coeffPair;
+		
+		uint coeff512Pair = ((coeff256Pair + coeff256Pair) & ~VECT_ONE) ^ SPREAD_POLY(coeff256Pair);
+		uint prod256 = lh_mul256_x2(prod);
+		table[val + 256] = prod256;
+		table[val + 257] = prod256 ^ coeff256Pair;
+		table[val + 258] = prod256 ^ coeff512Pair;
+		table[val + 259] = prod256 ^ coeff512Pair ^ coeff256Pair;
+		
+		/* dynamic number of entries idea:
+		for(int i=0; i<numEnt; i++) {
+			table[val+i] = prod;
+			table[val+i + 256] = prod256;
+		}
+		uint _coeffPair = coeffPair;
+		uint _coeff256Pair = coeff256Pair;
+		for(int b=1; b<numEnt; b<<=1) {
+			for(int i=b; i<numEnt; i+=b<<1)
+				for(int j=0; j<b; j++) {
+					table[val+i+j] ^= _coeffPair;
+					table[val+i+j + 256] ^= _coeff256Pair;
+				}
+			_coeffPair = ((_coeffPair + _coeffPair) & ~VECT_ONE) ^ SPREAD_POLY(_coeffPair);
+			_coeff256Pair = ((_coeff256Pair + _coeff256Pair) & ~VECT_ONE) ^ SPREAD_POLY(_coeff256Pair);
+		}
+		*/
+	}
+	
+	void compute_lhtable_x2(__local nat_uint* table, __global const ushort* restrict coeffs, const ushort numInputs) {
+		barrier(CLK_LOCAL_MEM_FENCE);
+		
+		const nat_uint localOffset = get_local_id(0)*4;
+		
+		// assume workgroup size is a power of 2
+		) "\n#if COL_GROUP_SIZE*4 > 256\n" STRINGIFY(
+		// process multiple coefficients at a time
+		for(nat_uint coeffBase=0; coeffBase<numInputs; coeffBase+=(COL_GROUP_SIZE*4/256)) {
+			const nat_uint coeffI = coeffBase + localOffset/256;
+			if(coeffI < numInputs) {
+				const ushort coeffA = coeffs[COBUF_REF(0, coeffI)];
+				const ushort coeffB = coeffs[COBUF_REF(1, coeffI)];
+				uint coeff = upsample(coeffB, coeffA);
+				gf16_multiply_write_lh_x2(
+					table + coeffI*512,
+					localOffset & 0xff,
+					coeff,
+					lh_mul256_x2(coeff)
+				);
+			}
+		}
+		
+		) "\n#else\n" STRINGIFY(
+		// process one coefficient at a time
+		
+		for(nat_uint coeffI=0; coeffI<numInputs; coeffI++) {
+			const ushort coeffA = coeffs[COBUF_REF(0, coeffI)];
+			const ushort coeffB = coeffs[COBUF_REF(1, coeffI)];
+			const uint coeffPair = upsample(coeffB, coeffA);
+			const uint coeff256Pair = lh_mul256_x2(coeffPair);
+			__local nat_uint* nat_table = table + coeffI*512;
+			) "\n#pragma unroll\n" STRINGIFY(
+			for(nat_uint valI=0; valI<256; valI+=COL_GROUP_SIZE*4) {
+				gf16_multiply_write_lh_x2(nat_table, valI + localOffset, coeffPair, coeff256Pair);
+			}
+		}
+		
+		) "\n#endif\n" STRINGIFY(
+		
+		barrier(CLK_LOCAL_MEM_FENCE);
+	}
+	
+	inline uint2 lhtable_multiply_x2(__local const nat_uint* table, uint val) {
+		uint val_h = (val>>8) | 0x1000100;
+		return (uint2)(
+			table[val & 0xff] ^ table[val_h & 0x1ff],
+			table[(val>>16) & 0xff] ^ table[val_h>>16]
+		);
+	}
+	) "\n#endif\n" STRINGIFY(
 );
 const static char _ocl_method_ll[] =
 "#define LUT_REF(name, idx) ((__local ushort*)(name) + (idx)*256)\n"
@@ -265,8 +396,19 @@ STRINGIFY(
 	// as gf16_multiply_write_lh, but doesn't write 256x entries
 	void gf16_multiply_write_ll(__local nat_uint* table, nat_uint val, nat_uint coeff) {
 		// align a and b to the top so that the top-bit can be replicated with a single arithmetic right-shift
-		nat_int a = val << (NAT_BITS - 8);
 		nat_int b = coeff << (NAT_BITS - 16);
+		) "\n#if VECT_WIDTH >= 2\n" STRINGIFY(
+		
+		nat_uint prod = 0;
+		) "\n#pragma unroll\n" STRINGIFY(
+		for(uint i=1; i<256; i<<=1)
+			prod ^= mul24((uint)(val & i), (uint)coeff);
+		prod ^= mul256poly[prod >> 16];
+		prod <<= NAT_BITS - 16;
+		
+		) "\n#else\n" STRINGIFY(
+		
+		nat_int a = val << (NAT_BITS - 8);
 		nat_int prod = SHIFT_TOP_BIT(a) & b;
 		) "\n#pragma unroll\n" STRINGIFY(
 		for(int i=0; i<7; i++) {
@@ -275,6 +417,8 @@ STRINGIFY(
 			a <<= 1;
 			prod ^= SHIFT_TOP_BIT(a) & b;
 		}
+		
+		) "\n#endif\n" STRINGIFY(
 		
 		// multiply by 2 (aligned to top)
 		nat_uint b2 = (b << 1) ^ (SHIFT_TOP_BIT(b) & ((nat_uint)(GF16_POLYNOMIAL & 0xffff) << (NAT_BITS-16)));
@@ -808,6 +952,9 @@ STRINGIFY({
 		const nat_uint outputsThisThread = NUM_OUTPUTS;
 		const nat_uint outBase = 0;
 		__global val_t* dstBase = dst + colGlobal;
+		) "\n#ifdef WRITE_GRP2\n" STRINGIFY(
+			__global val_t* dstBase2 = dst + colGlobal*2;
+		) "\n#endif\n" STRINGIFY(
 	) "\n#else\n" STRINGIFY(
 		const nat_uint outBase = get_global_id(1) * OUTPUTS_PER_THREAD;
 		) "\n#if NUM_OUTPUTS % OUTPUTS_PER_THREAD == 0\n" STRINGIFY(
@@ -816,13 +963,49 @@ STRINGIFY({
 		const nat_uint outputsThisThread = (get_global_id(1)+1 == get_global_size(1) ? NUM_OUTPUTS % OUTPUTS_PER_THREAD : OUTPUTS_PER_THREAD);
 		) "\n#endif\n" STRINGIFY(
 		__global val_t* dstBase = dst + WBUF_REF(outBase, len, colGlobal);
+		) "\n#ifdef WRITE_GRP2\n" STRINGIFY(
+			__global val_t* dstBase2 = dst + WBUF_REF(outBase, len, colGlobal*2);
+		) "\n#endif\n" STRINGIFY(
 	) "\n#endif\n" STRINGIFY(
 	__global const val_t* srcBase = src + colGlobal;
 	
-	__local val_t cache[SUBMIT_INPUTS][COL_GROUP_SIZE*COL_GROUP_ITERS];
-	LUT_DECLARATION(lut_table, SUBMIT_INPUTS);
-	LUT_GENERATE(lut_table, coeff + COBUF_REF(outBase, 0u), numInputs);
+	) "\n#ifdef WRITE_GRP2\n" STRINGIFY(
+		LUT_DECLARATION_X2(lut_table_x2, SUBMIT_INPUTS);
+		LUT_DECLARATION_X2_1(lut_table, lut_table_x2);
+	) "\n#else\n" STRINGIFY(
+		LUT_DECLARATION(lut_table, SUBMIT_INPUTS);
+	) "\n#endif\n" STRINGIFY(
 	
+	// only one output -> no need to cache (this also handles the special case for *_X2)
+	// TODO: check if this is worth it
+	if(outputsThisThread == 1) {
+		LUT_GENERATE(lut_table, coeff + COBUF_REF(outBase, 0u), numInputs);
+		
+		for(uint iter=0; iter<COL_GROUP_ITERS; iter++) {
+			uint iterBase = iter*COL_GROUP_SIZE;
+			
+			val_t val = READ_SRC(srcBase, 0u);
+			val_t result = LUT_MULTIPLY(LUT_REF(lut_table, 0u), val);
+			
+			__global const val_t* srcIterBase = srcBase;
+			) "\n#ifdef numInputs\n#pragma unroll\n#endif\n" STRINGIFY(
+			for (nat_uint input = 1; input < numInputs; input++) {
+				srcIterBase += len;
+				val = READ_SRC(srcIterBase, 0u);
+				result ^= LUT_MULTIPLY(LUT_REF(lut_table, input), val);
+			}
+			WRITE_DST(dstBase, iterBase, result);
+			srcBase += COL_GROUP_SIZE;
+		}
+		return;
+	}
+	
+	__local val_t cache[SUBMIT_INPUTS][COL_GROUP_SIZE*COL_GROUP_ITERS];
+	) "\n#ifdef WRITE_GRP2\n" STRINGIFY(
+		LUT_GENERATE_X2(lut_table_x2, coeff + COBUF_REF(outBase, 0u), numInputs);
+	) "\n#else\n" STRINGIFY(
+		LUT_GENERATE(lut_table, coeff + COBUF_REF(outBase, 0u), numInputs);
+	) "\n#endif\n" STRINGIFY(
 	
 	) "\n#ifndef LUT_GENERATE_HAS_BARRIER\n" STRINGIFY(
 	//barrier(CLK_LOCAL_MEM_FENCE);
@@ -833,7 +1016,11 @@ STRINGIFY({
 		
 		val_t val = READ_SRC(srcBase, 0u);
 		cache[0][colLocal+iterBase] = val;
-		val_t result = LUT_MULTIPLY(LUT_REF(lut_table, 0u), val);
+		) "\n#ifdef WRITE_GRP2\n" STRINGIFY(
+			uint2 result = LUT_MULTIPLY_X2(LUT_REF_X2(lut_table_x2, 0u), val);
+		) "\n#else\n" STRINGIFY(
+			val_t result = LUT_MULTIPLY(LUT_REF(lut_table, 0u), val);
+		) "\n#endif\n" STRINGIFY(
 		
 		__global const val_t* srcIterBase = srcBase;
 		) "\n#ifdef numInputs\n#pragma unroll\n#endif\n" STRINGIFY(
@@ -843,15 +1030,46 @@ STRINGIFY({
 			// copy global input to local cache to be used in subsequent iterations
 			// TODO: investigate using async_work_group_copy
 			cache[input][colLocal + iterBase] = val;
-			result ^= LUT_MULTIPLY(LUT_REF(lut_table, input), val);
+			) "\n#ifdef WRITE_GRP2\n" STRINGIFY(
+				result ^= LUT_MULTIPLY_X2(LUT_REF_X2(lut_table_x2, input), val);
+			) "\n#else\n" STRINGIFY(
+				result ^= LUT_MULTIPLY(LUT_REF(lut_table, input), val);
+			) "\n#endif\n" STRINGIFY(
 		}
-		WRITE_DST(dstBase, iterBase, result);
+		) "\n#ifdef WRITE_GRP2\n" STRINGIFY(
+			WRITE_DST(dstBase2, iterBase*2, result[0]);
+			WRITE_DST(dstBase2, iterBase*2+1, result[1]);
+		) "\n#else\n" STRINGIFY(
+			WRITE_DST(dstBase, iterBase, result);
+		) "\n#endif\n" STRINGIFY(
 		srcBase += COL_GROUP_SIZE;
 	}
 	//barrier(CLK_LOCAL_MEM_FENCE);
 	
 	// subsequent iterations: use cache
-	for(nat_uint output=1; output<outputsThisThread; output++) {
+	) "\n#ifdef WRITE_GRP2\n" STRINGIFY(
+		nat_uint output=2;
+		for(; output<outputsThisThread-1; output+=2) {
+			dstBase2 += len*2;
+			LUT_GENERATE_X2(lut_table_x2, coeff + COBUF_REF(outBase+output, 0u), numInputs);
+			for(nat_uint iter=0; iter<COL_GROUP_ITERS; iter++) {
+				uint iterBase = iter*COL_GROUP_SIZE;
+				uint2 result = LUT_MULTIPLY_X2(LUT_REF_X2(lut_table, 0u), cache[0][colLocal + iterBase]);
+				
+				) "\n#ifdef numInputs\n#pragma unroll\n#endif\n" STRINGIFY(
+				for (ushort input = 1; input < numInputs; input++) {
+					result ^= LUT_MULTIPLY_X2(LUT_REF_X2(lut_table, input), cache[input][colLocal + iterBase]);
+				}
+				WRITE_DST(dstBase2, iterBase*2, result[0]);
+				WRITE_DST(dstBase2, iterBase*2+1, result[1]);
+			}
+		}
+		dstBase += WBUF_REF(outputsThisThread-2, len, 0u);
+		if(outputsThisThread & 1)
+	) "\n#else\n" STRINGIFY(
+		for(nat_uint output=1; output<outputsThisThread; output++)
+	) "\n#endif\n" STRINGIFY(
+	{
 		dstBase += len;
 		LUT_GENERATE(lut_table, coeff + COBUF_REF(outBase+output, 0u), numInputs);
 		for(nat_uint iter=0; iter<COL_GROUP_ITERS; iter++) {
@@ -887,35 +1105,85 @@ STRINGIFY(
 		const memsize_t globalCol = get_local_id(0) + get_group_id(0)*COL_GROUP_SIZE*COL_GROUP_ITERS;
 		
 		// TODO: defer looping to lut_generate (also avoids unnecessary barriers)
-		) "\n#pragma unroll\n" STRINGIFY(
-		for (ushort o = 0; o < numOutputs; o++) {
-			LUT_GENERATE(LUT_REF(lut_table, o*SUBMIT_INPUTS), coeff + COBUF_REF(outBlk+o, 0u), _numInputs);
-		}
-		
-		__global val_t* dstBase = dst + WBUF_REF(outBlk, len, globalCol);
-		__global const val_t* srcBase = src + globalCol;
-		for(nat_uint iter=0; iter<COL_GROUP_ITERS; iter++) {
-			val_t result[OUTPUT_GROUPING];
-			val_t val = READ_SRC(srcBase, 0u);
+		) "\n#ifdef WRITE_GRP2\n" STRINGIFY(
+			) "\n#pragma unroll\n" STRINGIFY(
+			for (ushort o = 0; o < numOutputs-1; o+=2) {
+				LUT_GENERATE_X2(LUT_REF_X2(lut_table, o*SUBMIT_INPUTS/2), coeff + COBUF_REF(outBlk+o, 0u), _numInputs);
+			}
+			if(numOutputs & 1) {
+				LUT_GENERATE(LUT_REF(lut_table, (numOutputs-1)*SUBMIT_INPUTS), coeff + COBUF_REF(outBlk+(numOutputs-1), 0u), _numInputs);
+			}
+		) "\n#else\n" STRINGIFY(
 			) "\n#pragma unroll\n" STRINGIFY(
 			for (ushort o = 0; o < numOutputs; o++) {
-				result[o] = LUT_MULTIPLY(LUT_REF(lut_table, o*SUBMIT_INPUTS), val);
+				LUT_GENERATE(LUT_REF(lut_table, o*SUBMIT_INPUTS), coeff + COBUF_REF(outBlk+o, 0u), _numInputs);
 			}
+		) "\n#endif\n" STRINGIFY(
+		
+		) "\n#ifdef WRITE_GRP2\n" STRINGIFY(
+			__global val_t* dstBase2 = dst + WBUF_REF(outBlk, len, globalCol*2);
+			__global val_t* dstBase = dst + WBUF_REF(outBlk + numOutputs -1, len, globalCol);
+		) "\n#else\n" STRINGIFY(
+			__global val_t* dstBase = dst + WBUF_REF(outBlk, len, globalCol);
+		) "\n#endif\n" STRINGIFY(
+		__global const val_t* srcBase = src + globalCol;
+		for(nat_uint iter=0; iter<COL_GROUP_ITERS; iter++) {
+			val_t val = READ_SRC(srcBase, 0u);
+			) "\n#ifdef WRITE_GRP2\n" STRINGIFY(
+				uint2 result[OUTPUT_GROUPING/2];
+				uint resultLast;
+				) "\n#pragma unroll\n" STRINGIFY(
+				for (ushort o = 0; o < numOutputs/2; o++) {
+					result[o] = LUT_MULTIPLY_X2(LUT_REF_X2(lut_table, o*SUBMIT_INPUTS), val);
+				}
+				if(numOutputs & 1)
+					resultLast = LUT_MULTIPLY(LUT_REF(lut_table, (numOutputs-1)*SUBMIT_INPUTS), val);
+			) "\n#else\n" STRINGIFY(
+				val_t result[OUTPUT_GROUPING];
+				) "\n#pragma unroll\n" STRINGIFY(
+				for (ushort o = 0; o < numOutputs; o++) {
+					result[o] = LUT_MULTIPLY(LUT_REF(lut_table, o*SUBMIT_INPUTS), val);
+				}
+			) "\n#endif\n" STRINGIFY(
+			
 			__global const val_t* srcIterBase = srcBase;
 			for (ushort i = 1; i < _numInputs; i++) {
 				srcIterBase += len;
 				val = READ_SRC(srcIterBase, 0u);
+				) "\n#ifdef WRITE_GRP2\n" STRINGIFY(
+					) "\n#pragma unroll\n" STRINGIFY(
+					for (ushort o = 0; o < numOutputs/2; o++) {
+						result[o] ^= LUT_MULTIPLY_X2(LUT_REF_X2(lut_table, o*SUBMIT_INPUTS+i), val);
+					}
+					if(numOutputs & 1)
+						resultLast ^= LUT_MULTIPLY(LUT_REF(lut_table, (numOutputs-1)*SUBMIT_INPUTS+i), val);
+				) "\n#else\n" STRINGIFY(
+					) "\n#pragma unroll\n" STRINGIFY(
+					for (ushort o = 0; o < numOutputs; o++) {
+						result[o] ^= LUT_MULTIPLY(LUT_REF(lut_table, o*SUBMIT_INPUTS+i), val);
+					}
+				) "\n#endif\n" STRINGIFY(
+			}
+			) "\n#ifdef WRITE_GRP2\n" STRINGIFY(
+				__global val_t* dstIterBase2 = dstBase2;
+				) "\n#pragma unroll\n" STRINGIFY(
+				for (ushort o = 0; o < numOutputs/2; o++) {
+					WRITE_DST(dstIterBase2, 0u, result[o][0]);
+					WRITE_DST(dstIterBase2, 1u, result[o][1]);
+					dstIterBase2 += len*2;
+				}
+				if(numOutputs & 1) {
+					WRITE_DST(dstBase, 0u, resultLast);
+				}
+				dstBase2 += COL_GROUP_SIZE*2;
+			) "\n#else\n" STRINGIFY(
+				__global val_t* dstIterBase = dstBase;
 				) "\n#pragma unroll\n" STRINGIFY(
 				for (ushort o = 0; o < numOutputs; o++) {
-					result[o] ^= LUT_MULTIPLY(LUT_REF(lut_table, o*SUBMIT_INPUTS+i), val);
+					WRITE_DST(dstIterBase, 0u, result[o]);
+					dstIterBase += len;
 				}
-			}
-			__global val_t* dstIterBase = dstBase;
-			) "\n#pragma unroll\n" STRINGIFY(
-			for (ushort o = 0; o < numOutputs; o++) {
-				WRITE_DST(dstIterBase, 0u, result[o]);
-				dstIterBase += len;
-			}
+			) "\n#endif\n" STRINGIFY(
 			
 			srcBase += COL_GROUP_SIZE;
 			dstBase += COL_GROUP_SIZE;
@@ -936,6 +1204,7 @@ const static char _ocl_kernel_lut[] = STRINGIFY({
 	) "\n#endif\n" STRINGIFY(
 	
 	LUT_DECLARATION(lut_table, SUBMIT_INPUTS*OUTPUT_GROUPING);
+	
 	if(!isPartialOutputsThread) {
 		) "\n#if OUTPUTS_PER_THREAD > OUTPUT_GROUPING\n" STRINGIFY(
 		for (; outBlk < OUTPUTS_PER_THREAD - OUTPUT_GROUPING + 1; outBlk += OUTPUT_GROUPING) {
@@ -1019,6 +1288,11 @@ GF16OCL_MethodInfo PAR2ProcOCL::info(Galois16OCLMethods method) {
 	case GF16OCL_LOG_TINY_LMEM:
 		ret.idealInBatch = 8;
 	break;
+	case GF16OCL_LOOKUP_GRP2:
+		ret.usesOutGrouping = false;
+		ret.idealInBatch = 4;
+		ret.idealIters = 2;
+	break;
 	case GF16OCL_LOOKUP:
 	case GF16OCL_LOOKUP_HALF:
 		ret.usesOutGrouping = false;
@@ -1029,6 +1303,10 @@ GF16OCL_MethodInfo PAR2ProcOCL::info(Galois16OCLMethods method) {
 	case GF16OCL_LOOKUP_HALF_NOCACHE:
 		ret.idealInBatch = 4;
 		ret.idealIters = 8; // generally little reason not to do multiple iters
+	break;
+	case GF16OCL_LOOKUP_GRP2_NOCACHE:
+		ret.idealInBatch = 6;
+		ret.idealIters = 2;
 	break;
 	default: break; // prevent compiler warning
 	}
@@ -1051,6 +1329,10 @@ bool PAR2ProcOCL::setup_kernels(Galois16OCLMethods method, unsigned targetInputB
 		infoShortVecSize = 4; // other than BY2, we currently only support vect-width=1,2,4
 	
 	wgSize = device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>();
+	if(device.getInfo<CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR>() == 1 && device.getInfo<CL_DEVICE_VENDOR_ID>() == 0x10de /*Nvidia*/ && wgSize > 32) {
+		// this size is too large for Nvidia cards; we'll assume their max width is ideal for 8-bit ints, so divide it by 4
+		wgSize /= infoShortVecSize*2;
+	}
 #ifdef OCL_PREFER_WORKGROUP_MULTIPLE
 	size_t wgSizeMultiple = getWGSize(context, device) * OCL_PREFER_WORKGROUP_MULTIPLE;
 	if(wgSizeMultiple && wgSizeMultiple < wgSize)
@@ -1189,8 +1471,22 @@ bool PAR2ProcOCL::setup_kernels(Galois16OCLMethods method, unsigned targetInputB
 	case GF16OCL_LOOKUP_HALF:
 	case GF16OCL_LOOKUP_NOCACHE:
 	case GF16OCL_LOOKUP_HALF_NOCACHE:
+	case GF16OCL_LOOKUP_GRP2:
+	case GF16OCL_LOOKUP_GRP2_NOCACHE:
 	default:
-		if(method == GF16OCL_LOOKUP_NOCACHE || method == GF16OCL_LOOKUP_HALF_NOCACHE) {
+		if(method == GF16OCL_LOOKUP_GRP2 || method == GF16OCL_LOOKUP_GRP2_NOCACHE) {
+			if(method == GF16OCL_LOOKUP_GRP2)
+				outputsPerThread += outputsPerThread & 1; // outputsPerThread must be a multiple of two
+			sourceStream << "#define WRITE_GRP2 1\n";
+			infoShortVecSize = 2; // only supported on 32b
+			// recompute the two variables dependent on infoShortVecSize
+			threadWordSize = infoShortVecSize*2;
+			sizePerWorkGroup = threadWordSize * wgSize;
+			
+			outputsInterleaved = 2;
+		}
+		
+		if(method == GF16OCL_LOOKUP_NOCACHE || method == GF16OCL_LOOKUP_HALF_NOCACHE || method == GF16OCL_LOOKUP_GRP2_NOCACHE) {
 			unsigned tables = (unsigned)(deviceLocalSize / (method == GF16OCL_LOOKUP_HALF_NOCACHE ? 512 : 1024));
 			if(tables >= 96)
 				inputBatchSize = 8;
@@ -1202,6 +1498,10 @@ bool PAR2ProcOCL::setup_kernels(Galois16OCLMethods method, unsigned targetInputB
 				inputBatchSize = 2;
 			outputsPerGroup = tables / inputBatchSize;
 			if(outputsPerGroup > 16) outputsPerGroup = 16;
+			if(method == GF16OCL_LOOKUP_GRP2_NOCACHE && outputsPerGroup > 1) {
+				outputsPerGroup &= ~1; // must be a multiple of 2 if outputs are written in pairs
+				targetGrouping &= ~1;
+			}
 			
 			if(targetInputBatch) inputBatchSize = targetInputBatch;
 			kernelCode = _ocl_kernel_lut;
@@ -1209,9 +1509,11 @@ bool PAR2ProcOCL::setup_kernels(Galois16OCLMethods method, unsigned targetInputB
 		} else {
 			if(targetInputBatch) inputBatchSize = targetInputBatch;
 			// TODO: compute ideal iteration count
+			unsigned tableSize = method == GF16OCL_LOOKUP_HALF ? 512 : 1024;
+			if(method == GF16OCL_LOOKUP_GRP2) tableSize *= 2;
 			while(1) {
 				groupIterations = (unsigned)round_down_pow2(
-					(deviceLocalSize - inputBatchSize*(method == GF16OCL_LOOKUP_HALF ? 512 : 1024))
+					(deviceLocalSize - inputBatchSize*tableSize)
 					/ (sizePerWorkGroup * inputBatchSize)
 				);
 				if(groupIterations < 1 && deviceLocalSize >= 8192) {
@@ -1270,7 +1572,7 @@ bool PAR2ProcOCL::setup_kernels(Galois16OCLMethods method, unsigned targetInputB
 			if(wgSize < minWgSize) wgSize = minWgSize;
 		}
 	}
-	if(method == GF16OCL_LOOKUP || method == GF16OCL_LOOKUP_HALF || method == GF16OCL_LOOKUP_NOCACHE || method == GF16OCL_LOOKUP_HALF_NOCACHE) {
+	if(method == GF16OCL_LOOKUP || method == GF16OCL_LOOKUP_HALF || method == GF16OCL_LOOKUP_NOCACHE || method == GF16OCL_LOOKUP_HALF_NOCACHE || method == GF16OCL_LOOKUP_GRP2 || method == GF16OCL_LOOKUP_GRP2_NOCACHE) {
 		// lookup method assumes workgroup is a power of two
 		wgSize = round_down_pow2(wgSize);
 	}
@@ -1481,10 +1783,10 @@ bool PAR2ProcOCL::setup_kernels(Galois16OCLMethods method, unsigned targetInputB
 		try {
 			program.build(std::vector<cl::Device>(1, device), paramsDump);
 		} catch(cl::Error const& err) {
+			printError("Build Error", err);
 			if(err.err() == CL_BUILD_PROGRAM_FAILURE || err.err() == CL_COMPILE_PROGRAM_FAILURE || err.err() == CL_LINK_PROGRAM_FAILURE) {
-				std::cerr << "OpenCL Build Failure: " << err.what() << "(" << err.err() << "); build log:" <<std::endl << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << std::endl;
-			} else
-				std::cerr << "OpenCL Build Error: " << err.what() << "(" << err.err() << ")" << std::endl;
+				std::cerr << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << std::endl;
+			}
 			if(tblLog) delete[] tblLog;
 			if(tblAntiLog) delete[] tblAntiLog;
 			return false;
@@ -1540,11 +1842,11 @@ bool PAR2ProcOCL::setup_kernels(Galois16OCLMethods method, unsigned targetInputB
 	try {
 		program.build(std::vector<cl::Device>(1, device), params);
 	} catch(cl::Error const& err) {
+		printError("Build Error", err);
 #ifndef GF16OCL_NO_OUTPUT
 		if(err.err() == CL_BUILD_PROGRAM_FAILURE || err.err() == CL_COMPILE_PROGRAM_FAILURE || err.err() == CL_LINK_PROGRAM_FAILURE) {
-			std::cerr << "OpenCL Build Failure: " << err.what() << "(" << err.err() << "); build log:" <<std::endl << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << std::endl;
-		} else
-			std::cerr << "OpenCL Build Error: " << err.what() << "(" << err.err() << ")" << std::endl;
+			std::cerr << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << std::endl;
+		}
 #endif
 		if(tblLog) delete[] tblLog;
 		if(tblAntiLog) delete[] tblAntiLog;
@@ -1559,20 +1861,22 @@ bool PAR2ProcOCL::setup_kernels(Galois16OCLMethods method, unsigned targetInputB
 	kernelMulAdd = cl::Kernel(program, "gf16_ocl_kernel");
 	
 	
-	// TODO: check if supports CPU shared memory and use host mem instead?
-	// should probably check for dedicated memory to determine if transferring is needed
+	cl_mem_flags bufferFlags = CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
+	if(oclPlatVersion >= 1002)
+		bufferFlags |= CL_MEM_HOST_WRITE_ONLY;
 	for(auto& area : staging) {
-		area.input = cl::Buffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, inputBatchSize*sliceSizeAligned);
+		area.input = cl::Buffer(context, bufferFlags, inputBatchSize*sliceSizeAligned);
 		if(coeffType != GF16OCL_COEFF_NORMAL) {
-			area.coeffs = cl::Buffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, inputBatchSize*sizeof(uint16_t));
+			area.coeffs = cl::Buffer(context, bufferFlags, inputBatchSize*sizeof(uint16_t));
 			area.procCoeffs.resize(inputBatchSize);
 		} else {
-			area.coeffs = cl::Buffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, inputBatchSize*numOutputs*sizeof(uint16_t));
+			area.coeffs = cl::Buffer(context, bufferFlags, inputBatchSize*numOutputs*sizeof(uint16_t));
 			area.procCoeffs.resize(inputBatchSize*numOutputs);
 		}
 	}
+	// TODO: check if supports CPU shared memory and use host mem (CL_MEM_USE_HOST_PTR) instead? avoids a transfer when retrieving output; downside is that currently our API works by the caller supplying a buffer to write into, so would be a big change
 	// TODO: need to consider CL_DEVICE_MAX_MEM_ALLOC_SIZE and perhaps break this into multiple allocations
-	buffer_output = cl::Buffer(context, CL_MEM_READ_WRITE, numOutputs*sliceSizeAligned);
+	buffer_output = cl::Buffer(context, CL_MEM_READ_WRITE | (oclPlatVersion>=1002 ? CL_MEM_HOST_READ_ONLY : 0), numOutputs*sliceSizeAligned);
 	
 	workGroupRange = cl::NDRange(wgSize, 1);
 	
@@ -1584,9 +1888,11 @@ bool PAR2ProcOCL::setup_kernels(Galois16OCLMethods method, unsigned targetInputB
 	kernelMulAdd.setArg(0, buffer_output);
 	
 	extra_buffers.clear();
+	cl_mem_flags transBufferFlags = CL_MEM_READ_ONLY;
+	if(oclPlatVersion >= 1002) transBufferFlags |= CL_MEM_HOST_WRITE_ONLY;
 	
 	if(coeffType == GF16OCL_COEFF_LOG) {
-		buffer_outExp = cl::Buffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, numOutputs*sizeof(uint16_t));
+		buffer_outExp = cl::Buffer(context, transBufferFlags | CL_MEM_ALLOC_HOST_PTR, numOutputs*sizeof(uint16_t));
 		kernelMul.setArg(3, buffer_outExp);
 		kernelMulAdd.setArg(3, buffer_outExp);
 		kernelMulLast.setArg(4, buffer_outExp);
@@ -1596,7 +1902,7 @@ bool PAR2ProcOCL::setup_kernels(Galois16OCLMethods method, unsigned targetInputB
 	}
 	// if we couldn't embed log tables directly into the source, transfer them now
 	if(tblLog) {
-		const cl::Buffer bufLog(context, CL_MEM_READ_ONLY, tblLogSize*2);
+		const cl::Buffer bufLog(context, transBufferFlags, tblLogSize*2);
 		extra_buffers.push_back(bufLog);
 		kernelMul.setArg(4, bufLog);
 		kernelMulAdd.setArg(4, bufLog);
@@ -1604,7 +1910,7 @@ bool PAR2ProcOCL::setup_kernels(Galois16OCLMethods method, unsigned targetInputB
 		kernelMulAddLast.setArg(5, bufLog);
 		
 		if(tblAntiLog) {
-			extra_buffers.push_back(cl::Buffer(context, CL_MEM_READ_ONLY, tblAntiLogSize*2));
+			extra_buffers.push_back(cl::Buffer(context, transBufferFlags, tblAntiLogSize*2));
 			const cl::Buffer& bufALog = extra_buffers.back();
 			kernelMul.setArg(5, bufALog);
 			kernelMulAdd.setArg(5, bufALog);
@@ -1621,6 +1927,17 @@ bool PAR2ProcOCL::setup_kernels(Galois16OCLMethods method, unsigned targetInputB
 			queue.enqueueWriteBuffer(bufLog, CL_TRUE, 0, tblLogSize*2, tblLog);
 			delete[] tblLog;
 		}
+	}
+	
+	
+	// for some implementations, errors don't show up during build, but do during execute, so try a dummy run
+	kernelMul.setArg(1, staging[0].input);
+	kernelMul.setArg(2, staging[0].coeffs);
+	try {
+		queue.enqueueNDRangeKernel(kernelMul, cl::NullRange, workGroupRange, workGroupRange);
+	} catch(cl::Error const& err) {
+		printError("Execute Error", err);
+		return false;
 	}
 	
 	return true;

@@ -106,6 +106,7 @@
     <ClCompile Include="hasher\hasher_scalar.cpp" />
     <ClCompile Include="hasher\hasher_input.cpp" />
     <ClCompile Include="hasher\hasher_md5crc.cpp" />
+    <ClCompile Include="hasher\tables.cpp" />
     <ClCompile Include="hasher\md5-final.c" />
     <ClCompile Include="hasher/hasher_sse.cpp">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -140,8 +141,8 @@
     <ClCompile Include="hasher\hasher_avx512vl.cpp">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
-      <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|Win32'">-mavx512vl -mavx512bw -mbmi2 -mpclmul %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|x64'">-mavx512vl -mavx512bw -mbmi2 -mpclmul %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|Win32'">-mavx512vl -mavx512bw -mbmi2 -mpclmul -mno-evex512 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|x64'">-mavx512vl -mavx512bw -mbmi2 -mpclmul -mno-evex512 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="hasher\hasher_armcrc.cpp">
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM'">-march=armv8-a+crc %(AdditionalOptions)</AdditionalOptions>
@@ -157,10 +158,12 @@
     <ClCompile Include="hasher\hasher_sve2.cpp">
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM64'">-march=armv8-a+sve2 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="hasher\hasher_rvzbc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hasher\crc_arm.h" />
     <ClInclude Include="hasher\crc_clmul.h" />
+    <ClInclude Include="hasher\crc_rvzbc.h" />
     <ClInclude Include="hasher\crc_slice4.h" />
     <ClInclude Include="hasher\crc_zeropad.h" />
     <ClInclude Include="hasher\hasher.h" />

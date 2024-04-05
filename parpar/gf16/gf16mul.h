@@ -33,6 +33,7 @@ typedef void(*Galois16AddPackPfFunc) (unsigned packedRegions, unsigned regions, 
 
 typedef void(*Galois16CopyCksum) (void *HEDLEY_RESTRICT dst, const void *HEDLEY_RESTRICT src, size_t srcLen, size_t sliceLen);
 typedef int(*Galois16CopyCksumCheck) (void *HEDLEY_RESTRICT dst, const void *HEDLEY_RESTRICT src, size_t len);
+typedef int(*Galois16UngrpCksumCheck) (void *HEDLEY_RESTRICT dst, const void *HEDLEY_RESTRICT src, size_t len, unsigned grp);
 
 
 enum Galois16Methods {
@@ -60,13 +61,16 @@ enum Galois16Methods {
 	GF16_XOR_JIT_AVX512,  // *
 	GF16_AFFINE_GFNI,
 	GF16_AFFINE_AVX2,
+	GF16_AFFINE_AVX10,
 	GF16_AFFINE_AVX512,
 	GF16_AFFINE2X_GFNI,  // *
 	GF16_AFFINE2X_AVX2,  // *
+	GF16_AFFINE2X_AVX10,  // *
 	GF16_AFFINE2X_AVX512,  // *
 	GF16_CLMUL_NEON,
 	GF16_CLMUL_SHA3,
-	GF16_CLMUL_SVE2
+	GF16_CLMUL_SVE2,
+	GF16_CLMUL_RVV
 	// TODO: consider non-transforming shuffle/affine
 };
 static const char* Galois16MethodsText[] = {
@@ -93,13 +97,16 @@ static const char* Galois16MethodsText[] = {
 	"Xor-Jit (AVX512)",
 	"Affine (GFNI)",
 	"Affine (GFNI+AVX2)",
+	"Affine (GFNI+AVX10)",
 	"Affine (GFNI+AVX512)",
 	"Affine2x (GFNI)",
 	"Affine2x (GFNI+AVX2)",
+	"Affine2x (GFNI+AVX10)",
 	"Affine2x (GFNI+AVX512)",
 	"CLMul (NEON)",
 	"CLMul (SHA3)",
-	"CLMul (SVE2)"
+	"CLMul (SVE2)",
+	"CLMul (RVV+Zvbc)"
 };
 
 typedef struct {
@@ -118,13 +125,17 @@ private:
 	void* scratch;
 	Galois16MethodInfo _info;
 	
-	Galois16MulFunc _mul;
 	Galois16MulRstFunc _mul_add;
 	Galois16MulPfFunc _mul_add_pf;
+#ifdef PARPAR_POW_SUPPORT
 	Galois16PowFunc _pow;
 	Galois16PowFunc _pow_add;
+#endif
+#ifdef PARPAR_INVERT_SUPPORT
+	Galois16MulFunc _mul;
 	Galois16MulMultiFunc _mul_add_multi;
 	Galois16MulStridePfFunc _mul_add_multi_stridepf;
+#endif
 	Galois16MulPackedFunc _mul_add_multi_packed;
 	Galois16MulPackPfFunc _mul_add_multi_packpf;
 	
@@ -133,6 +144,7 @@ private:
 			memcpy(dst, src, srcLen);
 	}
 	static void _finish_none(void *HEDLEY_RESTRICT, size_t) {}
+#ifdef PARPAR_INVERT_SUPPORT
 	static void _prepare_packed_none(void *HEDLEY_RESTRICT dst, const void *HEDLEY_RESTRICT src, size_t srcLen, size_t sliceLen, unsigned inputPackSize, unsigned inputNum, size_t chunkLen);
 	static uint16_t _replace_word(void* data, size_t index, uint16_t newValue) {
 		uint8_t* p = (uint8_t*)data + index*2;
@@ -141,6 +153,7 @@ private:
 		p[1] = newValue>>8;
 		return oldValue;
 	}
+#endif
 	
 	
 	Galois16Methods _method;
@@ -169,18 +182,22 @@ public:
 	}
 #endif
 	
+#ifdef PARPAR_INVERT_SUPPORT
 	inline bool needPrepare() const {
 		return prepare != &Galois16Mul::_prepare_none;
 	};
 	inline bool hasMultiMulAdd() const {
 		return _mul_add_multi != NULL;
 	};
+#endif
 	inline bool hasMultiMulAddPacked() const {
 		return _mul_add_multi_packed != NULL;
 	};
+#ifdef PARPAR_POW_SUPPORT
 	inline bool hasPowAdd() const {
 		return _pow_add != NULL;
 	};
+#endif
 	
 	static std::vector<Galois16Methods> availableMethods(bool checkCpuid);
 	static inline const char* methodToText(Galois16Methods m) {
@@ -200,24 +217,32 @@ public:
 		return (len + alignMask) & ~alignMask;
 	}
 	
+#ifdef PARPAR_INVERT_SUPPORT
 	Galois16MulTransform prepare;
-	Galois16MulTransformPacked prepare_packed;
-	Galois16MulTransformPacked prepare_packed_cksum;
-	Galois16MulTransformPackedPartial prepare_partial_packsum; // TODO: consider a nicer interface for this
 	Galois16MulUntransform finish;
-	Galois16MulUntransformPacked finish_packed;
-	Galois16MulUntransformPackedCksum finish_packed_cksum;
-	Galois16MulUntransformPackedCksumPartial finish_partial_packsum;
 	Galois16ReplaceWord replace_word;
+#endif
+#ifdef PARPAR_INCLUDE_BASIC_OPS
+	Galois16MulTransformPacked prepare_packed;
+	Galois16MulUntransformPacked finish_packed;
 	Galois16AddMultiFunc add_multi;
 	Galois16AddPackedFunc add_multi_packed;
+#endif
+	Galois16MulTransformPacked prepare_packed_cksum;
+	Galois16MulTransformPackedPartial prepare_partial_packsum; // TODO: consider a nicer interface for this
+	Galois16MulUntransformPackedCksum finish_packed_cksum;
+	Galois16MulUntransformPackedCksumPartial finish_partial_packsum;
 	Galois16AddPackPfFunc add_multi_packpf;
+#ifdef PARPAR_OPENCL_SUPPORT
 	Galois16CopyCksum copy_cksum;
 	Galois16CopyCksumCheck copy_cksum_check;
+	Galois16UngrpCksumCheck finish_grp2_cksum;
+#endif
 	
 	HEDLEY_MALLOC void* mutScratch_alloc() const;
 	void mutScratch_free(void* mutScratch) const;
 	
+#ifdef PARPAR_INVERT_SUPPORT
 	inline void mul(void* dst, const void* src, size_t len, uint16_t coefficient, void *HEDLEY_RESTRICT mutScratch) const {
 		assert(isMultipleOfStride(len));
 		assert(len > 0);
@@ -249,7 +274,9 @@ public:
 		else
 			_mul_add(scratch, dst, src, len, coefficient, mutScratch);
 	}
+#endif
 	
+#ifdef PARPAR_POW_SUPPORT
 	inline void pow(unsigned outputs, size_t offset, void **HEDLEY_RESTRICT dst, const void *HEDLEY_RESTRICT src, size_t len, uint16_t coefficient, void *HEDLEY_RESTRICT mutScratch) const {
 		assert(isMultipleOfStride(len));
 		assert(len > 0);
@@ -288,7 +315,9 @@ public:
 		if(HEDLEY_UNLIKELY(coefficient == 0)) return;
 		_pow_add(scratch, outputs, offset, dst, src, len, coefficient, mutScratch);
 	}
+#endif
 	
+#ifdef PARPAR_INVERT_SUPPORT
 	inline void mul_add_multi(unsigned regions, size_t offset, void *HEDLEY_RESTRICT dst, const void* const*HEDLEY_RESTRICT src, size_t len, const uint16_t *HEDLEY_RESTRICT coefficients, void *HEDLEY_RESTRICT mutScratch) const {
 		assert(isMultipleOfStride(len));
 		assert(len > 0);
@@ -327,6 +356,7 @@ public:
 			_mul_add(scratch, dst, (const uint8_t*)src+region*srcStride, len, coefficients[region], mutScratch);
 		}
 	}
+#endif
 	
 	inline void mul_add_multi_packed(unsigned packedRegions, unsigned regions, void *HEDLEY_RESTRICT dst, const void* HEDLEY_RESTRICT src, size_t len, const uint16_t *HEDLEY_RESTRICT coefficients, void *HEDLEY_RESTRICT mutScratch) const {
 		assert(isMultipleOfStride(len));

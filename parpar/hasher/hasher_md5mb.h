@@ -10,6 +10,7 @@ enum MD5MultiLevels {
 	MD5MULT_SSE,
 	MD5MULT_AVX2,
 	MD5MULT_XOP,
+	MD5MULT_AVX10,
 	MD5MULT_AVX512F,
 	MD5MULT_AVX512VL,
 	
@@ -46,6 +47,10 @@ public:
 	inline void reset() {
 		for(unsigned i=0; i<ctx.size(); i++)
 			ctx[i]->reset();
+	}
+	
+	inline IMD5Multi* _getFirstCtx() const { // only used for testing
+		return ctx[0];
 	}
 };
 
