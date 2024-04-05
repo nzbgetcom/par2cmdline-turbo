@@ -13,11 +13,11 @@ int gf16_available_rvv = 0;
 // intrinsics v0.12.x
 static HEDLEY_ALWAYS_INLINE void _vlseg2e8(vuint8m1_t* v0, vuint8m1_t* v1, const uint8_t* src, size_t vl) {
 	vuint8m1x2_t d = RV(vlseg2e8_v_u8m1x2)(src, vl);
-	*v0 = RV(vget_v_u8m1x2_u8m1)(vd, 0);
-	*v1 = RV(vget_v_u8m1x2_u8m1)(vd, 1);
+	*v0 = RV(vget_v_u8m1x2_u8m1)(d, 0);
+	*v1 = RV(vget_v_u8m1x2_u8m1)(d, 1);
 }
 static HEDLEY_ALWAYS_INLINE void _vsseg2e8(uint8_t* dst, vuint8m1_t v0, vuint8m1_t v1, size_t vl) {
-	vuint8m1x2_t d;
+	vuint8m1x2_t d = {};
 	d = RV(vset_v_u8m1_u8m1x2)(d, 0, v0);
 	d = RV(vset_v_u8m1_u8m1x2)(d, 1, v1);
 	RV(vsseg2e8_v_u8m1x2)(dst, d, vl);
@@ -152,6 +152,7 @@ static HEDLEY_ALWAYS_INLINE void gf16_shuffle_muladd_x_128_rvv(
 
 
 
+#ifdef PARPAR_INVERT_SUPPORT
 void gf16_shuffle_mul_128_rvv(const void *HEDLEY_RESTRICT scratch, void *HEDLEY_RESTRICT dst, const void *HEDLEY_RESTRICT src, size_t len, uint16_t val, void *HEDLEY_RESTRICT mutScratch) {
 	UNUSED(mutScratch);
 #if defined(__RVV_LE)
@@ -190,6 +191,7 @@ void gf16_shuffle_mul_128_rvv(const void *HEDLEY_RESTRICT scratch, void *HEDLEY_
 	UNUSED(scratch); UNUSED(dst); UNUSED(src); UNUSED(len); UNUSED(val);
 #endif
 }
+#endif
 
 void gf16_shuffle_muladd_128_rvv(const void *HEDLEY_RESTRICT scratch, void *HEDLEY_RESTRICT dst, const void *HEDLEY_RESTRICT src, size_t len, uint16_t val, void *HEDLEY_RESTRICT mutScratch) {
 	UNUSED(mutScratch);
@@ -219,7 +221,7 @@ static HEDLEY_ALWAYS_INLINE void gf16_prepare_blocku_rvv(void *HEDLEY_RESTRICT d
 	size_t vlmax = RV(vsetvlmax_e8m2)();
 	vuint8m2_t v = RV(vmv_v_x_u8m2)(0, vlmax);
 	size_t vl = RV(vsetvl_e8m2)(remaining);
-#if defined(__riscv_v_intrinsic) && __riscv_v_intrinsic >= 13000
+#ifdef __riscv_v_intrinsic
 	v = RV(vle8_v_u8m2_tu)(v, (const uint8_t*)src, vl);
 	RV(vse8_v_u8m2)((uint8_t*)dst, v, vlmax);
 #else
@@ -231,14 +233,6 @@ static HEDLEY_ALWAYS_INLINE void gf16_prepare_blocku_rvv(void *HEDLEY_RESTRICT d
 static HEDLEY_ALWAYS_INLINE void gf16_finish_blocku_rvv(void *HEDLEY_RESTRICT dst, const void *HEDLEY_RESTRICT src, size_t remaining) {
 	size_t vl = RV(vsetvl_e8m2)(remaining);
 	RV(vse8_v_u8m2)((uint8_t*)dst, RV(vle8_v_u8m2)((const uint8_t*)src, vl), vl);
-}
-
-static HEDLEY_ALWAYS_INLINE void gf16_checksum_prepare_rvv(void *HEDLEY_RESTRICT dst, void *HEDLEY_RESTRICT checksum, const size_t blockLen, gf16_transform_block_rst prepareBlock) {
-	int16_t tmp[blockLen/2];
-	memset(tmp, 0, blockLen);
-	RV(vse16_v_i16m1)(tmp, *(vint16m1_t*)checksum, RV(vsetvlmax_e16m1)());
-	
-	prepareBlock(dst, tmp);
 }
 
 #include "gf16_checksum_rvv.h"

@@ -22,6 +22,8 @@ enum Galois16OCLMethods {
 	GF16OCL_LOOKUP_HALF,
 	GF16OCL_LOOKUP_NOCACHE,
 	GF16OCL_LOOKUP_HALF_NOCACHE,
+	GF16OCL_LOOKUP_GRP2,
+	GF16OCL_LOOKUP_GRP2_NOCACHE,
 	GF16OCL_SHUFFLE,
 	//GF16OCL_SHUFFLE2, // not implemented
 	GF16OCL_LOG,
@@ -39,6 +41,8 @@ static const char* Galois16OCLMethodsText[] = {
 	"Lookup Half",
 	"Lookup (NoCache)",
 	"Lookup Half (NoCache)",
+	"Lookup Group2",
+	"Lookup Group2 (NoCache)",
 	"Shuffle",
 	//"Shuffle2",
 	"Log",
@@ -130,12 +134,15 @@ class PAR2ProcOCL : public IPAR2ProcBackend {
 	size_t bytesPerGroup;
 	size_t wgSize;
 	unsigned outputsPerGroup;
+	int oclPlatVersion; // = major*1000 + minor
+	int oclDevVersion;
 	
 	std::unique_ptr<Galois16Mul> gf;
 	Galois16Methods gfMethod;
 	MessageThread transferThread;
 	static void transfer_slice(ThreadMessageQueue<void*>& q);
 	
+	unsigned outputsInterleaved; // must be a power of 2
 	
 	// remembered setup params
 	Galois16OCLMethods _setupMethod;
@@ -161,6 +168,8 @@ class PAR2ProcOCL : public IPAR2ProcBackend {
 	void _notifyRecv(void* _req) override;
 	void _notifyProc(void* _req) override;
 #endif
+	
+	static void printError(const char* where, cl::Error const& err);
 	
 	// disable copy constructor
 	PAR2ProcOCL(const PAR2ProcOCL&);

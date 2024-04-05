@@ -20,6 +20,7 @@ int gf16_affine_available_gfni = 1;
 int gf16_affine_available_gfni = 0;
 #endif
 
+#define AFFINE2X_AMD64_INTERLEAVE 6
 #include "gf16_affine2x_x86.h"
 #ifdef _AVAILABLE
 # undef _AVAILABLE
@@ -58,6 +59,7 @@ static HEDLEY_ALWAYS_INLINE void gf16_affine_load_matrix(const void *HEDLEY_REST
 }
 #endif
 
+#ifdef PARPAR_INVERT_SUPPORT
 void gf16_affine_mul_gfni(const void *HEDLEY_RESTRICT scratch, void* dst, const void* src, size_t len, uint16_t coefficient, void *HEDLEY_RESTRICT mutScratch) {
 	UNUSED(mutScratch);
 #if defined(__GFNI__) && defined(__SSSE3__)
@@ -93,6 +95,7 @@ void gf16_affine_mul_gfni(const void *HEDLEY_RESTRICT scratch, void* dst, const 
 	UNUSED(scratch); UNUSED(dst); UNUSED(src); UNUSED(len); UNUSED(coefficient);
 #endif
 }
+#endif
 
 #if defined(__GFNI__) && defined(__SSSE3__)
 static HEDLEY_ALWAYS_INLINE void gf16_affine_muladd_round(const __m128i* src, __m128i* tpl, __m128i* tph, __m128i mat_ll, __m128i mat_hl, __m128i mat_lh, __m128i mat_hh) {
@@ -366,6 +369,7 @@ static HEDLEY_ALWAYS_INLINE void gf16_affine2x_muladd_x_gfni(
 }
 #endif /*defined(__GFNI__) && defined(__SSSE3__) && !defined(PARPAR_SLIM_GF16)*/
 
+#ifdef PARPAR_INVERT_SUPPORT
 void gf16_affine2x_mul_gfni(const void *HEDLEY_RESTRICT scratch, void* dst, const void* src, size_t len, uint16_t coefficient, void *HEDLEY_RESTRICT mutScratch) {
 	UNUSED(mutScratch);
 #if defined(__GFNI__) && defined(__SSSE3__) && !defined(PARPAR_SLIM_GF16)
@@ -387,6 +391,7 @@ void gf16_affine2x_mul_gfni(const void *HEDLEY_RESTRICT scratch, void* dst, cons
 	UNUSED(scratch); UNUSED(dst); UNUSED(src); UNUSED(len); UNUSED(coefficient);
 #endif
 }
+#endif
 
 void gf16_affine2x_muladd_gfni(const void *HEDLEY_RESTRICT scratch, void *HEDLEY_RESTRICT dst, const void *HEDLEY_RESTRICT src, size_t len, uint16_t coefficient, void *HEDLEY_RESTRICT mutScratch) {
 	UNUSED(mutScratch);

@@ -19,6 +19,103 @@ int PAR2ProcOCL::load_runtime() {
 	return 0;
 }
 
+void PAR2ProcOCL::printError(const char* where, cl::Error const& err) {
+#ifndef GF16OCL_NO_OUTPUT
+	std::cerr << "OpenCL " << where << ": ";
+	switch(err.err()) {
+		#define _PRINT_ERR(x) case x: std::cerr << #x; break
+		_PRINT_ERR(CL_DEVICE_NOT_FOUND);
+		_PRINT_ERR(CL_DEVICE_NOT_AVAILABLE);
+		_PRINT_ERR(CL_COMPILER_NOT_AVAILABLE);
+		_PRINT_ERR(CL_MEM_OBJECT_ALLOCATION_FAILURE);
+		_PRINT_ERR(CL_OUT_OF_RESOURCES);
+		_PRINT_ERR(CL_OUT_OF_HOST_MEMORY);
+		_PRINT_ERR(CL_PROFILING_INFO_NOT_AVAILABLE);
+		_PRINT_ERR(CL_MEM_COPY_OVERLAP);
+		_PRINT_ERR(CL_IMAGE_FORMAT_MISMATCH);
+		_PRINT_ERR(CL_IMAGE_FORMAT_NOT_SUPPORTED);
+		_PRINT_ERR(CL_BUILD_PROGRAM_FAILURE);
+		_PRINT_ERR(CL_MAP_FAILURE);
+		#ifdef CL_VERSION_1_1
+		_PRINT_ERR(CL_MISALIGNED_SUB_BUFFER_OFFSET);
+		_PRINT_ERR(CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST);
+		#endif
+		#ifdef CL_VERSION_1_2
+		_PRINT_ERR(CL_COMPILE_PROGRAM_FAILURE);
+		_PRINT_ERR(CL_LINKER_NOT_AVAILABLE);
+		_PRINT_ERR(CL_LINK_PROGRAM_FAILURE);
+		_PRINT_ERR(CL_DEVICE_PARTITION_FAILED);
+		_PRINT_ERR(CL_KERNEL_ARG_INFO_NOT_AVAILABLE);
+		#endif
+
+		_PRINT_ERR(CL_INVALID_VALUE);
+		_PRINT_ERR(CL_INVALID_DEVICE_TYPE);
+		_PRINT_ERR(CL_INVALID_PLATFORM);
+		_PRINT_ERR(CL_INVALID_DEVICE);
+		_PRINT_ERR(CL_INVALID_CONTEXT);
+		_PRINT_ERR(CL_INVALID_QUEUE_PROPERTIES);
+		_PRINT_ERR(CL_INVALID_COMMAND_QUEUE);
+		_PRINT_ERR(CL_INVALID_HOST_PTR);
+		_PRINT_ERR(CL_INVALID_MEM_OBJECT);
+		_PRINT_ERR(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR);
+		_PRINT_ERR(CL_INVALID_IMAGE_SIZE);
+		_PRINT_ERR(CL_INVALID_SAMPLER);
+		_PRINT_ERR(CL_INVALID_BINARY);
+		_PRINT_ERR(CL_INVALID_BUILD_OPTIONS);
+		_PRINT_ERR(CL_INVALID_PROGRAM);
+		_PRINT_ERR(CL_INVALID_PROGRAM_EXECUTABLE);
+		_PRINT_ERR(CL_INVALID_KERNEL_NAME);
+		_PRINT_ERR(CL_INVALID_KERNEL_DEFINITION);
+		_PRINT_ERR(CL_INVALID_KERNEL);
+		_PRINT_ERR(CL_INVALID_ARG_INDEX);
+		_PRINT_ERR(CL_INVALID_ARG_VALUE);
+		_PRINT_ERR(CL_INVALID_ARG_SIZE);
+		_PRINT_ERR(CL_INVALID_KERNEL_ARGS);
+		_PRINT_ERR(CL_INVALID_WORK_DIMENSION);
+		_PRINT_ERR(CL_INVALID_WORK_GROUP_SIZE);
+		_PRINT_ERR(CL_INVALID_WORK_ITEM_SIZE);
+		_PRINT_ERR(CL_INVALID_GLOBAL_OFFSET);
+		_PRINT_ERR(CL_INVALID_EVENT_WAIT_LIST);
+		_PRINT_ERR(CL_INVALID_EVENT);
+		_PRINT_ERR(CL_INVALID_OPERATION);
+		_PRINT_ERR(CL_INVALID_GL_OBJECT);
+		_PRINT_ERR(CL_INVALID_BUFFER_SIZE);
+		_PRINT_ERR(CL_INVALID_MIP_LEVEL);
+		_PRINT_ERR(CL_INVALID_GLOBAL_WORK_SIZE);
+		#ifdef CL_VERSION_1_1
+		_PRINT_ERR(CL_INVALID_PROPERTY);
+		#endif
+		#ifdef CL_VERSION_1_2
+		_PRINT_ERR(CL_INVALID_IMAGE_DESCRIPTOR);
+		_PRINT_ERR(CL_INVALID_COMPILER_OPTIONS);
+		_PRINT_ERR(CL_INVALID_LINKER_OPTIONS);
+		_PRINT_ERR(CL_INVALID_DEVICE_PARTITION_COUNT);
+		#endif
+		#undef _PRINT_ERR
+		default:
+			std::cerr << err.err();
+	}
+	std::cerr << std::endl;
+#endif
+}
+
+static int parse_ocl_version(const std::string& ver) {
+	// OpenCL gives the string "OpenCL x.y [extra]"
+	const char* p = ver.c_str() + 7;
+	int major = 0, minor = 0;
+	int* majmin = &major;
+	while(1) {
+		if(*p == '.')
+			majmin = &minor;
+		else if(*p >= '0' && *p <= '9') {
+			*majmin *= 10;
+			*majmin += *p - '0';
+		} else break;
+		p++;
+	}
+	// note that we assume 1.20 is newer than 1.2, i.e. not interpreted as a floating point value
+	return major * 1000 + minor;
+}
 
 PAR2ProcOCL::PAR2ProcOCL(IF_LIBUV(uv_loop_t* _loop,) int platformId, int deviceId, int stagingAreas)
 : IPAR2ProcBackend(IF_LIBUV(_loop)), staging(stagingAreas), allocatedSliceSize(0), transferThread(PAR2ProcOCL::transfer_slice) {
@@ -44,14 +141,18 @@ PAR2ProcOCL::PAR2ProcOCL(IF_LIBUV(uv_loop_t* _loop,) int platformId, int deviceI
 		queue = cl::CommandQueue(context, device, 0);
 		_initSuccess = true;
 	} catch(cl::Error const& err) {
-#ifndef GF16OCL_NO_OUTPUT
-		std::cerr << "OpenCL Error: " << err.what() << "(" << err.err() << ")" << std::endl;
-#endif
+		printError("Create Queue Error", err);
 	}
 	#undef ERROR_EXIT
 	
 	queueEvents.reserve(2);
 	_deviceId = deviceId;
+	
+	oclDevVersion = parse_ocl_version(device.getInfo<CL_DEVICE_VERSION>());
+	
+	cl::Platform platform;
+	getPlatform(platform, platformId);
+	oclPlatVersion = parse_ocl_version(platform.getInfo<CL_PLATFORM_VERSION>());
 }
 
 PAR2ProcOCL::~PAR2ProcOCL() {
@@ -84,6 +185,8 @@ bool PAR2ProcOCL::init(Galois16OCLMethods method, unsigned targetInputBatch, uns
 	gfMethod = cksumMethod;
 	
 	sliceSizeCksum = sliceSize + gf->info().cksumSize;
+	
+	outputsInterleaved = 1;
 	
 	return true;
 }
@@ -161,6 +264,8 @@ std::vector<Galois16OCLMethods> PAR2ProcOCL::availableMethods(int platformId, in
 		ret.push_back(GF16OCL_LOOKUP_HALF);
 		ret.push_back(GF16OCL_LOOKUP_NOCACHE);
 		ret.push_back(GF16OCL_LOOKUP_HALF_NOCACHE);
+		ret.push_back(GF16OCL_LOOKUP_GRP2);
+		ret.push_back(GF16OCL_LOOKUP_GRP2_NOCACHE);
 		/* log methods are known to fail on some platforms, so disable for now
 		TODO: debug these and enable
 		ret.push_back(GF16OCL_LOG);
@@ -185,6 +290,9 @@ std::vector<Galois16OCLMethods> PAR2ProcOCL::availableMethods(int platformId, in
 		ret.push_back(GF16OCL_LOOKUP_HALF);
 		ret.push_back(GF16OCL_LOOKUP_NOCACHE);
 		ret.push_back(GF16OCL_LOOKUP_HALF_NOCACHE);
+		
+		ret.push_back(GF16OCL_LOOKUP_GRP2); // TODO: consider restricting to platforms with 32b word size (currently it just forces 32b word size)
+		ret.push_back(GF16OCL_LOOKUP_GRP2_NOCACHE);
 		/* log methods are known to fail on some platforms, so disable for now
 		ret.push_back(GF16OCL_LOG);
 		ret.push_back(GF16OCL_LOG_SMALL);
@@ -238,11 +346,14 @@ struct transfer_data_ocl {
 	size_t srcLen;
 	unsigned submitInBufs;
 	unsigned inBufId;
+	int oclPlatVersion;
 	NOTIFY_DECL(cbPrep, promPrep);
 	
 	// finish specific
 	NOTIFY_BOOL_DECL(cbOut, promOut);
 	int cksumSuccess;
+	unsigned grpSize;
+	unsigned region;
 };
 
 
@@ -273,13 +384,18 @@ void PAR2ProcOCL::transfer_slice(ThreadMessageQueue<void*>& q) {
 	while((data = static_cast<struct transfer_data_ocl*>(q.pop())) != NULL) {
 		// TODO: consider doing a single mapping for the entire slice (if not, consider async mapping)
 		if(data->finish) {
-			void* remote = data->parent->queue.enqueueMapBuffer(*(data->remote), CL_TRUE, CL_MAP_READ, data->remoteOffset, data->totalLen);
-			data->cksumSuccess = data->gf->copy_cksum_check(data->local, remote, data->sliceLen);
+			void* remote = data->parent->queue.enqueueMapBuffer(*(data->remote), CL_TRUE, CL_MAP_READ, data->remoteOffset, data->totalLen*data->grpSize);
+			if(data->grpSize == 2) {
+				// TODO: look at a way to avoid unnecessary map/unmap calls
+				data->cksumSuccess = data->gf->finish_grp2_cksum(data->local, remote, data->sliceLen, data->region & (data->grpSize-1));
+			} else {
+				data->cksumSuccess = data->gf->copy_cksum_check(data->local, remote, data->sliceLen);
+			}
 			data->parent->queue.enqueueUnmapMemObject(*(data->remote), remote);
 			NOTIFY_DONE(data, _queueRecv, data->promOut, data->cksumSuccess);
 		} else {
 			if(data->local) {
-				void* remote = data->parent->queue.enqueueMapBuffer(*(data->remote), CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, data->remoteOffset, data->totalLen);
+				void* remote = data->parent->queue.enqueueMapBuffer(*(data->remote), CL_TRUE, data->oclPlatVersion>=1002 ? CL_MAP_WRITE_INVALIDATE_REGION : CL_MAP_WRITE, data->remoteOffset, data->totalLen);
 				data->gf->copy_cksum(remote, data->local, data->srcLen, data->sliceLen);
 				data->parent->queue.enqueueUnmapMemObject(*(data->remote), remote);
 			}
@@ -320,6 +436,7 @@ FUTURE_RETURN_T PAR2ProcOCL::_addInput(const void* buffer, size_t size, T inputN
 	data->sliceLen = sliceSize;
 	data->totalLen = sliceSizeCksum;
 	data->gf = gf.get();
+	data->oclPlatVersion = oclPlatVersion;
 	IF_LIBUV(data->cbPrep = cb);
 	
 	currentStagingInputs++;
@@ -366,7 +483,7 @@ void PAR2ProcOCL::dummyInput(uint16_t inputNum, bool flush) {
 }
 
 bool PAR2ProcOCL::fillInput(const void* buffer) {
-	void* remote = queue.enqueueMapBuffer(staging[currentStagingArea].input, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, currentStagingInputs * sliceSizeAligned, sliceSizeAligned);
+	void* remote = queue.enqueueMapBuffer(staging[currentStagingArea].input, CL_TRUE, oclPlatVersion>=1002 ? CL_MAP_WRITE_INVALIDATE_REGION : CL_MAP_WRITE, currentStagingInputs * sliceSizeAligned, sliceSizeAligned);
 	gf->copy_cksum(remote, buffer, sliceSize, sliceSize);
 	queue.enqueueUnmapMemObject(staging[currentStagingArea].input, remote);
 	
@@ -410,6 +527,7 @@ void PAR2ProcOCL::flush() {
 	data->submitInBufs = currentStagingInputs;
 	data->inBufId = currentStagingArea;
 	data->gf = gf.get();
+	data->oclPlatVersion = oclPlatVersion;
 	
 	stagingActiveCount_inc();
 	staging[currentStagingArea].setIsActive(true); // lock this buffer until processing is complete
@@ -448,7 +566,14 @@ FUTURE_RETURN_BOOL_T PAR2ProcOCL::getOutput(unsigned index, void* output  IF_LIB
 	data->sliceLen = sliceSize;
 	data->totalLen = sliceSizeAligned;
 	data->gf = gf.get();
+	data->oclPlatVersion = oclPlatVersion;
 	data->local = output;
+	data->region = index;
+	data->grpSize = 1;
+	if(outputsInterleaved > 1 && index < ((unsigned)outputExponents.size() & ~(outputsInterleaved-1))) {
+		data->grpSize = outputsInterleaved;
+		data->remoteOffset = (index & ~(outputsInterleaved-1))*sliceSizeAligned;
+	}
 #ifdef USE_LIBUV
 	data->cbOut = cb;
 	pendingOutCallbacks++;

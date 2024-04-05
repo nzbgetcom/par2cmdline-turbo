@@ -177,4 +177,60 @@ static HEDLEY_ALWAYS_INLINE void _FN(gf16_checksum_prepare)(void *HEDLEY_RESTRIC
 	}
 #undef _X
 }
+
+static HEDLEY_ALWAYS_INLINE void _FN(gf16_ungrp2a_block)(void *HEDLEY_RESTRICT dst, const void *HEDLEY_RESTRICT src, const size_t blockLen) {
+	const unsigned words = (unsigned)blockLen / sizeof(_mword);
+	const _mword* _src = (const _mword*)src;
+	_mword* _dst = (_mword*)dst;
+	for(unsigned i=0; i<words; i++) {
+		_mword w1 = _MMI(loadu)(_src);
+		_mword w2 = _MMI(loadu)(_src + 1);
+		_src += 2;
+		
+#if MWORD_SIZE==64
+		_mword r = _MM(permutex2var_epi16)(w1, _MM(set_epi16)(
+			62,60,58,56,54,52,50,48,46,44,42,40,38,36,34,32,30,28,26,24,22,20,18,16,14,12,10,8,6,4,2,0
+		), w2);
+#elif MWORD_SIZE==32
+		w1 = _MMI(and)(w1, _MM(set1_epi32)(0xffff));
+		w2 = _MMI(and)(w2, _MM(set1_epi32)(0xffff));
+		_mword r = _MM(packus_epi32)(w1, w2);
+		r = _mm256_permute4x64_epi64(r, _MM_SHUFFLE(3,1,2,0));
+#else
+		w1 = _MM(slli_epi32)(w1, 16);
+		w2 = _MM(slli_epi32)(w2, 16);
+		w1 = _MM(srai_epi32)(w1, 16);
+		w2 = _MM(srai_epi32)(w2, 16);
+		_mword r = _MM(packs_epi32)(w1, w2);
+#endif
+		_MMI(storeu)(_dst + i, r);
+	}
+}
+
+static HEDLEY_ALWAYS_INLINE void _FN(gf16_ungrp2b_block)(void *HEDLEY_RESTRICT dst, const void *HEDLEY_RESTRICT src, const size_t blockLen) {
+	const unsigned words = (unsigned)blockLen / sizeof(_mword);
+	const _mword* _src = (const _mword*)src;
+	_mword* _dst = (_mword*)dst;
+	for(unsigned i=0; i<words; i++) {
+		_mword w1 = _MMI(loadu)(_src);
+		_mword w2 = _MMI(loadu)(_src + 1);
+		_src += 2;
+		
+#if MWORD_SIZE==64
+		_mword r = _MM(permutex2var_epi16)(w1, _MM(set_epi16)(
+			63,61,59,57,55,53,51,49,47,45,43,41,39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1
+		), w2);
+#else
+		w1 = _MM(srai_epi32)(w1, 16);
+		w2 = _MM(srai_epi32)(w2, 16);
+		
+		_mword r = _MM(packs_epi32)(w1, w2);
+#if MWORD_SIZE==32
+		r = _mm256_permute4x64_epi64(r, _MM_SHUFFLE(3,1,2,0));
+#endif
+#endif
+		_MMI(storeu)(_dst + i, r);
+	}
+}
+
 #endif

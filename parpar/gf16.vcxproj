@@ -127,6 +127,12 @@
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|Win32'">-mssse3 -mgfni %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|x64'">-mssse3 -mgfni %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="gf16\gf16_affine_avx10.c">
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|Win32'">-mavx512bw -mavx512vl -mgfni -mno-evex512 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|x64'">-mavx512bw -mavx512vl -mgfni -mno-evex512 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="gf16\gf16_lookup.c" />
     <ClCompile Include="gf16\gf16_lookup_sse2.c">
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -167,6 +173,7 @@
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM64'">-march=armv8-a+sve2 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="gf16\gf16_shuffle128_rvv.c" />
+    <ClCompile Include="gf16\gf16_clmul_rvv.c" />
     <ClCompile Include="gf16\gf16_clmul_neon.c">
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM'">-mfpu=neon %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -206,6 +213,12 @@
       <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|Win32'">-mavx512bw -mavx512vl %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|x64'">-mavx512bw -mavx512vl %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="gf16\gf_add_avx10.c">
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|Win32'">-mavx512bw -mavx512vl -mno-evex512 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|x64'">-mavx512bw -mavx512vl -mno-evex512 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="gf16\gf_add_neon.c">
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM'">-mfpu=neon %(AdditionalOptions)</AdditionalOptions>
@@ -268,6 +281,7 @@
     <ClCompile Include="gf16\gf16pmul_sve2.c">
       <AdditionalOptions Condition="'$(PlatformToolset)|$(Platform)'=='ClangCL|ARM64'">-march=armv8-a+sve2 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="gf16\gf16pmul_rvv.c" />
     <ClCompile Include="gf16\controller.cpp" />
     <ClCompile Include="gf16\controller_cpu.cpp" />
     <ClCompile Include="src\platform_warnings.c">
@@ -292,6 +306,7 @@
     <ClInclude Include="gf16\gf16_muladd_multi.h" />
     <ClInclude Include="gf16\gf16_clmul.h" />
     <ClInclude Include="gf16\gf16_clmul_neon_base.h" />
+    <ClInclude Include="gf16\gf16_clmul_rvv.h" />
     <ClInclude Include="gf16\gf16_neon_common.h" />
     <ClInclude Include="gf16\gf16_sve_common.h" />
     <ClInclude Include="gf16\gf16_rvv_common.h" />
@@ -309,6 +324,7 @@
     <ClInclude Include="gf16\gf16_clmul_neon.h" />
     <ClInclude Include="gf16\gf16_clmul_sve2.h" />
     <ClInclude Include="gf16\gf_add.h" />
+    <ClInclude Include="gf16\gf_add_common.h" />
     <ClInclude Include="gf16\gf_add_x86.h" />
     <ClInclude Include="gf16\platform.h" />
     <ClInclude Include="gf16\x86_jit.h" />
