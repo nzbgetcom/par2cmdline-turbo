@@ -2481,7 +2481,7 @@ bool Par2Repairer::AllocateBuffers(size_t memorylimit)
     chunksize = (size_t)blocksize;
   }
 
-  if (MAX_CHUNK_SIZE && chunksize > MAX_CHUNK_SIZE)
+  if (MAX_CHUNK_SIZE != 0 && chunksize > MAX_CHUNK_SIZE)
     chunksize = MAX_CHUNK_SIZE;
 
   if (noiselevel >= nlDebug)

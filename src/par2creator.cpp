@@ -334,7 +334,7 @@ bool Par2Creator::CalculateProcessBlockSize(size_t memorylimit)
       deferhashcomputation = true;
     }
     
-    if (MAX_CHUNK_SIZE && chunksize > MAX_CHUNK_SIZE)
+    if (MAX_CHUNK_SIZE != 0 && chunksize > MAX_CHUNK_SIZE)
     {
       chunksize = MAX_CHUNK_SIZE;
       deferhashcomputation = false;
