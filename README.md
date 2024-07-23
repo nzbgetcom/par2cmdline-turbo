@@ -84,6 +84,7 @@ Pre-built binaries for common systems are available on the [releases page](https
 
 * Arch Linux: [AUR](https://aur.archlinux.org/packages/par2cmdline-turbo) ([git](https://aur.archlinux.org/packages/par2cmdline-turbo-git))
 * Fedora Linux: [COPR](https://copr.fedorainfracloud.org/coprs/errornointernet/par2cmdline-turbo)
+* Python: [pip](https://pypi.org/project/par2cmdline-turbo/)
 
 ## Building
 
