@@ -31,7 +31,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - run: msbuild -property:PlatformToolset=ClangCL -property:Configuration=Release -property:Platform=${{ matrix.platform }} par2cmdline.sln
-      - run: move "${{ matrix.platform }}\Release\par2.exe" par2.exe && 7z a -t7z -mx=9 ${{ matrix.bcj }} par2.7z par2.exe
+      - run: move "${{ matrix.platform }}\Release\par2.exe" par2.exe
+      - run: 7z a -t7z -mx=9 ${{ matrix.bcj }} par2.7z par2.exe
+      - run: 7z a -tzip -mx=9 par2.zip par2.exe
       - uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -39,6 +41,14 @@ jobs:
           upload_url: ${{ steps.get_release.outputs.upload_url }} 
           asset_path: ./par2.7z
           asset_name: par2cmdline-turbo-${{ steps.get_release.outputs.tag_name }}-win-${{ matrix.name }}.7z
+          asset_content_type: application/octet-stream
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }} 
+          asset_path: ./par2.zip
+          asset_name: par2cmdline-turbo-${{ steps.get_release.outputs.tag_name }}-win-${{ matrix.name }}.zip
           asset_content_type: application/octet-stream
   
   build-linux-static:
