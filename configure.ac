@@ -75,6 +75,9 @@ dnl C++11 check
 m4_include([m4/ax_cxx_compile_stdcxx.m4])
 AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
 
+dnl ParPar backend is mostly compiled as C, so perform compiler checks appropriately
+AC_LANG_PUSH(C)
+
 dnl Platform detection / flags supported by compiler
 m4_include([m4/ax_check_compile_flag.m4])
 AX_CHECK_COMPILE_FLAG([-msse2], , , [-Werror])
@@ -153,6 +156,9 @@ AM_CONDITIONAL([HAS_RV32VBC], [test x$ax_cv_check_cxxflags__Werror__march_rv32gc
 AM_COND_IF([HAS_RV32VBC], [AC_SUBST(CFLAGS_RV32ZVBC, "-march=rv32gcv_zvbc")])
 
 AC_CHECK_DECLS([posix_memalign], [], [AC_SUBST(CFLAGS_POSIX_SOURCE, "-D_POSIX_C_SOURCE=200112L")], [[#include <stdlib.h>]])
+
+dnl Revert back to C++ compiler
+AC_LANG_POP
 
 m4_include([m4/ax_check_link_flag.m4])
 AX_CHECK_LINK_FLAG([-latomic])
