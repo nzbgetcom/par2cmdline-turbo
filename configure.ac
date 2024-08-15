@@ -70,6 +70,10 @@ AC_CHECK_FUNCS([strchr] [memcpy])
 
 AC_CHECK_FUNCS([getopt] [getopt_long])
 
+dnl Enforce C99
+CFLAGS="$CFLAGS -std=c99"
+AC_SUBST(CFLAGS)
+
 dnl ParPar backend is mostly compiled as C, so perform compiler checks appropriately
 AC_LANG_PUSH(C)
 
