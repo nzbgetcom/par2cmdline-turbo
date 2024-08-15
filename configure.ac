@@ -75,6 +75,10 @@ dnl C++11 check
 m4_include([m4/ax_cxx_compile_stdcxx.m4])
 AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
 
+dnl Enforce C99
+CFLAGS="$CFLAGS -std=c99"
+AC_SUBST(CFLAGS)
+
 dnl ParPar backend is mostly compiled as C, so perform compiler checks appropriately
 AC_LANG_PUSH(C)
 
