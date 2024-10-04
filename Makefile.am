@@ -52,7 +52,8 @@ libpar2_a_SOURCES = src/crc.cpp src/crc.h \
 	src/reedsolomon.cpp src/reedsolomon.h \
 	src/verificationhashtable.cpp src/verificationhashtable.h \
 	src/verificationpacket.cpp src/verificationpacket.h \
-	src/libpar2.cpp src/libpar2.h src/libpar2internal.h
+	src/libpar2.cpp src/libpar2.h src/libpar2internal.h \
+	src/utf8.cpp src/utf8.h
 libpar2_a_DEPENDENCIES = \
 	libparpar_gf16.a libparpar_gf16_sse2.a libparpar_gf16_ssse3.a libparpar_gf16_avx.a libparpar_gf16_avx2.a libparpar_gf16_avx512.a libparpar_gf16_vbmi.a libparpar_gf16_gfni.a libparpar_gf16_gfni_avx2.a libparpar_gf16_gfni_avx512.a libparpar_gf16_gfni_avx10.a libparpar_gf16_clmul.a libparpar_gf16_avx2_clmul.a libparpar_gf16_vpclmul.a libparpar_gf16_vpclgfni.a libparpar_gf16_neon.a libparpar_gf16_neonsha3.a libparpar_gf16_sve.a libparpar_gf16_sve2.a libparpar_gf16_rvv.a libparpar_gf16_rvv_zvbc.a \
 	libparpar_hasher.a libparpar_hasher_sse2.a libparpar_hasher_clmul.a libparpar_hasher_xop.a libparpar_hasher_bmi1.a libparpar_hasher_avx2.a libparpar_hasher_avx512.a libparpar_hasher_avx512vl.a libparpar_hasher_armcrc.a libparpar_hasher_neon.a libparpar_hasher_neoncrc.a libparpar_hasher_sve2.a libparpar_hasher_zbkc.a
@@ -288,6 +289,7 @@ tests_md5_test_SOURCES = src/md5_test.cpp src/md5.cpp src/md5.h
 tests_md5_test_LDADD = libpar2.a
 
 tests_diskfile_test_SOURCES = src/diskfile_test.cpp src/diskfile.cpp src/diskfile.h
+tests_diskfile_test_LDADD = libpar2.a
 
 tests_libpar2_test_SOURCES = src/libpar2_test.cpp src/libpar2.h
 tests_libpar2_test_LDADD = libpar2.a
