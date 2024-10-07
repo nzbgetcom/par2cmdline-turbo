@@ -1,6 +1,6 @@
 
-#include "gf16_neon_common.h"
-#include "gf16_muladd_multi.h"
+#include <par2/gf16/gf16_neon_common.h>
+#include <par2/gf16/gf16_muladd_multi.h>
 
 #if defined(__ARM_NEON)
 int gf16_available_neon = 1;

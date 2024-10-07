@@ -1,25 +1,25 @@
-#include "gf16mul.h"
-#include "gf16_global.h"
+#include <par2/gf16/gf16mul.h>
+#include <par2/gf16/gf16_global.h>
 #include <cstdlib>
 
 extern "C" {
-	#include "gf16_lookup.h"
-	#include "gf16_shuffle.h"
-	#include "gf16_clmul.h"
-	#include "gf16_affine.h"
-	#include "gf16_xor.h"
-	#include "gf_add.h"
-	#include "gf16_cksum.h"
+	#include <par2/gf16/gf16_lookup.h>
+	#include <par2/gf16/gf16_shuffle.h>
+	#include <par2/gf16/gf16_clmul.h>
+	#include <par2/gf16/gf16_affine.h>
+	#include <par2/gf16/gf16_xor.h>
+	#include <par2/gf16/gf_add.h>
+	#include <par2/gf16/gf16_cksum.h>
 }
 
 // CPUID stuff
-#include "../src/cpuid.h"
+#include <par2/osinfo/cpuid.h>
 #ifdef PLATFORM_X86
 # ifdef __APPLE__
 #  include <sys/types.h>
 #  include <sys/sysctl.h>
 # endif
-# include "x86_jit.h"
+# include <par2/gf16/x86_jit.h>
 struct GF16CpuCap {
 	bool hasSSE2, hasSSSE3, hasAVX, hasAVX2, hasAVX512VLBW, hasAVX512VBMI, hasGFNI, hasAVX10;
 	size_t propPrefShuffleThresh;

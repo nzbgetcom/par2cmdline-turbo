@@ -26,8 +26,8 @@
 #include <iostream>
 #include <stdlib.h>
 
-#include "md5.h"
-
+using namespace Par2;
+using namespace std;
 
 // compares Update(length) to Update(buffer,buffersize)
 int test1() {

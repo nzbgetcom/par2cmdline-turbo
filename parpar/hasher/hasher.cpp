@@ -1,5 +1,5 @@
-#include "hasher.h"
-#include "../src/cpuid.h"
+#include <par2/hasher/hasher.h>
+#include <par2/osinfo/cpuid.h>
 #include <string.h>
 
 #ifdef PLATFORM_X86

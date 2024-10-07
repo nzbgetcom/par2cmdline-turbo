@@ -1,6 +1,6 @@
 
-#include "gf16_clmul_sve2.h"
-#include "gf16_muladd_multi.h"
+#include <par2/gf16/gf16_clmul_sve2.h>
+#include <par2/gf16/gf16_muladd_multi.h>
 
 #if defined(__ARM_FEATURE_SVE2)
 
@@ -162,7 +162,7 @@ void gf16_clmul_muladd_sve2(const void *HEDLEY_RESTRICT scratch, void *HEDLEY_RE
 #endif
 }
 
-#include "gf16_checksum_sve.h"
+#include <par2/gf16/gf16_checksum_sve.h>
 
 #if defined(__ARM_FEATURE_SVE2)
 GF16_MULADD_MULTI_FUNCS(gf16_clmul, _sve2, gf16_clmul_muladd_x_sve2, CLMUL_NUM_REGIONS, svcntb()*2, 0, (void)0)

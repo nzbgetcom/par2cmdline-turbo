@@ -1,5 +1,5 @@
 
-#include "gf16_checksum_generic.h"
+#include <par2/gf16/gf16_checksum_generic.h>
 
 #define _FNSUFFIX _generic
 typedef uintptr_t cksum_t;
@@ -9,5 +9,5 @@ typedef uintptr_t cksum_t;
 #define CKSUM_IS_ZERO(c) c == 0
 
 #define _AVAILABLE 1
-#include "gf16_cksum_base.h"
+#include <par2/gf16/gf16_cksum_base.h>
 

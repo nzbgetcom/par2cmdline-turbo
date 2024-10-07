@@ -1,0 +1,2 @@
+/* PAR2_TURBO library version */
+#cmakedefine PAR2_TURBO_LIB_VERSION "@PAR2_TURBO_LIB_VERSION@"

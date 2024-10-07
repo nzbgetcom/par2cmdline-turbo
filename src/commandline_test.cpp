@@ -17,6 +17,7 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+#include "libpar2internal.h"
 
 #include <iostream>
 #include <fstream>
@@ -25,6 +26,8 @@
 #include "commandline.h"
 
 
+namespace Par2
+{
 // ComputeRecoveryBlockCount
 // recoveryblockset = true
 int test5() {
@@ -1712,4 +1715,6 @@ int main() {
   std::cout << "SUCCESS: commandline_test complete." << std::endl;
 
   return 0;
+}
+
 }

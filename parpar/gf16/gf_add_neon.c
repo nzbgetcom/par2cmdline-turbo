@@ -1,5 +1,5 @@
-#include "gf16_neon_common.h"
-#include "gf16_muladd_multi.h"
+#include <par2/gf16/gf16_neon_common.h>
+#include <par2/gf16/gf16_muladd_multi.h>
 
 #ifdef __ARM_NEON
 static HEDLEY_ALWAYS_INLINE uint8x16x2_t veorq_u8_x2(uint8x16x2_t a, uint8x16x2_t b) {

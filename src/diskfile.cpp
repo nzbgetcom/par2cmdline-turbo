@@ -20,6 +20,13 @@
 
 #include "libpar2internal.h"
 
+#include <ostream>
+#include <string>
+#include <list>
+
+using namespace Par2;
+using namespace std;
+
 #ifdef _MSC_VER
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -372,7 +379,7 @@ std::string DiskFile::GetCanonicalPathname(std::string filename)
   wfullname[0] = towupper(wfullname[0]);
   std::replace(wfullname.get(), wfullname.get() + length, L'/', L'\\');
 
-  return utf8::WideToUtf8(wfullname.get());
+  return WideToUtf8(wfullname.get());
 }
 
 std::unique_ptr< std::list<std::string> > DiskFile::FindFiles(std::string path, std::string wildcard, bool recursive)
@@ -394,7 +401,7 @@ std::unique_ptr< std::list<std::string> > DiskFile::FindFiles(std::string path, 
     {
       if (0 == (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
-        matches->push_back(path + utf8::WideToUtf8(fd.cFileName));
+        matches->push_back(path + WideToUtf8(fd.cFileName));
       }
       else if (recursive == true)
       {
@@ -1011,7 +1018,7 @@ bool DiskFile::Delete(void)
 //  }
 //}
 
-void DiskFile::SplitFilename(std::string filename, std::string &path, std::string &name)
+void DiskFile::SplitFilename(const string& filename, string &path, string &name)
 {
   std::string::size_type where;
 
@@ -1118,8 +1125,8 @@ bool DiskFile::Rename(std::string _filename)
 {
   assert(hFile == INVALID_HANDLE_VALUE);
 
-  std::wstring wfilename = utf8::Utf8ToWide(filename);
-  std::wstring _wfilename = utf8::Utf8ToWide(_filename);
+  std::wstring wfilename = Utf8ToWide(filename);
+  std::wstring _wfilename = Utf8ToWide(_filename);
 
   if (::MoveFileW(wfilename.c_str(), _wfilename.c_str()))
   {
