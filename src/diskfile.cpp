@@ -37,6 +37,9 @@ static char THIS_FILE[]=__FILE__;
 #ifdef _WIN32
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include "utf8.h"
+#include <cwctype>
+
 #define OffsetType __int64
 #define MaxOffset 0x7fffffffffffffffI64
 
@@ -76,7 +79,8 @@ bool DiskFile::CreateParentDirectory(string _pathname)
     if (!DiskFile::CreateParentDirectory(path))
       return false;
 
-    if (!CreateDirectory(path.c_str(), NULL))
+    wstring wpath = utf8::Utf8ToWide(path);
+    if (!CreateDirectory(wpath.c_str(), NULL))
     {
       DWORD error = ::GetLastError();
 
@@ -101,7 +105,8 @@ bool DiskFile::Create(string _filename, u64 _filesize)
     return false;
 
   // Create the file
-  hFile = ::CreateFileA(_filename.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+  wstring wfilename = utf8::Utf8ToWide(_filename);
+  hFile = ::CreateFile(wfilename.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
   if (hFile == INVALID_HANDLE_VALUE)
   {
     DWORD error = ::GetLastError();
@@ -126,7 +131,7 @@ bool DiskFile::Create(string _filename, u64 _filesize)
 
       ::CloseHandle(hFile);
       hFile = INVALID_HANDLE_VALUE;
-      ::DeleteFile(_filename.c_str());
+      ::DeleteFile(wfilename.c_str());
 
       return false;
     }
@@ -140,7 +145,7 @@ bool DiskFile::Create(string _filename, u64 _filesize)
 
       ::CloseHandle(hFile);
       hFile = INVALID_HANDLE_VALUE;
-      ::DeleteFile(_filename.c_str());
+      ::DeleteFile(wfilename.c_str());
 
       return false;
     }
@@ -223,7 +228,8 @@ bool DiskFile::Open(const string &_filename, u64 _filesize)
   filename = _filename;
   filesize = _filesize;
 
-  hFile = ::CreateFileA(_filename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+  wstring wfilename = utf8::Utf8ToWide(_filename);
+  hFile = ::CreateFile(wfilename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
   if (hFile == INVALID_HANDLE_VALUE)
   {
     DWORD error = ::GetLastError();
@@ -315,65 +321,19 @@ void DiskFile::Close(void)
 
 string DiskFile::GetCanonicalPathname(string filename)
 {
-  char fullname[MAX_PATH];
-  char *filepart;
+  std::wstring wfilename = utf8::Utf8ToWide(filename);
+  auto wfullname = make_unique<wchar_t[]>(MAX_PATH); 
 
-  // Resolve a relative path to a full path
-  unsigned int length = ::GetFullPathName(filename.c_str(), sizeof(fullname), fullname, &filepart);
-  if (length <= 0 || sizeof(fullname) < length)
-    return filename;
-
-  // Make sure the drive letter is upper case.
-  fullname[0] = toupper(fullname[0]);
-
-  // Translate all /'s to \'s
-  char *current = strchr(fullname, '/');
-  while (current)
+  size_t length = GetFullPathName(wfilename.data(), MAX_PATH, wfullname.get(), nullptr);
+  if (length == 0) 
   {
-    *current++ = '\\';
-    current  = strchr(current, '/');
+    return filename; 
   }
 
-  // Copy the root directory to the output string
-  string longname(fullname, 3);
+  wfullname[0] = towupper(wfullname[0]);
+  replace(wfullname.get(), wfullname.get() + length, L'/', L'\\');
 
-  // Start processing at the first path component
-  current = &fullname[3];
-  char *limit = &fullname[length];
-
-  // Process until we reach the end of the full name
-  while (current < limit)
-  {
-    char *tail;
-
-    // Find the next \, or the end of the string
-    (tail = strchr(current, '\\')) || (tail = limit);
-    *tail = 0;
-
-    // Create a wildcard to search for the path
-    string wild = longname + current;
-    WIN32_FIND_DATA finddata;
-    HANDLE hFind = ::FindFirstFile(wild.c_str(), &finddata);
-    if (hFind == INVALID_HANDLE_VALUE)
-    {
-      // If the component was not found then just copy the rest of the path to the
-      // output buffer verbatim.
-      longname += current;
-      break;
-    }
-    ::FindClose(hFind);
-
-    // Copy the component found to the output
-    longname += finddata.cFileName;
-
-    current = tail + 1;
-
-    // If we have not reached the end of the name, add a "\"
-    if (current < limit)
-      longname += '\\';
-  }
-
-  return longname;
+  return utf8::WideToUtf8(wfullname.get());
 }
 
 std::unique_ptr< list<string> > DiskFile::FindFiles(string path, string wildcard, bool recursive)
@@ -386,16 +346,16 @@ std::unique_ptr< list<string> > DiskFile::FindFiles(string path, string wildcard
   }
   list<string> *matches = new list<string>;
 
-  wildcard = path + wildcard;
+  wstring wwildcard = utf8::Utf8ToWide(path + wildcard);
   WIN32_FIND_DATA fd;
-  HANDLE h = ::FindFirstFile(wildcard.c_str(), &fd);
+  HANDLE h = ::FindFirstFile(wwildcard.c_str(), &fd);
   if (h != INVALID_HANDLE_VALUE)
   {
     do
     {
       if (0 == (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
-        matches->push_back(path + fd.cFileName);
+        matches->push_back(path + utf8::WideToUtf8(fd.cFileName));
       }
       else if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
       {
@@ -405,7 +365,7 @@ std::unique_ptr< list<string> > DiskFile::FindFiles(string path, string wildcard
 
         string nwwildcard="*";
 	std::unique_ptr< list<string> > dirmatches(
-						 DiskFile::FindFiles(path + fd.cFileName, nwwildcard, true)
+						 DiskFile::FindFiles(path + utf8::WideToUtf8(fd.cFileName), nwwildcard, true)
 						 );
 
         matches->merge(*dirmatches);
@@ -419,8 +379,9 @@ std::unique_ptr< list<string> > DiskFile::FindFiles(string path, string wildcard
 
 u64 DiskFile::GetFileSize(string filename)
 {
+  wstring wfilename = utf8::Utf8ToWide(filename);
   struct _stati64 st;
-  if ((0 == _stati64(filename.c_str(), &st)) && (0 != (st.st_mode & S_IFREG)))
+  if ((0 == _wstati64(wfilename.c_str(), &st)) && (0 != (st.st_mode & S_IFREG)))
   {
     return st.st_size;
   }
@@ -432,8 +393,9 @@ u64 DiskFile::GetFileSize(string filename)
 
 bool DiskFile::FileExists(string filename)
 {
-  struct _stati64 st;
-  return ((0 == _stati64(filename.c_str(), &st)) && (0 != (st.st_mode & S_IFREG)));
+  wstring wfilename = utf8::Utf8ToWide(filename);
+  struct _stat st;
+  return ((0 == _wstat(wfilename.c_str(), &st)) && (0 != (st.st_mode & _S_IFREG))); 
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
