@@ -20,6 +20,9 @@
 
 #include "libpar2internal.h"
 
+using namespace Par2;
+using namespace std;
+
 #ifdef _MSC_VER
 #ifdef _DEBUG
 #undef THIS_FILE

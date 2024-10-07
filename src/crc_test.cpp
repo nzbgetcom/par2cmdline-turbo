@@ -30,8 +30,8 @@
 #include <iostream>
 #include <stdlib.h>
 
-#include "crc.h"
-
+using namespace Par2;
+using namespace std;
 
 // Example usage:
 //   u32 checksum = CRCCompute((size_t)blocksize, buffer);

@@ -1,4 +1,4 @@
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 #define _mword __m256i
 #define _MM(f) _mm256_ ## f
@@ -11,4 +11,4 @@
 #if defined(__VPCLMULQDQ__) && defined(__AVX2__)
 # define _AVAILABLE 1
 #endif
-#include "gf16pmul_x86.h"
+#include <par2/gf16/gf16pmul_x86.h>

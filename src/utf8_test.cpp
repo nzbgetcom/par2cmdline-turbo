@@ -20,10 +20,10 @@
 #include "libpar2internal.h"
 
 #include <iostream>
-#include "utf8.h"
+#include <string>
 
+using namespace Par2;
 using namespace std;
-using namespace utf8;
 
 int test1()
 {

@@ -19,7 +19,12 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "libpar2internal.h"
-#include "foreach_parallel.h"
+
+#include <ostream>
+#include <string>
+
+using namespace Par2;
+using namespace std;
 
 #ifdef _MSC_VER
 #ifdef _DEBUG

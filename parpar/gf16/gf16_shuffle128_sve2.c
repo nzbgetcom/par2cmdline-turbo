@@ -1,5 +1,5 @@
 
-#include "gf16_sve_common.h"
+#include <par2/gf16/gf16_sve_common.h>
 
 // only support our target polynomial
 #if defined(__ARM_FEATURE_SVE2) && (GF16_POLYNOMIAL | 0x1f) == 0x1101f && __BYTE_ORDER__ != __ORDER_BIG_ENDIAN__
@@ -71,7 +71,7 @@ static HEDLEY_ALWAYS_INLINE void gf16_shuffle128_sve2_round(svuint8x2_t va, svui
 #define SVE_ROUND1 gf16_shuffle128_sve2_round1
 #define SVE_ROUND gf16_shuffle128_sve2_round
 #define _FNSUFFIX _128_sve2
-#include "gf16_shuffle128_sve_common.h"
+#include <par2/gf16/gf16_shuffle128_sve_common.h>
 #undef _FNSUFFIX
 #undef SVE_ROUND
 #undef SVE_ROUND1
