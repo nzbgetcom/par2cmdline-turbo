@@ -278,7 +278,7 @@ EXTRA_DIST = ROADMAP \
 
 # Programs that need to be compiled for the test suite.
 # These are the unit tests.
-check_PROGRAMS = tests/letype_test tests/crc_test tests/md5_test tests/diskfile_test tests/libpar2_test tests/commandline_test tests/descriptionpacket_test tests/criticalpacket_test tests/reedsolomon_test tests/galois_test
+check_PROGRAMS = tests/letype_test tests/crc_test tests/md5_test tests/diskfile_test tests/libpar2_test tests/commandline_test tests/descriptionpacket_test tests/criticalpacket_test tests/reedsolomon_test tests/galois_test tests/utf8_test
 
 tests_letype_test_SOURCES = src/letype_test.cpp src/letype.h
 
@@ -306,6 +306,8 @@ tests_criticalpacket_test_LDADD = libpar2.a
 tests_reedsolomon_test_SOURCES = src/reedsolomon_test.cpp src/reedsolomon.cpp src/reedsolomon.h
 
 tests_galois_test_SOURCES = src/galois_test.cpp src/galois.cpp src/galois.h
+
+tests_utf8_test_SOURCES = src/utf8_test.cpp src/utf8.cpp src/utf8.h
 
 
 # List of all tests.
@@ -340,6 +342,7 @@ TESTS = tests/test1 \
 		tests/test26 \
 		tests/test27 \
 		tests/test28 \
+		tests/utf8_test \
 		tests/unit_tests
 
 install-exec-hook :

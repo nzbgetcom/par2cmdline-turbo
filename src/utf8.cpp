@@ -21,6 +21,7 @@
 
 #include <codecvt>
 #include <iostream>
+#include <exception>
 #include "utf8.h"
 
 namespace utf8
@@ -38,19 +39,36 @@ namespace utf8
     return utf8Converter.to_bytes(str.data(), str.data() + str.size());
   }
 
-  WideToUtf8ArgsAdapter::WideToUtf8ArgsAdapter(int argc, wchar_t* wargv[]) : m_argc(argc)
+  WideToUtf8ArgsAdapter::WideToUtf8ArgsAdapter(int argc, wchar_t* wargv[]) noexcept(false)
+    : m_argc(argc)
   {
+    if (wargv == nullptr)
+    {
+      throw std::invalid_argument("Invalid argument: wargv cannot be nullptr.");
+    }
+
     if (m_argc > MAX_ARGS)
     {
-      std::cerr << "Too many arguments (" << argc << "/" << MAX_ARGS << ").\n"
+      std::cerr
+        << "Too many arguments (" << argc << "/" << MAX_ARGS << ").\n"
         << "Only " << MAX_ARGS << " will be processed." << std::endl;
 
       m_argc = MAX_ARGS;
     }
 
-    m_argv = new char*[m_argc];
+    m_argv = new char* [m_argc];
     for (int i = 0; i < m_argc; ++i)
     {
+      if (wargv[i] == nullptr)
+      {
+        std::cerr
+          << "Invalid argument: encountered nullptr in wargv.\n"
+          << "Skipping " << i << "argument." << std::endl;
+        --m_argc;
+        --i;
+        continue;
+      }
+
       std::string arg = utf8::WideToUtf8(wargv[i]);
       size_t size = arg.size() + 1;
       m_argv[i] = new char[size];

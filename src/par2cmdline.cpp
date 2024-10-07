@@ -49,9 +49,8 @@ int main(int argc, char* argv[])
 
   SetConsoleOutputCP(CP_UTF8);
 
-  utf8::WideToUtf8ArgsAdapter wargs{ argc, wargv };
-  auto argv = wargs.GetUtf8Args();
-
+  utf8::WideToUtf8ArgsAdapter wargsAdapter{ argc, wargv };
+  auto argv = wargsAdapter.GetUtf8Args();
 #endif
 
   // check sizeof integers

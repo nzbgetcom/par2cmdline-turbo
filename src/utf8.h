@@ -30,7 +30,7 @@ namespace utf8
   class WideToUtf8ArgsAdapter final
   {
   public:
-    WideToUtf8ArgsAdapter(int argc, wchar_t* argv_[]);
+    WideToUtf8ArgsAdapter(int argc, wchar_t* argv_[]) noexcept(false);
 
     const char* const* GetUtf8Args() const noexcept;
 
