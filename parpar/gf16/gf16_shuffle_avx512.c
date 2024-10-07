@@ -1,5 +1,5 @@
 
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 #define MWORD_SIZE 64
 #define _mword __m512i
@@ -12,11 +12,11 @@
 #if defined(__AVX512BW__) && defined(__AVX512VL__)
 # define _AVAILABLE
 #endif
-#include "gf16_shuffle_x86.h"
-#include "gf16_shuffle2x_x86.h"
+#include <par2/gf16/gf16_shuffle_x86.h>
+#include <par2/gf16/gf16_shuffle2x_x86.h>
 
 
-#include "gf16_muladd_multi.h"
+#include <par2/gf16/gf16_muladd_multi.h>
 
 #ifdef _AVAILABLE
 static HEDLEY_ALWAYS_INLINE void gf16_shuffle_calc2x_table(const uint16_t* coefficients, __m256i polyl, __m256i polyh, __m256i* prodLo0, __m256i* prodHi0, __m256i* prodLo1, __m256i* prodHi1, __m256i* prodLo2, __m256i* prodHi2, __m256i* prodLo3, __m256i* prodHi3) {

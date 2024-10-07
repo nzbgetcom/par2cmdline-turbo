@@ -1,4 +1,4 @@
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 // despite the name, this does also require AVX512BW
 
 #define _CRC_USE_AVX512_ 1
@@ -10,14 +10,14 @@
 #define _FNCRC(f) f##_clmul
 
 #if defined(__AVX512VL__) && defined(__AVX512BW__)
-# include "crc_clmul.h"
-# include "md5x2-sse.h"
-# include "md5-avx512.h"
-# include "hasher_input_base.h"
-# include "hasher_md5crc_base.h"
+# include <par2/hasher/crc_clmul.h>
+# include <par2/hasher/md5x2-sse.h>
+# include <par2/hasher/md5-avx512.h>
+# include <par2/hasher/hasher_input_base.h>
+# include <par2/hasher/hasher_md5crc_base.h>
 #else
-# include "hasher_input_stub.h"
-# include "hasher_md5crc_stub.h"
+# include <par2/hasher/hasher_input_stub.h>
+# include <par2/hasher/hasher_md5crc_stub.h>
 #endif
 
 
@@ -29,10 +29,10 @@
 #define CLEAR_VEC (void)0
 
 #if defined(__AVX512VL__) && defined(__AVX512BW__)
-# include "md5mb-sse.h"
-# include "hasher_md5mb_base.h"
+# include <par2/hasher/md5mb-sse.h>
+# include <par2/hasher/hasher_md5mb_base.h>
 #else
-# include "hasher_md5mb_stub.h"
+# include <par2/hasher/hasher_md5mb_stub.h>
 #endif
 
 #undef MD5Multi
@@ -50,9 +50,9 @@
 #define CLEAR_VEC _mm256_zeroupper()
 
 #if defined(__AVX512VL__) && defined(__AVX512BW__)
-# include "hasher_md5mb_base.h"
+# include <par2/hasher/hasher_md5mb_base.h>
 #else
-# include "hasher_md5mb_stub.h"
+# include <par2/hasher/hasher_md5mb_stub.h>
 #endif
 
 #if defined(__AVX512VL__) && defined(__AVX512BW__) && !defined(__EVEX512__) && (defined(__AVX10_1__) || defined(__EVEX256__))

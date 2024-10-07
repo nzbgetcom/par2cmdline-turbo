@@ -1,6 +1,6 @@
 
-#include "gf16_global.h"
-#include "../src/platform.h"
+#include <par2/gf16/gf16_global.h>
+#include <par2/osinfo/platform.h>
 
 #define MWORD_SIZE 64
 #define _mword __m512i
@@ -44,7 +44,7 @@ static HEDLEY_ALWAYS_INLINE __m512i gf16_affine_load2_matrix(const void *HEDLEY_
 }
 #endif
 
-#include "gf16_affine_avx10.h"
+#include <par2/gf16/gf16_affine_avx10.h>
 #ifdef _AVAILABLE
 # undef _AVAILABLE
 #endif

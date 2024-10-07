@@ -1,6 +1,6 @@
-#include "hasher_input.h"
+#include <par2/hasher/hasher_input.h>
 #include <string.h>
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 IHasherInput*(*HasherInput_Create)() = NULL;
 HasherInputMethods HasherInput_Method = INHASH_SCALAR;

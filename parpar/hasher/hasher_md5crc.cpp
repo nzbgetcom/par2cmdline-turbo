@@ -1,6 +1,6 @@
-#include "hasher_md5crc.h"
+#include <par2/hasher/hasher_md5crc.h>
 #include <string.h>
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 #ifdef PARPAR_ENABLE_HASHER_MD5CRC
 
@@ -123,7 +123,7 @@ void MD5Single::updateZero(size_t len) {
 	memset(tmp, 0, len & (MD5_BLOCKSIZE-1));
 }
 
-#include "md5-final.h"
+#include <par2/hasher/md5-final.h>
 void MD5Single::end(void* md5) {
 	md5_final_block(md5State, tmp, dataLen, 0);
 	memcpy(md5, md5State, 16);
