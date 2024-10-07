@@ -1,4 +1,4 @@
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 
 #define _MD5_USE_BMI1_ 1
@@ -10,12 +10,12 @@
 #define _FNCRC(f) f##_clmul
 
 #if defined(__PCLMUL__) && defined(__AVX__) && defined(__BMI__)
-# include "crc_clmul.h"
-# include "md5x2-scalar.h"
-# include "md5-scalar.h"
-# include "hasher_input_base.h"
-# include "hasher_md5crc_base.h"
+# include <par2/hasher/crc_clmul.h>
+# include <par2/hasher/md5x2-scalar.h>
+# include <par2/hasher/md5-scalar.h>
+# include <par2/hasher/hasher_input_base.h>
+# include <par2/hasher/hasher_md5crc_base.h>
 #else
-# include "hasher_input_stub.h"
-# include "hasher_md5crc_stub.h"
+# include <par2/hasher/hasher_input_stub.h>
+# include <par2/hasher/hasher_md5crc_stub.h>
 #endif

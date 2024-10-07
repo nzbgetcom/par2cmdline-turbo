@@ -1,5 +1,5 @@
 
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 #define MWORD_SIZE 32
 #define _mword __m256i
@@ -11,10 +11,10 @@
 #if defined(__AVX2__)
 # define _AVAILABLE
 #endif
-#include "gf16_shuffle_x86.h"
-#include "gf16_shuffle2x_x86.h"
+#include <par2/gf16/gf16_shuffle_x86.h>
+#include <par2/gf16/gf16_shuffle2x_x86.h>
 
-#include "gf16_muladd_multi.h"
+#include <par2/gf16/gf16_muladd_multi.h>
 
 #if defined(_AVAILABLE) && !defined(PARPAR_SLIM_GF16)
 static HEDLEY_ALWAYS_INLINE void gf16_shuffle2x_muladd_round_avx2(__m256i* _dst, const int srcCount, const uint8_t* _src1, const uint8_t* _src2, intptr_t srcOffset, __m256i shufNormLoA, __m256i shufNormLoB, __m256i shufNormHiA, __m256i shufNormHiB, __m256i shufSwapLoA, __m256i shufSwapLoB, __m256i shufSwapHiA, __m256i shufSwapHiB) {

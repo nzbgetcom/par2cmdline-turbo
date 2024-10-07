@@ -1,10 +1,10 @@
 #include <iostream>
 #include <stdio.h> // snprintf
-#include "../src/stdint.h"
+#include <par2/osinfo/stdint.h>
 #include <string.h> // strstr
 #include <sstream> // std::stringstream
-#include "controller_ocl.h"
-#include "gf16_global.h" // GF16_POLYNOMIAL
+#include <par2/gf16/controller_ocl.h>
+#include <par2/gf16/gf16_global.h> // GF16_POLYNOMIAL
 
 // for viewing compiled code, uncomment
 //#define DUMP_ASM

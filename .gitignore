@@ -4,6 +4,7 @@
 
 # compilation output
 par2
+!par2/
 libpar2.a
 *.o
 .deps/
@@ -27,6 +28,7 @@ test-driver
 Makefile.in
 Makefile
 config.h
+version.h
 config.status
 configure
 stamp-h

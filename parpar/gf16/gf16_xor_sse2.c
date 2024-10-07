@@ -1,6 +1,6 @@
 
 #define _GF16_XORJIT_COPY_ALIGN 16
-#include "gf16_xor_common.h"
+#include <par2/gf16/gf16_xor_common.h>
 #undef _GF16_XORJIT_COPY_ALIGN
 
 #include <string.h>
@@ -1171,9 +1171,9 @@ void gf16_xor_finish_copy_blocku_sse2(void *HEDLEY_RESTRICT dst, const void *HED
 
 #if defined(__SSE2__)
 # define _AVAILABLE
-# include "gf16_checksum_x86.h"
+# include <par2/gf16/gf16_checksum_x86.h>
 #endif
-#include "gf16_xor_common_funcs.h"
+#include <par2/gf16/gf16_xor_common_funcs.h>
 #undef _AVAILABLE
 
 #undef MWORD_SIZE
@@ -1191,7 +1191,7 @@ GF_FINISH_PACKED_FUNCS_STUB(gf16_xor, _sse2)
 #endif
 
 
-#include "gf16_bitdep_init_sse2.h"
+#include <par2/gf16/gf16_bitdep_init_sse2.h>
 
 #ifdef PLATFORM_X86
 static void xor_write_init_jit(uint8_t *jitCodeNorm, uint8_t *jitCodeInsitu, uint_fast16_t* sizeNorm, uint_fast16_t* sizeInsitu) {

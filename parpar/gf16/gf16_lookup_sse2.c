@@ -1,6 +1,6 @@
 
-#include "gf16_global.h"
-#include "../src/platform.h"
+#include <par2/gf16/gf16_global.h>
+#include <par2/osinfo/platform.h>
 
 #if defined(__SSE2__) && !defined(PARPAR_SLIM_GF16)
 # define _AVAILABLE 1
@@ -198,7 +198,7 @@ static HEDLEY_ALWAYS_INLINE void gf16_lookup_prepare_blocku(void *HEDLEY_RESTRIC
 #define _FNSUFFIX _sse2
 #define _MM_END
 
-#include "gf16_checksum_x86.h"
+#include <par2/gf16/gf16_checksum_x86.h>
 
 #undef MWORD_SIZE
 #undef _mword

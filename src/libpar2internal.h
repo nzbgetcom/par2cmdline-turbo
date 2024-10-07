@@ -200,14 +200,22 @@ char *strchr(), *strrchr();
 #include <list>
 #include <map>
 #include <algorithm>
-
+#include <memory>
+#include <string>
+#include <vector>
+#include <map>
+#include <unordered_set>
+#include <mutex>
+#include <atomic>
+#include <future>
+#include <functional>
+#include <exception>
+#include <fstream>
 #include <ctype.h>
 #include <iomanip>
 #include <codecvt>
 
 #include <cassert>
-
-using namespace std;
 
 #ifdef offsetof
 #undef offsetof
@@ -215,39 +223,35 @@ using namespace std;
 #define offsetof(TYPE, MEMBER) ((size_t) ((char*)(&((TYPE *)1)->MEMBER) - (char*)1))
 
 // par2cmdline includes
-#include "libpar2.h"
-
-#include "letype.h"
-
-#include "galois.h"
-#include "crc.h"
-#include "md5.h"
-#include "par2fileformat.h"
-
-#include "diskfile.h"
-#include "datablock.h"
-
-#include "criticalpacket.h"
-#include "par2creatorsourcefile.h"
-
-#include "mainpacket.h"
-#include "creatorpacket.h"
-#include "descriptionpacket.h"
-#include "verificationpacket.h"
-#include "recoverypacket.h"
-
-#include "par2repairersourcefile.h"
-
-#include "filechecksummer.h"
-#include "verificationhashtable.h"
-
-#include "par2creator.h"
-#include "par2repairer.h"
-
-#include "par1fileformat.h"
-#include "par1repairersourcefile.h"
-#include "par1repairer.h"
-#include "utf8.h"
+#include <par2/commandline.h>
+#include <par2/crc.h>
+#include <par2/creatorpacket.h>
+#include <par2/criticalpacket.h>
+#include <par2/datablock.h>
+#include <par2/descriptionpacket.h>
+#include <par2/diskfile.h>
+#include <par2/filechecksummer.h>
+#include <par2/foreach_parallel.h>
+#include <par2/galois.h>
+#include <par2/hasher.h>
+#include <par2/letype.h>
+#include <par2/libpar2.h>
+#include <par2/mainpacket.h>
+#include <par2/md5.h>
+#include <par2/par1fileformat.h>
+#include <par2/par1repairer.h>
+#include <par2/par1repairersourcefile.h>
+#include <par2/par2creator.h>
+#include <par2/par2creatorsourcefile.h>
+#include <par2/par2fileformat.h>
+#include <par2/par2repairer.h>
+#include <par2/par2repairersourcefile.h>
+#include <par2/recoverypacket.h>
+#include <par2/reedsolomon.h>
+#include <par2/utf8.h>
+#include <par2/verificationhashtable.h>
+#include <par2/verificationpacket.h>
+>>>>>>> cfa9e2f (Add: NZBGet specific changes)
 
 // Heap checking
 #ifdef _MSC_VER

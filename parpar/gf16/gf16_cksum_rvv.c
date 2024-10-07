@@ -1,7 +1,7 @@
-#include "../src/hedley.h"
-#include "../src/platform.h"
+#include <par2/osinfo/hedley.h>
+#include <par2/osinfo/platform.h>
 
-#include "gf16_checksum_rvv.h"
+#include <par2/gf16/gf16_checksum_rvv.h>
 
 #ifdef __RVV_LE
 # define _AVAILABLE 1
@@ -16,4 +16,4 @@
 #define CKSUM_SIZE RV(vsetvlmax_e8m1)()
 
 #define _FNSUFFIX _rvv
-#include "gf16_cksum_base.h"
+#include <par2/gf16/gf16_cksum_base.h>

@@ -22,6 +22,9 @@
 
 #include "libpar2internal.h"
 
+using namespace Par2;
+using namespace std;
+
 // The file separator
 #ifdef _WIN32
 string fs("\\");

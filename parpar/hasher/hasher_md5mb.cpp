@@ -1,6 +1,6 @@
-#include "hasher_md5mb.h"
+#include <par2/hasher/hasher_md5mb.h>
 #include <string.h>
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 #ifdef PARPAR_ENABLE_HASHER_MULTIMD5
 

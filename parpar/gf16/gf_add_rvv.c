@@ -1,6 +1,6 @@
-#include "gf16_rvv_common.h"
-#include "gf16_muladd_multi.h"
-#include "gf_add_common.h"
+#include <par2/gf16/gf16_rvv_common.h>
+#include <par2/gf16/gf16_muladd_multi.h>
+#include <par2/gf16/gf_add_common.h>
 
 #ifdef __riscv_vector
 

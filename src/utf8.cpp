@@ -17,15 +17,18 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+
 #include "libpar2internal.h"
 
+#include <codecvt>
+#include <locale>
 #include <cstring>
 #include <iostream>
 #include <exception>
 
-#include "utf8.h"
+#include <par2/utf8.h>
 
-namespace utf8
+namespace Par2
 {
   const int MAX_ARGS = 128;
   const size_t MAX_DIR_PATH = 248;
