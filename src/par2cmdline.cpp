@@ -18,10 +18,14 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-#include "libpar2.h"
-#include "commandline.h"
+
+#include "libpar2internal.h"
+
 // This is included here, so that cout and cerr are not used elsewhere.
 #include <iostream>
+
+using namespace std;
+using namespace Par2;
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -49,7 +53,7 @@ int main(int argc, char* argv[])
 
   SetConsoleOutputCP(CP_UTF8);
 
-  utf8::WideToUtf8ArgsAdapter wargsAdapter{ argc, wargv };
+  WideToUtf8ArgsAdapter wargsAdapter{ argc, wargv };
   auto argv = wargsAdapter.GetUtf8Args();
 #endif
 

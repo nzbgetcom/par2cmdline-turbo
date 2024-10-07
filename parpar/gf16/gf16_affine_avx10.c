@@ -1,6 +1,6 @@
 
-#include "gf16_global.h"
-#include "../src/platform.h"
+#include <par2/gf16/gf16_global.h>
+#include <par2/osinfo/platform.h>
 
 #define MWORD_SIZE 32
 #define _mword __m256i
@@ -17,7 +17,7 @@
 
 #define _EXCLUDE_FINISH_FUNCS 1  // ...because we can just use the AVX2 variants
 
-#include "gf16_affine_avx10.h"
+#include <par2/gf16/gf16_affine_avx10.h>
 #ifdef _AVAILABLE
 # undef _AVAILABLE
 #endif

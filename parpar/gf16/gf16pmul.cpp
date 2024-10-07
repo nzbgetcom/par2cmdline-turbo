@@ -1,5 +1,5 @@
-#include "gf16pmul.h"
-#include "../src/cpuid.h"
+#include <par2/gf16/gf16pmul.h>
+#include <par2/osinfo/cpuid.h>
 
 Gf16PMulFunc gf16pmul = nullptr;
 Galois16PointMulMethods gf16pmul_method = GF16PMUL_NONE;

@@ -1,5 +1,5 @@
 
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 #define MWORD_SIZE 16
 #define _mword __m128i
@@ -12,7 +12,7 @@
 # define _AVAILABLE
 # define _AVAILABLE_AVX
 #endif
-#include "gf16_shuffle_x86.h"
+#include <par2/gf16/gf16_shuffle_x86.h>
 #undef _AVAILABLE
 #undef _AVAILABLE_AVX
 

@@ -28,12 +28,15 @@ static char THIS_FILE[]=__FILE__;
 #endif
 #endif
 
+namespace Par2
+{
+
 // The one and only CCITT CRC32 lookup table
 //
 // NOTE: the constant is the reversed polynomial for CRC-32
 // as listed on Wikipedia's page:
 // https://en.wikipedia.org/wiki/Cyclic_redundancy_check
-crc32table ccitttable(0xEDB88320L);
+crc32table g_ccitttable(0xEDB88320L);
 
 
 // GF32 multiplication
@@ -60,7 +63,7 @@ static u32 CRCExp8(u64 n)
   while (n)
   {
     if (n & 1)
-      result = GF32Multiply(result, ccitttable.power[power], ccitttable.polynom);
+      result = GF32Multiply(result, g_ccitttable.power[power], g_ccitttable.polynom);
     n >>= 1;
     power = (power + 1) & 31;
   }
@@ -103,20 +106,22 @@ void GenerateWindowTable(u64 window, u32 (&target)[256])
   // Window coefficient
   u32 coeff = CRCExp8(window);
   // Extend initial CRC to window length
-  u32 mask = GF32Multiply(~0, coeff, ccitttable.polynom);
+  u32 mask = GF32Multiply(~0, coeff, g_ccitttable.polynom);
   // Xor initial CRC with that extended by one byte
-  mask = GF32Multiply(mask, 0x80800000, ccitttable.polynom);
+  mask = GF32Multiply(mask, 0x80800000, g_ccitttable.polynom);
   // Since we have a table, may as well invert all bits to save doing it later
   mask ^= ~0;
   
   // Generate table
   for (i16 i=0; i<=255; i++)
   {
-    target[i] = GF32Multiply(ccitttable.table[i], coeff, ccitttable.polynom) ^ mask;
+    target[i] = GF32Multiply(g_ccitttable.table[i], coeff, g_ccitttable.polynom) ^ mask;
   }
 }
 
 u32 CRCUpdateBlock(u32 crc, u64 length)
 {
-  return GF32Multiply(crc, CRCExp8(length), ccitttable.polynom);
+  return GF32Multiply(crc, CRCExp8(length), g_ccitttable.polynom);
+}
+
 }

@@ -1,4 +1,4 @@
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 
 #define MD5Multi MD5Multi_AVX2
@@ -10,10 +10,10 @@
 
 
 #ifdef __AVX2__
-# include "md5mb-sse.h"
-# include "hasher_md5mb_base.h"
+# include <par2/hasher/md5mb-sse.h>
+# include <par2/hasher/hasher_md5mb_base.h>
 #else
-# include "hasher_md5mb_stub.h"
+# include <par2/hasher/hasher_md5mb_stub.h>
 #endif
 
 #undef MD5Multi
@@ -23,7 +23,7 @@
 #define md5mb_interleave 2
 
 #ifdef __AVX2__
-# include "hasher_md5mb_base.h"
+# include <par2/hasher/hasher_md5mb_base.h>
 #else
-# include "hasher_md5mb_stub.h"
+# include <par2/hasher/hasher_md5mb_stub.h>
 #endif

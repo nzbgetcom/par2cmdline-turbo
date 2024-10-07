@@ -1,15 +1,15 @@
-#include "gfmat_coeff.h"
-#include "gfmat_inv.h"
-#include "gf16pmul.h"
+#include <par2/gf16/gfmat_coeff.h>
+#include <par2/gf16/gfmat_inv.h>
+#include <par2/gf16/gf16pmul.h>
 #include <algorithm>
 
 #ifdef PARPAR_INVERT_SUPPORT
 extern "C" uint16_t* gf16_recip;
 
 #include <cassert>
-#include "../src/platform.h" // for ALIGN_*
-#include "gf16mul.h"
-#include "threadqueue.h"
+#include <par2/osinfo/platform.h> // for ALIGN_*
+#include <par2/gf16/gf16mul.h>
+#include <par2/gf16/threadqueue.h>
 #include <future>
 
 static const unsigned MIN_THREAD_REC = 10; // minimum number of rows to process on a thread
