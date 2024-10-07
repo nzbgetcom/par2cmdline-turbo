@@ -30,7 +30,7 @@ jobs:
         uses: bruceadams/get-release@v1.3.2
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - run: msbuild -property:PlatformToolset=ClangCL -property:Configuration=Release -property:Platform=${{ matrix.platform }} par2cmdline.sln
+      - run: msbuild -property:PlatformToolset=ClangCL -property:CharacterSet=Unicode -property:Configuration=Release -property:Platform=${{ matrix.platform }} par2cmdline.sln
       - run: move "${{ matrix.platform }}\Release\par2.exe" par2.exe
       - run: 7z a -t7z -mx=9 ${{ matrix.bcj }} par2.7z par2.exe
       - run: 7z a -tzip -mx=9 par2.zip par2.exe
