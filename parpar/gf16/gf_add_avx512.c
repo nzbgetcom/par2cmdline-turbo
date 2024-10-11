@@ -1,6 +1,6 @@
-#include "gf16_global.h"
-#include "../src/platform.h"
-#include "gf_add_common.h"
+#include <par2/gf16/gf16_global.h>
+#include <par2/osinfo/platform.h>
+#include <par2/gf16/gf_add_common.h>
 
 #define _mword __m512i
 #define _MM(f) _mm512_ ## f
@@ -11,7 +11,7 @@
 #endif
 #define _ADD_USE_TERNLOG
 
-#include "gf_add_x86.h"
+#include <par2/gf16/gf_add_x86.h>
 
 #undef _ADD_USE_TERNLOG
 #ifdef _AVAILABLE

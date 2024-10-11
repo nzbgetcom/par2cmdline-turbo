@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../src/stdint.h"
+#include <par2/osinfo/stdint.h>
 #include <stdlib.h> // free / calloc
 #include <cassert>
 #include "controller_ocl.h"
@@ -497,7 +497,7 @@ bool PAR2ProcOCL::fillInput(const void* buffer) {
 	return false;
 }
 
-#include "gfmat_coeff.h"
+#include <par2/gf16/gfmat_coeff.h>
 void PAR2ProcOCL::set_coeffs(PAR2ProcOCLStaging& area, unsigned idx, uint16_t inputNum) {
 	uint16_t inputLog = gfmat_input_log(inputNum);
 	auto& coeffs = area.procCoeffs;

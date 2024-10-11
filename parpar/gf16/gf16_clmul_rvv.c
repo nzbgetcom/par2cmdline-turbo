@@ -1,4 +1,4 @@
-#include "gf16_clmul_rvv.h"
+#include <par2/gf16/gf16_clmul_rvv.h>
 
 #ifdef RISCV_ZVBC_INTRIN
 int gf16_available_rvv_zvbc = 1;
@@ -6,7 +6,7 @@ int gf16_available_rvv_zvbc = 1;
 int gf16_available_rvv_zvbc = 0;
 #endif
 
-#include "gf16_muladd_multi.h"
+#include <par2/gf16/gf16_muladd_multi.h>
 
 #ifdef RISCV_ZVBC_INTRIN
 
@@ -141,7 +141,7 @@ static HEDLEY_ALWAYS_INLINE void gf16_finish_blocku_rvv(void *HEDLEY_RESTRICT ds
 	RV(vse8_v_u8m1)((uint8_t*)dst, RV(vle8_v_u8m1)((const uint8_t*)src, vl), vl);
 }
 
-#include "gf16_checksum_rvv.h"
+#include <par2/gf16/gf16_checksum_rvv.h>
 
 GF_PREPARE_PACKED_FUNCS(gf16_clmul, _rvv, RV(vsetvlmax_e8m1)(), gf16_prepare_block_rvv, gf16_prepare_blocku_rvv, 12, (void)0, vuint16m1_t checksum = RV(vmv_v_x_u16m1)(0, RV(vsetvlmax_e16m1)()), gf16_checksum_block_rvv, gf16_checksum_blocku_rvv, gf16_checksum_exp_rvv, gf16_checksum_prepare_rvv, 16)
 GF_FINISH_PACKED_FUNCS(gf16_clmul, _rvv, RV(vsetvlmax_e8m1)(), gf16_prepare_block_rvv, gf16_finish_blocku_rvv, 1, (void)0, gf16_checksum_block_rvv, gf16_checksum_blocku_rvv, gf16_checksum_exp_rvv, NULL, 16)

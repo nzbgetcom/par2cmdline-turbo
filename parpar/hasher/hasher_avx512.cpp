@@ -1,12 +1,12 @@
 // suppress warning spam in GCC 12.0-12.2 (caused by some AVX512 intrinsics)
-#include "../src/hedley.h"
+#include <par2/osinfo/hedley.h>
 #if HEDLEY_GCC_VERSION_CHECK(12,0,0) && !HEDLEY_GCC_VERSION_CHECK(12,3,0)
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Wuninitialized"
 # pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 
 #define MD5Multi MD5Multi_AVX512
@@ -17,10 +17,10 @@
 #define CLEAR_VEC _mm256_zeroupper()
 
 #ifdef __AVX512F__
-# include "md5mb-sse.h"
-# include "hasher_md5mb_base.h"
+# include <par2/hasher/md5mb-sse.h>
+# include <par2/hasher/hasher_md5mb_base.h>
 #else
-# include "hasher_md5mb_stub.h"
+# include <par2/hasher/hasher_md5mb_stub.h>
 #endif
 
 
@@ -32,7 +32,7 @@
 #define md5mb_interleave 2
 
 #ifdef __AVX512F__
-# include "hasher_md5mb_base.h"
+# include <par2/hasher/hasher_md5mb_base.h>
 #else
-# include "hasher_md5mb_stub.h"
+# include <par2/hasher/hasher_md5mb_stub.h>
 #endif

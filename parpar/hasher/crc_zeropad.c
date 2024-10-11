@@ -1,5 +1,5 @@
-#include "../src/hedley.h"
-#include "../src/stdint.h"
+#include <par2/osinfo/hedley.h>
+#include <par2/osinfo/stdint.h>
 
 // workaround MSVC complaining "unary minus operator applied to unsigned type, result still unsigned"
 #define NEGATE(n) (uint32_t)(-((int32_t)(n)))

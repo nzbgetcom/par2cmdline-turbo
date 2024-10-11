@@ -1,5 +1,5 @@
-#include "gf16_global.h"
-#include "gf16_clmul_sve2.h"
+#include <par2/gf16/gf16_global.h>
+#include <par2/gf16/gf16_clmul_sve2.h>
 
 #ifdef __ARM_FEATURE_SVE2
 int gf16pmul_available_sve2 = 1;

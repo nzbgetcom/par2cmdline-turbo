@@ -1,6 +1,6 @@
 
-#include "gf16_global.h"
-#include "../src/platform.h"
+#include <par2/gf16/gf16_global.h>
+#include <par2/osinfo/platform.h>
 
 #define MWORD_SIZE 32
 #define _mword __m256i
@@ -13,14 +13,14 @@
 #if defined(__GFNI__) && defined(__AVX2__)
 int gf16_affine_available_avx2 = 1;
 # define _AVAILABLE 1
-# include "gf16_shuffle_x86_prepare.h"
-# include "gf16_checksum_x86.h"
+# include <par2/gf16/gf16_shuffle_x86_prepare.h>
+# include <par2/gf16/gf16_checksum_x86.h>
 #else
 int gf16_affine_available_avx2 = 0;
 #endif
 
 #define AFFINE2X_AMD64_INTERLEAVE 6
-#include "gf16_affine2x_x86.h"
+#include <par2/gf16/gf16_affine2x_x86.h>
 #ifdef _AVAILABLE
 # undef _AVAILABLE
 #endif
@@ -32,7 +32,7 @@ int gf16_affine_available_avx2 = 0;
 #undef _mword
 #undef MWORD_SIZE
 
-#include "gf16_muladd_multi.h"
+#include <par2/gf16/gf16_muladd_multi.h>
 
 #if defined(__GFNI__) && defined(__AVX2__)
 # ifdef PLATFORM_AMD64
@@ -184,7 +184,7 @@ GF16_MULADD_MULTI_FUNCS_STUB(gf16_affine, _avx2)
 
 
 #if defined(__GFNI__) && defined(__AVX2__)
-# include "gf16_bitdep_init_avx2.h"
+# include <par2/gf16/gf16_bitdep_init_avx2.h>
 #endif
 void* gf16_affine_init_avx2(int polynomial) {
 #if defined(__GFNI__) && defined(__AVX2__)

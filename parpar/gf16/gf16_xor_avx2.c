@@ -1,6 +1,6 @@
 
 #define _GF16_XORJIT_COPY_ALIGN 32
-#include "gf16_xor_common.h"
+#include <par2/gf16/gf16_xor_common.h>
 #undef _GF16_XORJIT_COPY_ALIGN
 #include <string.h>
 
@@ -656,9 +656,9 @@ void gf16_xor_finish_copy_blocku_avx2(void *HEDLEY_RESTRICT dst, const void *HED
 
 #if defined(__AVX2__) && defined(PLATFORM_AMD64)
 # define _AVAILABLE
-# include "gf16_checksum_x86.h"
+# include <par2/gf16/gf16_checksum_x86.h>
 #endif
-#include "gf16_xor_common_funcs.h"
+#include <par2/gf16/gf16_xor_common_funcs.h>
 #undef _AVAILABLE
 
 #undef MWORD_SIZE
@@ -702,7 +702,7 @@ static void xor_write_init_jit(uint8_t *jitCodeNorm, uint8_t *jitCodeInsitu, uin
 	if(sizeInsitu) *sizeInsitu = (uint_fast16_t)(jitCodeInsitu-jitCodeStart);
 }
 
-# include "gf16_bitdep_init_avx2.h"
+# include <par2/gf16/gf16_bitdep_init_avx2.h>
 #endif
 
 

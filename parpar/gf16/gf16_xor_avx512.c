@@ -1,6 +1,6 @@
 
 #define _GF16_XORJIT_COPY_ALIGN 32
-#include "gf16_xor_common.h"
+#include <par2/gf16/gf16_xor_common.h>
 #undef _GF16_XORJIT_COPY_ALIGN
 
 #if defined(__AVX512BW__) && defined(__AVX512VL__) && defined(PLATFORM_AMD64) && !defined(PARPAR_SLIM_GF16)
@@ -27,7 +27,7 @@ static size_t xor_write_init_jit(uint8_t *jitCode) {
 	return jitCode-jitCodeStart;
 }
 
-# include "gf16_bitdep_init_avx2.h"
+# include <par2/gf16/gf16_bitdep_init_avx2.h>
 
 
 /* because some versions of GCC (e.g. 6.3.0) lack _mm512_set_epi8, emulate it */
@@ -1183,9 +1183,9 @@ void gf16_xor_finish_copy_blocku_avx512(void *HEDLEY_RESTRICT dst, const void* H
 #define _MM_END _mm256_zeroupper();
 
 #ifdef _AVAILABLE
-# include "gf16_checksum_x86.h"
+# include <par2/gf16/gf16_checksum_x86.h>
 #endif
-#include "gf16_xor_common_funcs.h"
+#include <par2/gf16/gf16_xor_common_funcs.h>
 
 #undef MWORD_SIZE
 #undef _mword

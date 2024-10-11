@@ -1,4 +1,4 @@
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 #define _mword __m128i
 #define _MM(f) _mm_ ## f
@@ -9,4 +9,4 @@
 #if defined(__PCLMUL__) && defined(__SSSE3__) && defined(__SSE4_1__)
 # define _AVAILABLE 1
 #endif
-#include "gf16pmul_x86.h"
+#include <par2/gf16/gf16pmul_x86.h>

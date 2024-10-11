@@ -1,7 +1,7 @@
 
-#include "gf16_global.h"
-#include "../src/platform.h"
-#include "gf16_muladd_multi.h"
+#include <par2/gf16/gf16_global.h>
+#include <par2/osinfo/platform.h>
+#include <par2/gf16/gf16_muladd_multi.h>
 
 #if defined(__AVX512VBMI__) && defined(__AVX512VL__)
 
@@ -12,9 +12,9 @@
 # define _FNSUFFIX _vbmi
 # define _AVAILABLE_AVX 1
 # define _AVAILABLE 1
-# include "gf16_shuffle_x86_common.h"
-# include "gf16_shuffle_x86_prepare.h"
-# include "gf16_checksum_x86.h"
+# include <par2/gf16/gf16_shuffle_x86_common.h>
+# include <par2/gf16/gf16_shuffle_x86_prepare.h>
+# include <par2/gf16/gf16_checksum_x86.h>
 # undef _AVAILABLE
 # undef _AVAILABLE_AVX
 # undef _FNSUFFIX

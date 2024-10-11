@@ -19,6 +19,7 @@
 
 #include "libpar2internal.h"
 
+
 #ifdef _MSC_VER
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -26,6 +27,9 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 #endif
+
+namespace Par2
+{
 
 // Create a packet large enough for the specified number of blocks
 
@@ -100,4 +104,6 @@ bool VerificationPacket::Load(DiskFile *diskfile, u64 offset, PACKET_HEADER &hea
   return diskfile->Read(offset + sizeof(PACKET_HEADER),
                         &packet->fileid,
                         (size_t)packet->header.length - sizeof(PACKET_HEADER));
+}
+
 }

@@ -1,0 +1,41 @@
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i686|x86|x86_64|x64|amd64|AMD64|win32|Win32")
+    set(IS_X86 TRUE)
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|x64|amd64|AMD64")
+        set(IS_X64 TRUE)
+    endif()
+endif()
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "arm|ARM|aarch64|arm64|ARM64|armeb|aarch64be|aarch64_be")
+    set(IS_ARM TRUE)
+endif()
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "riscv64|rv64")
+    set(IS_RISCV64 TRUE)
+endif()
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "riscv32|rv32")
+    set(IS_RISCV32 TRUE)
+endif()
+
+target_compile_definitions(${PACKAGE} PUBLIC
+    HAVE_CONFIG_H=1
+    PARPAR_ENABLE_HASHER_MD5CRC=1
+)
+
+if(WIN32)
+    target_compile_definitions(${PACKAGE} PRIVATE UNICODE _UNICODE)
+    if(BUILD_TOOL)
+        target_compile_definitions(${PACKAGE} PRIVATE _CONSOLE)
+    endif()
+endif()
+
+if(MSVC)
+    if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+        target_compile_definitions(${PACKAGE} PRIVATE /Od /Zi /MTd /MP /FS /W4)
+    else()
+        target_compile_definitions(${PACKAGE} PRIVATE /GS- /Gy /sdl- /Oy /Oi /MT /MP /Gy /OPT:REF /OPT:ICF)
+    endif()
+else()
+    target_compile_definitions(${PACKAGE} PRIVATE -Wall -Wextra -Wno-unused-function)
+
+    if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+        target_compile_definitions(${PACKAGE} PRIVATE -ggdb)
+    endif()
+endif()

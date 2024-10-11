@@ -1,6 +1,6 @@
 
-#include "gf16_global.h"
-#include "../src/platform.h"
+#include <par2/gf16/gf16_global.h>
+#include <par2/osinfo/platform.h>
 #include <string.h>
 
 #define MWORD_SIZE 16
@@ -14,14 +14,14 @@
 #if defined(__GFNI__) && defined(__SSSE3__)
 int gf16_affine_available_gfni = 1;
 # define _AVAILABLE 1
-# include "gf16_shuffle_x86_prepare.h"
-# include "gf16_checksum_x86.h"
+# include <par2/gf16/gf16_shuffle_x86_prepare.h>
+# include <par2/gf16/gf16_checksum_x86.h>
 #else
 int gf16_affine_available_gfni = 0;
 #endif
 
 #define AFFINE2X_AMD64_INTERLEAVE 6
-#include "gf16_affine2x_x86.h"
+#include <par2/gf16/gf16_affine2x_x86.h>
 #ifdef _AVAILABLE
 # undef _AVAILABLE
 #endif
@@ -33,7 +33,7 @@ int gf16_affine_available_gfni = 0;
 #undef _mword
 #undef MWORD_SIZE
 
-#include "gf16_muladd_multi.h"
+#include <par2/gf16/gf16_muladd_multi.h>
 
 #if defined(__GFNI__) && defined(__SSSE3__)
 # ifdef PLATFORM_AMD64
@@ -230,7 +230,7 @@ GF16_MULADD_MULTI_FUNCS_STUB(gf16_affine, _gfni)
 #endif
 
 
-#include "gf16_bitdep_init_sse2.h"
+#include <par2/gf16/gf16_bitdep_init_sse2.h>
 void* gf16_affine_init_gfni(int polynomial) {
 #if defined(__SSSE3__)
 	__m128i* ret;

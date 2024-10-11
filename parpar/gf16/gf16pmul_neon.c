@@ -1,9 +1,9 @@
-#include "gf16_global.h"
+#include <par2/gf16/gf16_global.h>
 
 #ifdef __ARM_NEON
 # define _AVAILABLE
 #endif
-#include "gf16_clmul_neon.h"
+#include <par2/gf16/gf16_clmul_neon.h>
 
 #ifdef __ARM_NEON
 # undef _AVAILABLE

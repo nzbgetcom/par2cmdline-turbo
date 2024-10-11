@@ -1,4 +1,4 @@
-#include "gfmat_coeff.h"
+#include <par2/gf16/gfmat_coeff.h>
 #include <stdlib.h>
 
 static int8_t* input_diff = NULL; // difference between predicted input coefficient and actual (number range is -4...5, so could be compressed to 4 bits, but I don't feel it's worth the savings)

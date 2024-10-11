@@ -1,8 +1,8 @@
-#include "../src/hedley.h"
-#include "../src/platform.h"
+#include <par2/osinfo/hedley.h>
+#include <par2/osinfo/platform.h>
 #ifdef __ARM_NEON
 # define _AVAILABLE 1
-# include "gf16_checksum_arm.h"
+# include <par2/gf16/gf16_checksum_arm.h>
 
 # define cksum_t uint8x16_t
 # define LOAD_DATA(var, addr) var = vld1q_u8((const uint8_t*)(addr))
@@ -21,4 +21,4 @@ static HEDLEY_ALWAYS_INLINE int CKSUM_IS_ZERO(uint8x16_t cksum) {
 
 #define _FNSUFFIX _neon
 
-#include "gf16_cksum_base.h"
+#include <par2/gf16/gf16_cksum_base.h>

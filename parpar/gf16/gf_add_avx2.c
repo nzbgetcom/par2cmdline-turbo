@@ -1,6 +1,6 @@
-#include "gf16_global.h"
-#include "../src/platform.h"
-#include "gf_add_common.h"
+#include <par2/gf16/gf16_global.h>
+#include <par2/osinfo/platform.h>
+#include <par2/gf16/gf_add_common.h>
 
 #define _mword __m256i
 #define _MM(f) _mm256_ ## f
@@ -10,7 +10,7 @@
 # define _AVAILABLE
 #endif
 
-#include "gf_add_x86.h"
+#include <par2/gf16/gf_add_x86.h>
 
 #ifdef _AVAILABLE
 # undef _AVAILABLE

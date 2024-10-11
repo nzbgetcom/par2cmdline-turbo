@@ -1,5 +1,5 @@
 
-#include "gf16_sve_common.h"
+#include <par2/gf16/gf16_sve_common.h>
 
 // only support our target polynomial
 #if defined(__ARM_FEATURE_SVE) && (GF16_POLYNOMIAL | 0x1f) == 0x1101f && __BYTE_ORDER__ != __ORDER_BIG_ENDIAN__
@@ -80,7 +80,7 @@ static HEDLEY_ALWAYS_INLINE void gf16_shuffle128_sve_round(svuint8x2_t va, svuin
 #define SVE_ROUND1 gf16_shuffle128_sve_round1
 #define SVE_ROUND gf16_shuffle128_sve_round
 #define _FNSUFFIX _128_sve
-#include "gf16_shuffle128_sve_common.h"
+#include <par2/gf16/gf16_shuffle128_sve_common.h>
 #undef _FNSUFFIX
 #undef SVE_ROUND
 #undef SVE_ROUND1
@@ -100,7 +100,7 @@ GF16_MULADD_MULTI_FUNCS_STUB(gf16_shuffle, _128_sve)
 
 
 // checksum stuff
-#include "gf16_checksum_sve.h"
+#include <par2/gf16/gf16_checksum_sve.h>
 
 #ifdef __ARM_FEATURE_SVE
 GF_PREPARE_PACKED_FUNCS(gf16_shuffle, _sve, svcntb()*2, gf16_prepare_block_sve, gf16_prepare_blocku_sve, 3, (void)0, svint16_t checksum = svdup_n_s16(0), gf16_checksum_block_sve, gf16_checksum_blocku_sve, gf16_checksum_exp_sve, gf16_checksum_prepare_sve, 16)

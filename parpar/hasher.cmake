@@ -1,141 +1,83 @@
 set(HASHER_LIBRARY "hasher")
-set(PP_DEFINITIONS
-    /W3
-    /D_CONSOLE 
-    /DPARPAR_ENABLE_HASHER_MD5CRC 
-)
+set(LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher)
 
 set(HASHER_LIBRARY_SRC 
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/crc_zeropad.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_scalar.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_input.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_md5crc.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/tables.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/md5-final.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_sse.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_clmul.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_xop.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_bmi1.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_avx2.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_avx512.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_avx512vl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_armcrc.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_neon.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_neoncrc.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_sve2.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher/hasher_rvzbc.cpp
+    ${LIB_DIR}/crc_zeropad.c
+    ${LIB_DIR}/hasher.cpp
+    ${LIB_DIR}/hasher_scalar.cpp
+    ${LIB_DIR}/hasher_input.cpp
+    ${LIB_DIR}/hasher_md5crc.cpp
+    ${LIB_DIR}/tables.cpp
+    ${LIB_DIR}/md5-final.c
+    ${LIB_DIR}/hasher_sse.cpp
+    ${LIB_DIR}/hasher_clmul.cpp
+    ${LIB_DIR}/hasher_xop.cpp
+    ${LIB_DIR}/hasher_bmi1.cpp
+    ${LIB_DIR}/hasher_avx2.cpp
+    ${LIB_DIR}/hasher_avx512.cpp
+    ${LIB_DIR}/hasher_avx512vl.cpp
+    ${LIB_DIR}/hasher_armcrc.cpp
+    ${LIB_DIR}/hasher_neon.cpp
+    ${LIB_DIR}/hasher_neoncrc.cpp
+    ${LIB_DIR}/hasher_sve2.cpp
+    ${LIB_DIR}/hasher_rvzbc.cpp
 )
 
-# if (CMAKE_CXX_COMPILER_ID  MATCHES "Clang|AppleClang")
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_affine_avx512.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl -mgfni)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_affine_avx2.c PROPERTIES COMPILE_FLAGS -mavx2 -mgfni)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_affine_gfni.c PROPERTIES COMPILE_FLAGS -mssse3 -mgfni)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_affine_avx10.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl -mgfni -mno-evex512)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle_avx512.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle_vbmi.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl -mavx512vbmi)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle_ssse3.c PROPERTIES COMPILE_FLAGS -mssse3)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_xor_avx512.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf_add_avx512.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf_add_avx10.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl -mno-evex512)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_cksum_avx512.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16pmul_sse.c PROPERTIES COMPILE_FLAGS -mpclmul)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16pmul_avx2.c PROPERTIES COMPILE_FLAGS -mavx2 -mpclmul)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16pmul_vpclmul.c PROPERTIES COMPILE_FLAGS -mavx2 -mvpclmulqdq)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16pmul_vpclgfni.c PROPERTIES COMPILE_FLAGS -mavx2 -mvpclmulqdq -mgfni)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/src/platform_warnings.c PROPERTIES COMPILE_FLAGS -mavx2 -mgfni)
-# elseif (CMAKE_CXX_COMPILER_ID  STREQUAL "GNU")
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_affine_avx512.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl -mgfni)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_affine_avx2.c PROPERTIES COMPILE_FLAGS -mavx2 -mgfni)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_affine_gfni.c PROPERTIES COMPILE_FLAGS -mssse3 -mgfni)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_affine_avx10.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl -mgfni -mno-evex512)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle_avx512.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle_vbmi.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl -mavx512vbmi)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle_ssse3.c PROPERTIES COMPILE_FLAGS -mssse3)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_xor_avx512.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf_add_avx512.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf_add_avx10.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl -mno-evex512)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_cksum_avx512.c PROPERTIES COMPILE_FLAGS -mavx512bw -mavx512vl)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16pmul_sse.c PROPERTIES COMPILE_FLAGS -mpclmul)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16pmul_avx2.c PROPERTIES COMPILE_FLAGS -mavx2 -mpclmul)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16pmul_vpclmul.c PROPERTIES COMPILE_FLAGS -mavx2 -mvpclmulqdq)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16pmul_vpclgfni.c PROPERTIES COMPILE_FLAGS -mavx2 -mvpclmulqdq -mgfni)
-# elseif (CMAKE_CXX_COMPILER_ID  STREQUAL "MSVC")
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_affine_avx512.c PROPERTIES COMPILE_FLAGS /arch:AVX512)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_affine_avx2.c PROPERTIES COMPILE_FLAGS /arch:AVX2)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_affine_gfni.c PROPERTIES COMPILE_FLAGS /arch:SSE2)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_affine_avx10.c PROPERTIES COMPILE_FLAGS /arch:AVX2)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle_avx512.c PROPERTIES COMPILE_FLAGS /arch:AVX512)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle_vbmi.c PROPERTIES COMPILE_FLAGS /arch:AVX512)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle_ssse3.c PROPERTIES COMPILE_FLAGS /arch:SSE2)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_xor_avx2.c PROPERTIES COMPILE_FLAGS /arch:AVX2)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_xor_avx512.c PROPERTIES COMPILE_FLAGS /arch:AVX512)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf_add_avx2.c PROPERTIES COMPILE_FLAGS /arch:AVX2)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf_add_avx512.c PROPERTIES COMPILE_FLAGS /arch:AVX512)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf_add_avx10.c PROPERTIES COMPILE_FLAGS /arch:AVX2)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_cksum_avx2.c PROPERTIES COMPILE_FLAGS /arch:AVX2)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_cksum_avx512.c PROPERTIES COMPILE_FLAGS /arch:AVX512)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16pmul_avx2.c PROPERTIES COMPILE_FLAGS /arch:AVX2)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16pmul_vpclmul.c PROPERTIES COMPILE_FLAGS /arch:AVX2)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16pmul_vpclgfni.c PROPERTIES COMPILE_FLAGS /arch:AVX2)
-# endif()
+if(NOT MSVC)
+    target_compile_options(${HASHER_LIBRARY} PRIVATE -fno-rtti -fno-exceptions)
+endif()
 
-# set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle_avx.c PROPERTIES COMPILE_FLAGS /arch:AVX)
-# set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle_avx2.c PROPERTIES COMPILE_FLAGS /arch:AVX2)
-
-# if (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86")
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_lookup_sse2.c PROPERTIES COMPILE_FLAGS /arch:SSE2)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_xor_sse2.c PROPERTIES COMPILE_FLAGS /arch:SSE2)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf_add_sse2.c PROPERTIES COMPILE_FLAGS /arch:SSE2)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_cksum_sse2.c PROPERTIES COMPILE_FLAGS /arch:SSE2)
-#     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16pmul_sse.c PROPERTIES COMPILE_FLAGS /arch:SSE2)
-# endif()
-
-# if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
-#     if (CMAKE_CXX_COMPILER_ID  MATCHES "Clang|AppleClang")
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle_neon.c PROPERTIES COMPILE_FLAGS -mfpu=neon)
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_clmul_neon.c PROPERTIES COMPILE_FLAGS -mfpu=neon)
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf_add_neon.c PROPERTIES COMPILE_FLAGS -mfpu=neon)
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_cksum_neon.c PROPERTIES COMPILE_FLAGS -mfpu=neon)
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16pmul_neon.c PROPERTIES COMPILE_FLAGS -mfpu=neon)
-#     endif()
-
-# elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
-#     if (CMAKE_CXX_COMPILER_ID  MATCHES "Clang|AppleClang")
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle128_sve.c PROPERTIES COMPILE_FLAGS -march=armv8-a+sve)
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle128_sve2.c PROPERTIES COMPILE_FLAGS -march=armv8-a+sve2)
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle2x128_sve2.c PROPERTIES COMPILE_FLAGS -march=armv8-a+sve2)
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_shuffle512_sve2.c PROPERTIES COMPILE_FLAGS -march=armv8-a+sve2)
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_clmul_sha3.c PROPERTIES COMPILE_FLAGS -march=armv8.2-a+sha3)
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_clmul_sve2.c PROPERTIES COMPILE_FLAGS -march=armv8-a+sve2)
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf_add_sve.c PROPERTIES COMPILE_FLAGS -march=armv8-a+sve)
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf_add_sve2.c PROPERTIES COMPILE_FLAGS -march=armv8-a+sve2)
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16_cksum_sve.c PROPERTIES COMPILE_FLAGS -march=armv8-a+sve)
-#         set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16/gf16pmul_sve2.c PROPERTIES COMPILE_FLAGS -march=armv8-a+sve2)
-#     endif()
-# endif()
+if(NOT MSVC OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    if(IS_X86)
+        set_source_files_properties(${LIB_DIR}/hasher_avx2.cpp PROPERTIES COMPILE_OPTIONS -mavx2)
+        set_source_files_properties(${LIB_DIR}/hasher_avx512.cpp PROPERTIES COMPILE_OPTIONS "-mavx512f")
+        CHECK_CXX_COMPILER_FLAG("-mno-evex512" COMPILER_SUPPORTS_AVX10)
+        if(COMPILER_SUPPORTS_AVX10)
+            set_source_files_properties(${LIB_DIR}/hasher_avx512vl.cpp PROPERTIES COMPILE_OPTIONS "-mavx512vl;-mavx512bw;-mbmi2;-mpclmul;-mno-evex512")
+        else()
+            set_source_files_properties(${LIB_DIR}/hasher_avx512vl.cpp PROPERTIES COMPILE_OPTIONS "-mavx512vl;-mavx512bw;-mbmi2;-mpclmul")
+        endif()
+        set_source_files_properties(${LIB_DIR}/hasher_bmi1.cpp PROPERTIES COMPILE_OPTIONS "-mpclmul;-mavx;-mbmi")
+        set_source_files_properties(${LIB_DIR}/hasher_clmul.cpp PROPERTIES COMPILE_OPTIONS "-mpclmul;-msse4.1")
+        set_source_files_properties(${LIB_DIR}/hasher_sse.cpp PROPERTIES COMPILE_OPTIONS -msse2)
+        set_source_files_properties(${LIB_DIR}/hasher_xop.cpp PROPERTIES COMPILE_OPTIONS "-mxop;-mavx")
+    endif()
+    
+    if(IS_ARM)
+        CHECK_CXX_COMPILER_FLAG("-mfpu=neon -march=armv7-a" COMPILER_SUPPORTS_ARM32_NEON)
+        if(COMPILER_SUPPORTS_ARM32_NEON)
+            set_source_files_properties(${LIB_DIR}/hasher_neon.cpp PROPERTIES COMPILE_OPTIONS "-mfpu=neon;-march=armv7-a")
+            set_source_files_properties(${LIB_DIR}/hasher_neoncrc.cpp PROPERTIES COMPILE_OPTIONS "-mfpu=neon;-march=armv8-a+crc")
+            set_source_files_properties(${LIB_DIR}/hasher_armcrc.cpp PROPERTIES COMPILE_OPTIONS "-mfpu=fp-armv8;-march=armv8-a+crc")
+        else()
+            CHECK_CXX_COMPILER_FLAG("-march=armv8-a+crc" COMPILER_SUPPORTS_ARM_CRC)
+            if(COMPILER_SUPPORTS_ARM_CRC)
+                set_source_files_properties(${LIB_DIR}/hasher_neoncrc.cpp PROPERTIES COMPILE_OPTIONS -march=armv8-a+crc)
+                set_source_files_properties(${LIB_DIR}/hasher_armcrc.cpp PROPERTIES COMPILE_OPTIONS -march=armv8-a+crc)
+            endif()
+        endif()
+        CHECK_CXX_COMPILER_FLAG("-march=armv8-a+sve2" COMPILER_SUPPORTS_SVE2)
+        if(COMPILER_SUPPORTS_SVE2)
+            set_source_files_properties(${LIB_DIR}/hasher_sve2.cpp PROPERTIES COMPILE_OPTIONS -march=armv8-a+sve2)
+        endif()
+    endif()
+    
+    if(IS_RISCV64)
+        CHECK_CXX_COMPILER_FLAG("-march=rv64gc_zbkc" COMPILER_SUPPORTS_RVZBKC)
+        if(COMPILER_SUPPORTS_RVZBKC)
+            set_source_files_properties(${LIB_DIR}/hasher_rvzbc.cpp PROPERTIES COMPILE_OPTIONS -march=rv64gc_zbkc)
+        endif()
+    endif()
+    if(IS_RISCV32)
+        CHECK_CXX_COMPILER_FLAG("-march=rv32gc_zbkc" COMPILER_SUPPORTS_RVZBKC)
+        if(COMPILER_SUPPORTS_RVZBKC)
+            set_source_files_properties(${LIB_DIR}/hasher_rvzbc.cpp PROPERTIES COMPILE_OPTIONS -march=rv32gc_zbkc)
+        endif()
+    endif()
+endif()
 
 add_library(${HASHER_LIBRARY} STATIC ${HASHER_LIBRARY_SRC})
-target_link_libraries(${HASHER_LIBRARY} PRIVATE Threads::Threads)
-target_include_directories(${HASHER_LIBRARY} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/hasher)
-target_compile_definitions(${HASHER_LIBRARY} PRIVATE PARPAR_ENABLE_HASHER_MD5CRC /wd4267)
+target_include_directories(${HASHER_LIBRARY} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_definitions(${HASHER_LIBRARY} PUBLIC PARPAR_ENABLE_HASHER_MD5CRC)
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(PP_DEFINITIONS ${PP_DEFINITIONS} 
-        /D_DEBUG
-        /MTd
-        /permissive-
-        /GS
-        /sdl
-    )
-elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(PP_DEFINITIONS ${PP_DEFINITIONS} 
-        /DNDEBUG
-        /MTd
-        /permissive-
-        /GS-
-        /sdl-
-    )
-    target_link_options(${HASHER_LIBRARY} PRIVATE /OPT:REF /Oi)
-endif()
-target_compile_definitions(${HASHER_LIBRARY} PRIVATE ${PP_DEFINITIONS})
+set(LIBS ${LIBS} ${HASHER_LIBRARY})

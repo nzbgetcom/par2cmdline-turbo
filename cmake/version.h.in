@@ -1,0 +1,2 @@
+/* PAR2 library version */
+#cmakedefine PAR2_LIB_VERSION "@PAR2_LIB_VERSION@"

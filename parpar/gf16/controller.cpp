@@ -1,6 +1,6 @@
-#include "controller.h"
-#include "../src/platform.h"
-#include "gfmat_coeff.h"
+#include <par2/gf16/controller.h>
+#include <par2/osinfo/platform.h>
+#include <par2/gf16/gfmat_coeff.h>
 #include <cassert>
 #include <algorithm>
 

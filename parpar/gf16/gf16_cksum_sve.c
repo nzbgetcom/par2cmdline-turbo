@@ -1,8 +1,8 @@
-#include "../src/hedley.h"
-#include "../src/platform.h"
+#include <par2/osinfo/hedley.h>
+#include <par2/osinfo/platform.h>
 #ifdef __ARM_FEATURE_SVE
 # define _AVAILABLE 1
-# include "gf16_checksum_sve.h"
+# include <par2/gf16/gf16_checksum_sve.h>
 #endif
 
 #define cksum_t svint16_t
@@ -13,4 +13,4 @@
 #define CKSUM_SIZE svcntb()
 
 #define _FNSUFFIX _sve
-#include "gf16_cksum_base.h"
+#include <par2/gf16/gf16_cksum_base.h>

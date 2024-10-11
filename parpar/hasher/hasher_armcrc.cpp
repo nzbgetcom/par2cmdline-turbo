@@ -1,4 +1,4 @@
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 #if defined(PLATFORM_ARM) && defined(_MSC_VER) && defined(__clang__) && !defined(__ARM_FEATURE_CRC32)
 // I don't think GYP provides a nice way to detect whether MSVC or clang-cl is being used, but it doesn't use clang-cl by default, so a warning here is probably sufficient
@@ -32,12 +32,12 @@ HEDLEY_WARNING("CRC32 acceleration has been disabled due to missing arm_acle.h")
 #define _FNCRC(f) f##_arm
 
 #if defined(__ARM_FEATURE_CRC32) || (defined(_M_ARM64) && !defined(__clang__)) // MSVC doesn't support CRC for ARM32
-# include "crc_arm.h"
-# include "md5x2-scalar.h"
-# include "md5-scalar.h"
-# include "hasher_input_base.h"
-# include "hasher_md5crc_base.h"
+# include <par2/hasher/crc_arm.h>
+# include <par2/hasher/md5x2-scalar.h>
+# include <par2/hasher/md5-scalar.h>
+# include <par2/hasher/hasher_input_base.h>
+# include <par2/hasher/hasher_md5crc_base.h>
 #else
-# include "hasher_input_stub.h"
-# include "hasher_md5crc_stub.h"
+# include <par2/hasher/hasher_input_stub.h>
+# include <par2/hasher/hasher_md5crc_stub.h>
 #endif

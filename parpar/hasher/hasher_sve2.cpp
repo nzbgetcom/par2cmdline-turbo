@@ -1,4 +1,4 @@
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 
 #define MD5Multi MD5Multi_SVE2
@@ -11,10 +11,10 @@
 
 #ifdef __ARM_FEATURE_SVE2
 # include <arm_sve.h>
-# include "md5mb-sve2.h"
-# include "hasher_md5mb_base.h"
+# include <par2/hasher/md5mb-sve2.h>
+# include <par2/hasher/hasher_md5mb_base.h>
 #else
-# include "hasher_md5mb_stub.h"
+# include <par2/hasher/hasher_md5mb_stub.h>
 #endif
 
 #undef MD5Multi
@@ -24,7 +24,7 @@
 #define md5mb_interleave 2
 
 #ifdef __ARM_FEATURE_SVE2
-# include "hasher_md5mb_base.h"
+# include <par2/hasher/hasher_md5mb_base.h>
 #else
-# include "hasher_md5mb_stub.h"
+# include <par2/hasher/hasher_md5mb_stub.h>
 #endif

@@ -1,5 +1,5 @@
-#include "gf16_global.h"
-#include "gf16_clmul_rvv.h"
+#include <par2/gf16/gf16_global.h>
+#include <par2/gf16/gf16_clmul_rvv.h>
 
 #ifdef RISCV_ZVBC_INTRIN
 int gf16pmul_available_rvv = 1;

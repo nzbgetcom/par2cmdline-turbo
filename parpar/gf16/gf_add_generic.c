@@ -1,5 +1,5 @@
-#include "gf16_global.h"
-#include "gf16_muladd_multi.h"
+#include <par2/gf16/gf16_global.h>
+#include <par2/gf16/gf16_muladd_multi.h>
 
 static HEDLEY_ALWAYS_INLINE void gf_add_x_generic(
 	const void *HEDLEY_RESTRICT scratch, uint8_t *HEDLEY_RESTRICT _dst, const unsigned srcScale,
@@ -71,7 +71,7 @@ static HEDLEY_ALWAYS_INLINE void gf_add_x_generic(
 	}
 }
 
-#include "gf16_lookup.h"
+#include <par2/gf16/gf16_lookup.h>
 #ifdef PARPAR_INCLUDE_BASIC_OPS
 void gf_add_multi_generic(unsigned regions, size_t offset, void *HEDLEY_RESTRICT dst, const void* const*HEDLEY_RESTRICT src, size_t len) {
 	gf16_muladd_multi(NULL, &gf_add_x_generic, 4, regions, offset, dst, src, len, NULL);

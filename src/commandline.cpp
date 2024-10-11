@@ -19,9 +19,13 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 // This is included here, so that cout and cerr are not used elsewhere.
-#include<iostream>
-#include<algorithm>
-#include "commandline.h"
+
+#include "libpar2internal.h"
+
+#include <iostream>
+#include <algorithm>
+
+using namespace Par2;
 using namespace std;
 
 #ifdef _MSC_VER

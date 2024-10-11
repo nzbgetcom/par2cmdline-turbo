@@ -1,4 +1,4 @@
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 // disable CRC on GCC versions with broken arm_acle.h
 #if defined(__ARM_FEATURE_CRC32) && defined(HEDLEY_GCC_VERSION)
@@ -21,9 +21,9 @@
 #define _FNCRC(f) f##_arm
 
 #if (defined(__ARM_FEATURE_CRC32) && defined(__ARM_NEON)) || (defined(_M_ARM64) && !defined(__clang__)) // MSVC doesn't support CRC for ARM32
-# include "crc_arm.h"
-# include "md5x2-neon.h"
-# include "hasher_input_base.h"
+# include <par2/hasher/crc_arm.h>
+# include <par2/hasher/md5x2-neon.h>
+# include <par2/hasher/hasher_input_base.h>
 #else
-# include "hasher_input_stub.h"
+# include <par2/hasher/hasher_input_stub.h>
 #endif

@@ -17,79 +17,80 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-#include "libpar2internal.h"
-
 #include <codecvt>
 #include <iostream>
 #include <exception>
-#include "utf8.h"
 
-namespace utf8
+#include <par2/utf8.h>
+
+namespace Par2
 {
-  constexpr int MAX_ARGS = 128;
-  static std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> utf8Converter;
 
-  std::wstring Utf8ToWide(const std::string& str)
+constexpr int MAX_ARGS = 128;
+static std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> utf8Converter;
+
+std::wstring Utf8ToWide(const std::string& str)
+{
+  return utf8Converter.from_bytes(str.data(), str.data() + str.size());
+}
+
+std::string WideToUtf8(const std::wstring& str)
+{
+  return utf8Converter.to_bytes(str.data(), str.data() + str.size());
+}
+
+WideToUtf8ArgsAdapter::WideToUtf8ArgsAdapter(int argc, wchar_t* wargv[]) noexcept(false)
+  : m_argc(argc)
+{
+  if (wargv == nullptr)
   {
-    return utf8Converter.from_bytes(str.data(), str.data() + str.size());
+    throw std::invalid_argument("Invalid argument: wargv cannot be nullptr.");
   }
 
-  std::string WideToUtf8(const std::wstring& str)
+  if (m_argc > MAX_ARGS)
   {
-    return utf8Converter.to_bytes(str.data(), str.data() + str.size());
+    std::cerr
+      << "Too many arguments (" << argc << "/" << MAX_ARGS << ").\n"
+      << "Only " << MAX_ARGS << " will be processed." << std::endl;
+
+    m_argc = MAX_ARGS;
   }
 
-  WideToUtf8ArgsAdapter::WideToUtf8ArgsAdapter(int argc, wchar_t* wargv[]) noexcept(false)
-    : m_argc(argc)
+  m_argv = new char* [m_argc];
+  for (int i = 0; i < m_argc; ++i)
   {
-    if (wargv == nullptr)
-    {
-      throw std::invalid_argument("Invalid argument: wargv cannot be nullptr.");
-    }
-
-    if (m_argc > MAX_ARGS)
+    if (wargv[i] == nullptr)
     {
       std::cerr
-        << "Too many arguments (" << argc << "/" << MAX_ARGS << ").\n"
-        << "Only " << MAX_ARGS << " will be processed." << std::endl;
-
-      m_argc = MAX_ARGS;
+        << "Invalid argument: encountered nullptr in wargv.\n"
+        << "Skipping " << i << "argument." << std::endl;
+      --m_argc;
+      --i;
+      continue;
     }
 
-    m_argv = new char* [m_argc];
+    std::string arg = WideToUtf8(wargv[i]);
+    size_t size = arg.size() + 1;
+    m_argv[i] = new char[size];
+    strcpy(m_argv[i], arg.c_str());
+  }
+}
+
+const char* const* WideToUtf8ArgsAdapter::GetUtf8Args() const noexcept
+{
+  return m_argv;
+}
+
+WideToUtf8ArgsAdapter::~WideToUtf8ArgsAdapter()
+{
+  if (m_argv)
+  {
     for (int i = 0; i < m_argc; ++i)
     {
-      if (wargv[i] == nullptr)
-      {
-        std::cerr
-          << "Invalid argument: encountered nullptr in wargv.\n"
-          << "Skipping " << i << "argument." << std::endl;
-        --m_argc;
-        --i;
-        continue;
-      }
-
-      std::string arg = utf8::WideToUtf8(wargv[i]);
-      size_t size = arg.size() + 1;
-      m_argv[i] = new char[size];
-      strcpy(m_argv[i], arg.c_str());
+      delete m_argv[i];
     }
+    delete[] m_argv;
   }
+}
 
-  const char* const* WideToUtf8ArgsAdapter::GetUtf8Args() const noexcept
-  {
-    return m_argv;
-  }
-
-  WideToUtf8ArgsAdapter::~WideToUtf8ArgsAdapter()
-  {
-    if (m_argv)
-    {
-      for (int i = 0; i < m_argc; ++i)
-      {
-        delete m_argv[i];
-      }
-      delete[] m_argv;
-    }
-  }
 }

@@ -1,7 +1,7 @@
 
 // this CLMul variant is optimised for Apple M1
 
-#include "gf16_neon_common.h"
+#include <par2/gf16/gf16_neon_common.h>
 
 #if defined(__ARM_NEON) && defined(__ARM_FEATURE_SHA3)
 int gf16_available_neon_sha3 = 1;
@@ -43,5 +43,5 @@ int gf16_available_neon_sha3 = 0;
 #endif /*defined(__ARM_NEON)*/
 
 #define _FNSUFFIX _sha3
-#include "gf16_clmul_neon_base.h"
+#include <par2/gf16/gf16_clmul_neon_base.h>
 #undef _FNSUFFIX

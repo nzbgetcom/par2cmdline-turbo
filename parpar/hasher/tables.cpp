@@ -1,5 +1,5 @@
-#include "../src/platform.h"
-#include "../src/stdint.h"
+#include <par2/osinfo/platform.h>
+#include <par2/osinfo/stdint.h>
 
 // this is based off Fast CRC32 slice-by-4: https://create.stephan-brumme.com/crc32/
 extern const uint32_t Crc32Lookup[4][256];

@@ -1,4 +1,4 @@
-#include "gf16_rvv_common.h"
+#include <par2/gf16/gf16_rvv_common.h>
 
 #if defined(__RVV_LE)
 int gf16_available_rvv = 1;
@@ -6,7 +6,7 @@ int gf16_available_rvv = 1;
 int gf16_available_rvv = 0;
 #endif
 
-#include "gf16_muladd_multi.h"
+#include <par2/gf16/gf16_muladd_multi.h>
 
 #if defined(__RVV_LE)
 # if defined(__riscv_v_intrinsic) && __riscv_v_intrinsic >= 12000
@@ -235,7 +235,7 @@ static HEDLEY_ALWAYS_INLINE void gf16_finish_blocku_rvv(void *HEDLEY_RESTRICT ds
 	RV(vse8_v_u8m2)((uint8_t*)dst, RV(vle8_v_u8m2)((const uint8_t*)src, vl), vl);
 }
 
-#include "gf16_checksum_rvv.h"
+#include <par2/gf16/gf16_checksum_rvv.h>
 
 // TODO: should align be width of the vector, instead of 16?
 GF_PREPARE_PACKED_FUNCS(gf16_shuffle, _rvv, RV(vsetvlmax_e8m1)()*2, gf16_prepare_block_rvv, gf16_prepare_blocku_rvv, 3, (void)0, vuint16m1_t checksum = RV(vmv_v_x_u16m1)(0, RV(vsetvlmax_e16m1)()), gf16_checksum_block_rvv, gf16_checksum_blocku_rvv, gf16_checksum_exp_rvv, gf16_checksum_prepare_rvv, 16)

@@ -1,5 +1,5 @@
 // single scalar implementation for finishing block
-#include "md5-scalar.h"
+#include <par2/hasher/md5-scalar.h>
 
 void md5_final_block(void* state, const void *HEDLEY_RESTRICT data, uint64_t totalLength, uint64_t zeroPad) {
 	ALIGN_TO(8, uint8_t block[64]);

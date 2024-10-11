@@ -1,5 +1,5 @@
-#include "../src/platform.h"
-#include "crc_slice4.h"
+#include <par2/osinfo/platform.h>
+#include <par2/hasher/crc_slice4.h>
 
 
 #define HasherInput HasherInput_NEON
@@ -13,13 +13,13 @@
 #define CLEAR_VEC (void)0
 
 #ifdef __ARM_NEON
-# include "md5x2-neon.h"
-# include "md5mb-neon.h"
-# include "hasher_input_base.h"
-# include "hasher_md5mb_base.h"
+# include <par2/hasher/md5x2-neon.h>
+# include <par2/hasher/md5mb-neon.h>
+# include <par2/hasher/hasher_input_base.h>
+# include <par2/hasher/hasher_md5mb_base.h>
 #else
-# include "hasher_input_stub.h"
-# include "hasher_md5mb_stub.h"
+# include <par2/hasher/hasher_input_stub.h>
+# include <par2/hasher/hasher_md5mb_stub.h>
 #endif
 
 #undef MD5Multi
@@ -29,7 +29,7 @@
 #define md5mb_interleave 2
 
 #ifdef __ARM_NEON
-# include "hasher_md5mb_base.h"
+# include <par2/hasher/hasher_md5mb_base.h>
 #else
-# include "hasher_md5mb_stub.h"
+# include <par2/hasher/hasher_md5mb_stub.h>
 #endif

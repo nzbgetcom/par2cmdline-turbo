@@ -1,8 +1,8 @@
-#include "../src/platform.h"
-#include "md5-scalar.h"
-#include "md5x2-scalar.h"
-#include "md5mb-scalar.h"
-#include "crc_slice4.h"
+#include <par2/osinfo/platform.h>
+#include <par2/hasher/md5-scalar.h>
+#include <par2/hasher/md5x2-scalar.h>
+#include <par2/hasher/md5mb-scalar.h>
+#include <par2/hasher/crc_slice4.h>
 
 
 #define HasherInput HasherInput_Scalar
@@ -19,9 +19,9 @@
 #define md5mb_alignment md5mb_alignment_scalar
 #define CLEAR_VEC (void)0
 
-#include "hasher_input_base.h"
-#include "hasher_md5crc_base.h"
-#include "hasher_md5mb_base.h"
+#include <par2/hasher/hasher_input_base.h>
+#include <par2/hasher/hasher_md5crc_base.h>
+#include <par2/hasher/hasher_md5mb_base.h>
 
 
 #undef MD5Multi
@@ -30,4 +30,4 @@
 #define _FNMD5mb2(f) f##2_scalar
 #define md5mb_interleave 2
 
-#include "hasher_md5mb_base.h"
+#include <par2/hasher/hasher_md5mb_base.h>

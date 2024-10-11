@@ -1,5 +1,5 @@
 
-#include "gf16_neon_common.h"
+#include <par2/gf16/gf16_neon_common.h>
 
 // TODO: for any multiplicand byte that's 0 (e.g. for coeff < 256), can shortcut a bunch of stuff, but may not be worth the effort
 
@@ -17,7 +17,7 @@ static HEDLEY_ALWAYS_INLINE poly16x8_t veorq_p16(poly16x8_t a, poly16x8_t b) {
 
 
 #define _FNSUFFIX _neon
-#include "gf16_clmul_neon_base.h"
+#include <par2/gf16/gf16_clmul_neon_base.h>
 #undef _FNSUFFIX
 
 

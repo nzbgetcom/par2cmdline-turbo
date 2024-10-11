@@ -1,4 +1,4 @@
-#include "../src/platform.h"
+#include <par2/osinfo/platform.h>
 
 #define _mword __m512i
 #define _MM(f) _mm512_ ## f
@@ -9,7 +9,7 @@
 # define _AVAILABLE
 #endif
 
-#include "gf16_cksum_x86.h"
+#include <par2/gf16/gf16_cksum_x86.h>
 
 #ifdef _AVAILABLE
 # undef _AVAILABLE
