@@ -23,10 +23,6 @@ set(HASHER_LIBRARY_SRC
     ${LIB_DIR}/hasher_rvzbc.cpp
 )
 
-if(NOT MSVC)
-    target_compile_options(${HASHER_LIBRARY} PRIVATE -fno-rtti -fno-exceptions)
-endif()
-
 if(NOT MSVC OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     if(IS_X86)
         set_source_files_properties(${LIB_DIR}/hasher_avx2.cpp PROPERTIES COMPILE_OPTIONS -mavx2)
@@ -78,5 +74,8 @@ endif()
 
 add_library(${HASHER_LIBRARY} STATIC ${HASHER_LIBRARY_SRC})
 target_include_directories(${HASHER_LIBRARY} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(${HASHER_LIBRARY} PRIVATE -fno-rtti -fno-exceptions)
+endif()
 
 set(LIBS ${LIBS} ${HASHER_LIBRARY})

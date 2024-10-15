@@ -62,10 +62,6 @@ if (MSVC AND IS_X64)
     set(GF16_LIBRARY_SRC ${GF16_LIBRARY_SRC} ${LIB_DIR}/xor_jit_stub_masm64.asm)
 endif()
 
-if(NOT MSVC)
-    target_compile_options(${GF16_LIBRARY} PRIVATE -fno-rtti -fno-exceptions)
-endif()
-
 if(MSVC)
     if(IS_X86)
         set_source_files_properties(${LIB_DIR}/gf_add_avx2.c PROPERTIES COMPILE_OPTIONS /arch:AVX2)
@@ -202,6 +198,9 @@ target_include_directories(${GF16_LIBRARY} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${LIB_DIR}/gf16/opencl-include
 )
+if(NOT MSVC)
+    target_compile_options(${GF16_LIBRARY} PRIVATE -fno-rtti -fno-exceptions)
+endif()
 target_compile_definitions(${GF16_LIBRARY} PRIVATE  
     PARPAR_INVERT_SUPPORT
     PARPAR_SLIM_GF16
