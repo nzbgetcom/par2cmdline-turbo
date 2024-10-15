@@ -202,7 +202,7 @@ target_include_directories(${GF16_LIBRARY} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${LIB_DIR}/gf16/opencl-include
 )
-target_compile_definitions(${GF16_LIBRARY} PUBLIC  
+target_compile_definitions(${GF16_LIBRARY} PRIVATE  
     PARPAR_INVERT_SUPPORT
     PARPAR_SLIM_GF16
 )

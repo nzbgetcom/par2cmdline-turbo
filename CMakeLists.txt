@@ -6,6 +6,7 @@ endif()
 
 set(VERSION "1.2.0")
 set(PACKAGE "par2")
+set(PAR2_LIBRARY "par2-turbo")
 set(PAR2_LIB_VERSION ${VERSION})
 
 project(
@@ -65,10 +66,12 @@ set(PAR2_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utf8.cpp
 )
 
-if(BUILD_LIB)
-    add_library(${PACKAGE} STATIC ${PAR2_SRC})
-else()
+if(BUILD_TOOL)
     add_executable(${PACKAGE} ${PAR2_SRC})
+endif()
+
+if(BUILD_LIB)
+    add_library(${PAR2_LIBRARY} STATIC ${PAR2_SRC})
 endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/common.cmake)
@@ -85,10 +88,20 @@ configure_file(
     ${par2_INCLUDE_DIR}/par2/version.h
 )
 
-target_link_libraries(${PACKAGE} PUBLIC ${LIBS})
-target_include_directories(${PACKAGE}  
-    PRIVATE
+if(BUILD_TOOL)
+    target_link_libraries(${PACKAGE} PRIVATE ${LIBS})
+    target_include_directories(${PACKAGE} PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}
-    PUBLIC
         ${par2_INCLUDE_DIR}
-)
+    )
+endif()
+
+if(BUILD_LIB)
+    target_link_libraries(${PAR2_LIBRARY} PUBLIC ${LIBS})
+    target_include_directories(${PAR2_LIBRARY}  
+        PRIVATE
+            ${CMAKE_CURRENT_BINARY_DIR}
+        PUBLIC
+            ${par2_INCLUDE_DIR}
+    )
+endif()

@@ -78,6 +78,5 @@ endif()
 
 add_library(${HASHER_LIBRARY} STATIC ${HASHER_LIBRARY_SRC})
 target_include_directories(${HASHER_LIBRARY} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_compile_definitions(${HASHER_LIBRARY} PUBLIC PARPAR_ENABLE_HASHER_MD5CRC)
 
 set(LIBS ${LIBS} ${HASHER_LIBRARY})
