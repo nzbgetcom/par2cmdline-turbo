@@ -28,6 +28,13 @@ if(WIN32)
         target_compile_definitions(${PACKAGE} PRIVATE UNICODE)
         target_compile_definitions(${PACKAGE} PRIVATE CONSOLE)
     endif()
+else()
+    add_compile_definitions(
+        _POSIX_C_SOURCE=200112L
+        _DARWIN_C_SOURCE
+        _GNU_SOURCE
+        _DEFAULT_SOURCE
+    )
 endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
