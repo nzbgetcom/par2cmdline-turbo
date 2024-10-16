@@ -2442,13 +2442,13 @@ bool Par2Repairer::ComputeRSmatrix(void)
       for (unsigned int col=0; col<sourceblockcount; col++)
       {
         sout << " "
-             << hex << setw(4) << setfill('0')
+             << hex << std::setw(4) << setfill('0')
              << (unsigned int)rs.GetFactor(col, row);
       }
       sout << ((row==0) ? " \\"   : lastrow ? " /"    : " |");
       sout << endl;
 
-      sout << dec << setw(0) << setfill(' ');
+      sout << dec << std::setw(0) << setfill(' ');
     }
   }
 

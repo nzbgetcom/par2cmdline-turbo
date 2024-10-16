@@ -75,6 +75,13 @@ if(BUILD_LIB)
 endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/common.cmake)
+
+if(WIN32)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/windows.cmake)
+else()
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/posix.cmake)
+endif()
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher.cmake)
 

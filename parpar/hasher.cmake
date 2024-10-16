@@ -74,8 +74,5 @@ endif()
 
 add_library(${HASHER_LIBRARY} STATIC ${HASHER_LIBRARY_SRC})
 target_include_directories(${HASHER_LIBRARY} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-if(NOT MSVC)
-    target_compile_options(${HASHER_LIBRARY} PRIVATE -fno-rtti -fno-exceptions)
-endif()
 
 set(LIBS ${LIBS} ${HASHER_LIBRARY})

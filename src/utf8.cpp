@@ -18,6 +18,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include <codecvt>
+#include <locale>
+#include <cstring>
 #include <iostream>
 #include <exception>
 
@@ -72,7 +74,7 @@ WideToUtf8ArgsAdapter::WideToUtf8ArgsAdapter(int argc, wchar_t* wargv[]) noexcep
     std::string arg = WideToUtf8(wargv[i]);
     size_t size = arg.size() + 1;
     m_argv[i] = new char[size];
-    strcpy(m_argv[i], arg.c_str());
+    std::strcpy(m_argv[i], arg.c_str());
   }
 }
 

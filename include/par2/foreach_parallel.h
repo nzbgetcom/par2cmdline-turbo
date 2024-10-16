@@ -24,7 +24,7 @@ void foreach_parallel(const std::vector<T> &collection, u32 numThreads, const st
     std::vector<std::future<void>> tasks;
     tasks.reserve(collection.size());
     for (const auto &item : collection)
-      tasks.push_back(std::async(std::launch::async, bind(fn, ref(item))));
+      tasks.push_back(std::async(std::launch::async, bind(fn, std::ref(item))));
     for (auto &task : tasks)
       task.wait();
   }
@@ -39,7 +39,7 @@ void foreach_parallel(const std::vector<T> &collection, u32 numThreads, const st
       {
         while (1)
         {
-          unsigned i = itemPos.fetch_add(1, memory_order_relaxed);
+          unsigned i = itemPos.fetch_add(1, std::memory_order_relaxed);
           if (i >= collection.size()) break;
           fn(collection.at(i));
         }

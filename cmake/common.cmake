@@ -17,25 +17,8 @@ endif()
 include(CheckCXXCompilerFlag)
 include(CheckIncludeFileCXX)
 include(CheckCXXSymbolExists)
+
 add_compile_definitions(HAVE_CONFIG_H PARPAR_ENABLE_HASHER_MD5CRC)
-
-if(WIN32)
-    if(BUILD_LIB)
-        target_compile_definitions(${PAR2_LIBRARY} PRIVATE UNICODE)
-    endif()
-
-    if(BUILD_TOOL)
-        target_compile_definitions(${PACKAGE} PRIVATE UNICODE)
-        target_compile_definitions(${PACKAGE} PRIVATE CONSOLE)
-    endif()
-else()
-    add_compile_definitions(
-        _POSIX_C_SOURCE=200112L
-        _DARWIN_C_SOURCE
-        _GNU_SOURCE
-        _DEFAULT_SOURCE
-    )
-endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang")
@@ -50,6 +33,6 @@ elseif(${CMAKE_BUILD_TYPE} STREQUAL "Release")
         add_compile_options(/MT /Oi /MP /GS- /RTC-)
         add_link_options(/OPT:REF /OPT:ICF)
     else()
-        add_compile_options(-Wno-unused-function)
+        add_compile_options(-fno-rtti -Wno-unused-function)
     endif()
 endif()
