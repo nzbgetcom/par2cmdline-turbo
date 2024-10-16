@@ -33,9 +33,9 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_EXTENSIONS OFF)
 
-set(par2_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include CACHE PATH "")
+set(par2_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-set(LIBS Threads::Threads CACHE INTERNAL "")
+set(LIBS Threads::Threads)
 
 set(PAR2_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/commandline.cpp
@@ -104,4 +104,19 @@ if(BUILD_LIB)
         PUBLIC
             ${par2_INCLUDE_DIR}
     )
+
+    install(
+        TARGETS ${PAR2_LIBRARY} ${GF16_LIBRARY} ${HASHER_LIBRARY}
+        EXPORT "${PAR2_LIBRARY}Config"
+        ARCHIVE DESTINATION ${CMAKE_BINARY_DIR}/lib
+        LIBRARY DESTINATION ${CMAKE_BINARY_DIR}/lib
+        INCLUDES DESTINATION ${par2_INCLUDE_DIR}
+    )
+
+    export(
+        TARGETS ${PAR2_LIBRARY} ${GF16_LIBRARY} ${HASHER_LIBRARY}
+        NAMESPACE ${PAR2_LIBRARY}::
+        FILE "${CMAKE_BINARY_DIR}/${PAR2_LIBRARY}Config.cmake"
+    )
+
 endif()
