@@ -21,6 +21,7 @@
 
 #include <codecvt>
 #include <iostream>
+#include <cstring>
 #include <exception>
 #include "utf8.h"
 
@@ -56,7 +57,7 @@ namespace utf8
       m_argc = MAX_ARGS;
     }
 
-    m_argv = new char* [m_argc];
+    m_argv = new char* [m_argc + 1];
     for (int i = 0; i < m_argc; ++i)
     {
       if (wargv[i] == nullptr)
@@ -69,11 +70,12 @@ namespace utf8
         continue;
       }
 
-      std::string arg = utf8::WideToUtf8(wargv[i]);
+      std::string arg = WideToUtf8(wargv[i]);
       size_t size = arg.size() + 1;
       m_argv[i] = new char[size];
-      strcpy(m_argv[i], arg.c_str());
+      std::strcpy(m_argv[i], arg.c_str());
     }
+    m_argv[m_argc] = nullptr;
   }
 
   const char* const* WideToUtf8ArgsAdapter::GetUtf8Args() const noexcept
@@ -85,7 +87,7 @@ namespace utf8
   {
     if (m_argv)
     {
-      for (int i = 0; i < m_argc; ++i)
+      for (size_t i = 0; m_argv[i]; ++i)
       {
         delete m_argv[i];
       }
