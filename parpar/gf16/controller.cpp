@@ -9,6 +9,9 @@ PAR2Proc::PAR2Proc() IF_LIBUV(: endSignalled(false)) {
 	gfmat_init();
 }
 
+PAR2Proc::~PAR2Proc() {
+	gfmat_free();
+}
 
 bool PAR2Proc::init(size_t sliceSize, const std::vector<struct PAR2ProcBackendAlloc>& _backends  IF_LIBUV(, const PAR2ProcCompleteCb& _progressCb)) {
 #ifdef USE_LIBUV

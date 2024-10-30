@@ -246,6 +246,8 @@ struct PAR2ProcBackendAlloc {
 };
 
 class PAR2Proc {
+public:
+	~PAR2Proc();
 private:
 	bool hasAdded;
 #ifdef USE_LIBUV
