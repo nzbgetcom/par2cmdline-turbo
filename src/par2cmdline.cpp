@@ -37,7 +37,7 @@ static char THIS_FILE[]=__FILE__;
 
 #ifdef _WIN32
 
-#include "utf8.h"
+#include <par2/utf8.h>
 
 int wmain(int argc, wchar_t* wargv[])
 

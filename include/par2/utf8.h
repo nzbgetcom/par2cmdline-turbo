@@ -21,11 +21,17 @@
 #define __UTF8_H__
 
 #include <string>
+#include <optional>
+#include <codecvt>
 
 namespace Par2
 {
-  std::wstring Utf8ToWide(const std::string& str);
-  std::string WideToUtf8(const std::wstring& str);
+  inline constexpr int MAX_ARGS = 128;
+  inline std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> UTF8_CONVERTER;
+
+  std::optional<std::wstring> Utf8ToWide(const std::string& str);
+  std::optional<std::string> WideToUtf8(const std::wstring& str);
+  std::string Latin1ToUtf8(const std::string& latin1Str);
 
   class WideToUtf8ArgsAdapter final
   {
