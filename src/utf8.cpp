@@ -20,8 +20,6 @@
 
 #include "libpar2internal.h"
 
-#include <codecvt>
-#include <locale>
 #include <cstring>
 #include <iostream>
 #include <exception>

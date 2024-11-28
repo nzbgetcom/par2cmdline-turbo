@@ -48,7 +48,7 @@ static char THIS_FILE[]=__FILE__;
 #ifdef _WIN32
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "utf8.h"
+#include <par2/utf8.h>
 #include <cwctype>
 
 #define OffsetType __int64
@@ -379,7 +379,7 @@ std::string DiskFile::GetCanonicalPathname(std::string filename)
   wfullname[0] = towupper(wfullname[0]);
   std::replace(wfullname.get(), wfullname.get() + length, L'/', L'\\');
 
-  return WideToUtf8(wfullname.get());
+  return utf8::WideToUtf8(wfullname.get());
 }
 
 std::unique_ptr< std::list<std::string> > DiskFile::FindFiles(std::string path, std::string wildcard, bool recursive)
@@ -401,7 +401,7 @@ std::unique_ptr< std::list<std::string> > DiskFile::FindFiles(std::string path, 
     {
       if (0 == (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
-        matches->push_back(path + WideToUtf8(fd.cFileName));
+        matches->push_back(path + utf8::WideToUtf8(fd.cFileName));
       }
       else if (recursive == true)
       {
@@ -1125,8 +1125,8 @@ bool DiskFile::Rename(std::string _filename)
 {
   assert(hFile == INVALID_HANDLE_VALUE);
 
-  std::wstring wfilename = Utf8ToWide(filename);
-  std::wstring _wfilename = Utf8ToWide(_filename);
+  std::wstring wfilename = utf8::Utf8ToWide(filename);
+  std::wstring _wfilename = utf8::Utf8ToWide(_filename);
 
   if (::MoveFileW(wfilename.c_str(), _wfilename.c_str()))
   {
