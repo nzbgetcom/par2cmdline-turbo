@@ -29,8 +29,8 @@ namespace utf8
   extern const size_t MAX_DIR_PATH;
   extern std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> UTF8_CONVERTER;
 
-  std::wstring Utf8ToWide(const std::string& str);
-  std::string WideToUtf8(const std::wstring& str);
+  std::optional<std::wstring> Utf8ToWide(const std::string& str);
+  std::optional<std::string> WideToUtf8(const std::wstring& str);
 
   class WideToUtf8ArgsAdapter final
   {
