@@ -1591,6 +1591,7 @@ bool Par2Repairer::VerifyDataFile(DiskFile *diskfile, Par2RepairerSourceFile *so
           lock_guard<mutex> lock(output_lock);
           sout << diskfile->FileName() << " is a perfect match for " << sourcefile->GetDescriptionPacket()->FileName() << endl;
         }
+
         // Record that we have a perfect match for this source file
         sourcefile->SetCompleteFile(diskfile);
 
