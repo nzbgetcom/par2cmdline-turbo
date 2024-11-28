@@ -74,7 +74,8 @@ public:
   // in the Par2 file, and back again.
   static std::string TranslateFilenameFromLocalToPar2(std::ostream &sout, std::ostream &serr, const NoiseLevel noiselevel, std::string local_filename);
   static std::string TranslateFilenameFromPar2ToLocal(std::ostream &sout, std::ostream &serr, const NoiseLevel noiselevel, std::string par2_encoded_filename);
-
+private:
+  std::string filename;
 };
 
 // Get the file id from the packet
@@ -103,7 +104,7 @@ inline std::string DescriptionPacket::FileName(void) const
   assert(packetdata != 0);
 
 //  return (char*)((const FILEDESCRIPTIONPACKET*)packetdata)->name();
-  return (char*)((const FILEDESCRIPTIONPACKET*)packetdata)->name;
+  return filename;
 }
 
 // Get the full file hash value from the packet
