@@ -52,7 +52,7 @@ static HEDLEY_ALWAYS_INLINE poly16x8_t pmacl_high(poly16x8_t sum, poly8x16_t a, 
 // changing the number of regions would mean that NEON prepare routines couldn't be used anymore though
 // regardless of spills, it still seems to bench slightly better than CLMul (NEON)
 
-#include "gf16_clmul_neon.h"
+#include <par2/gf16/gf16_clmul_neon.h>
 static HEDLEY_ALWAYS_INLINE void gf16_clmul_neon_round1(const void* src, poly16x8_t* low1, poly16x8_t* low2, poly16x8_t* mid1, poly16x8_t* mid2, poly16x8_t* high1, poly16x8_t* high2, const coeff_t* coeff);
 
 static HEDLEY_ALWAYS_INLINE void gf16_clmul_sha3_merge1(
