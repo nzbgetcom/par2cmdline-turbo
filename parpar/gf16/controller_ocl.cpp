@@ -2,7 +2,7 @@
 #include <par2/osinfo/stdint.h>
 #include <stdlib.h> // free / calloc
 #include <cassert>
-#include "controller_ocl.h"
+#include <par2/gf16/controller_ocl.h>
 
 std::vector<cl::Platform> PAR2ProcOCL::platforms;
 

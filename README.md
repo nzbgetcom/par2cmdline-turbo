@@ -1,3 +1,18 @@
+This is a fork of [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) and it's mostly tuned for [NZBGet](https://github.com/nzbgetcom/nzbget)
+
+There are three active branches:
+
+* `turbo`: this branch mirrors the default branch of [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) for easy synchronization with upstream changes. It is essentially the "vanilla" version.
+
+* `utf-8`: this branch includes the "vanilla" [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) code, with added support for long paths and UTF-8 encoding on Windows. This was requested by other projects.
+
+* `nzbget`: this branch builds upon the "vanilla" [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) code and incorporates changes specifically tailored for [NZBGet](https://github.com/nzbgetcom/nzbget).
+
+If you wish to contribute changes that are not related to Unicode support or NZBGet-specific code, please submit your contributions to the original [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) repository
+
+
+## About par2cmdline-turbo
+
 This is a *simple* fork of [par2cmdline](https://github.com/Parchive/par2cmdline) which replaces core computation routines with [ParPar’s](https://github.com/animetosho/ParPar) processing backend, improving par2cmdline’s performance on x86/ARM platforms.
 
 The original par2cmdline README [can be found here](https://github.com/Parchive/par2cmdline/blob/master/README.md), which covers more info including build and usage instructions.
