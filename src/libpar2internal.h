@@ -251,7 +251,6 @@ char *strchr(), *strrchr();
 #include <par2/utf8.h>
 #include <par2/verificationhashtable.h>
 #include <par2/verificationpacket.h>
->>>>>>> cfa9e2f (Add: NZBGet specific changes)
 
 // Heap checking
 #ifdef _MSC_VER

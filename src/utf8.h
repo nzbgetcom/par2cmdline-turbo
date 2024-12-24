@@ -22,6 +22,7 @@
 
 #include <string>
 #include <codecvt>
+#include <optional>
 
 namespace utf8
 {
