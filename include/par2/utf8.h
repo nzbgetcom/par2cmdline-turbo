@@ -27,6 +27,7 @@
 namespace Par2
 {
   inline constexpr int MAX_ARGS = 128;
+  inline constexpr size_t MAX_DIR_PATH = 248;
   inline std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> UTF8_CONVERTER;
 
   std::optional<std::wstring> Utf8ToWide(const std::string& str);
