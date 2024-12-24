@@ -1,7 +1,7 @@
 #ifndef PP_CPUID_H
 #define PP_CPUID_H
 
-#include <par2/osinfo/platform.h>
+#include "platform.h"
 
 
 #ifdef PLATFORM_X86
@@ -52,7 +52,10 @@
 
 
 #ifdef PLATFORM_ARM
-# if defined(_WIN32)
+# ifdef __ANDROID__
+// TODO: may be better to prefer auxv as it's supported
+// #  include <cpu-features.h>
+# elif defined(_WIN32)
 #  define WIN32_LEAN_AND_MEAN
 #  ifndef NOMINMAX
 #   define NOMINMAX

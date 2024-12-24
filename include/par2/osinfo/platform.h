@@ -59,13 +59,13 @@
 # define _LE64(x) (x)
 #endif
 
-# ifdef _M_ARM64
+#ifdef _M_ARM64
 	#define __ARM_NEON 1
 	#define __aarch64__ 1
-# endif
-# if defined(_M_ARM)
+#endif
+#if defined(_M_ARM)
 	#define __ARM_NEON 1
-# endif
+#endif
 
 #if defined(_MSC_VER) && !defined(__clang__)
 
@@ -250,8 +250,8 @@ HEDLEY_WARNING("GFNI disabled on GCC < 10 due to incorrect GF2P8AFFINEQB operand
 # endif
 #endif
 
-#if defined(__riscv_vector) && defined(HEDLEY_GCC_VERSION) && !HEDLEY_GCC_VERSION_CHECK(13,0,0)
-// GCC added RVV intrinsics in GCC13
+#if defined(__riscv_vector) && defined(HEDLEY_GCC_VERSION) && !HEDLEY_GCC_VERSION_CHECK(14,0,0)
+// GCC added RVV intrinsics in GCC13, but GCC13 lacks segmented loads/stores
 # undef __riscv_vector
 #endif
 
@@ -304,6 +304,7 @@ HEDLEY_WARNING("NEON disabled due to missing arm_neon.h header");
 
 #endif
 #endif
+
 
 // read/write to pointer
 #include <string.h>
