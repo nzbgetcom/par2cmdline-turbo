@@ -62,7 +62,7 @@ protected:
   // Steps in the creation process:
 
   // Check permissions in the basepath
-  bool CheckBasepath(const string &parfilename);
+  bool CheckBasepath(const std::string &parfilename);
 
   // Compute block size from block count or vice versa depending on which was
   // specified on the command line

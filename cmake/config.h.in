@@ -108,6 +108,12 @@
 /* Version number of package */
 #cmakedefine VERSION "@VERSION@"
 
+/* Forked package name */
+#cmakedefine X_PACKAGE "@X_PACKAGE@"
+
+/* Forked package version */
+#cmakedefine X_VERSION "@X_VERSION@"
+
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
 #if defined AC_APPLE_UNIVERSAL_BUILD
