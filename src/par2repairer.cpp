@@ -1660,12 +1660,8 @@ bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
       lock_guard<mutex> lock(output_lock);
       sout << "File: \"" << name << "\" - empty." << endl;
     }
-
     return true;
   }
-
-  string name;
-  DiskFile::SplitRelativeFilename(diskfile->FileName(), basepath, name);
 
   SigFilename(name);
 
@@ -2582,7 +2578,7 @@ bool Par2Repairer::ProcessData(u64 blockoffset, size_t blocklength)
     future<void> bufferavail[NUM_TRANSFER_BUFFERS];
     u32 bufferindex = NUM_TRANSFER_BUFFERS - 1;
     // Set all input buffers to available
-    for (i32 = 0; i < NUM_TRANSFER_BUFFERS; i++)
+    for (i32 i = 0; i < NUM_TRANSFER_BUFFERS; i++)
     {
       promise<void> stub;
       bufferavail[i] = stub.get_future();
