@@ -4,8 +4,10 @@ if (PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
     message(FATAL_ERROR "In-source builds are not allowed. You should create separate directory for build files.")
 endif()
 
-set(VERSION "1.2.0")
+set(VERSION "1.3.0")
 set(PACKAGE "par2")
+set(X_VERSION ${VERSION})
+set(X_PACKAGE "par2cmdline-turbo")
 set(PAR2_LIBRARY "par2-turbo")
 set(PAR2_TURBO_LIB_VERSION ${VERSION})
 

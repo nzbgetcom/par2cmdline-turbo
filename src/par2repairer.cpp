@@ -1699,7 +1699,6 @@ bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
       std::lock_guard<std::mutex> lock(output_lock);
       sout << "File: \"" << name << "\" - empty." << std::endl;
     }
-
     return true;
   }
 
@@ -2639,7 +2638,7 @@ bool Par2Repairer::ProcessData(u64 blockoffset, size_t blocklength)
     std::future<void> bufferavail[NUM_TRANSFER_BUFFERS];
     u32 bufferindex = NUM_TRANSFER_BUFFERS - 1;
     // Set all input buffers to available
-    for (i32 = 0; i < NUM_TRANSFER_BUFFERS; i++)
+    for (i32 i = 0; i < NUM_TRANSFER_BUFFERS; i++)
     {
       std::promise<void> stub;
       bufferavail[i] = stub.get_future();
