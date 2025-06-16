@@ -22,7 +22,7 @@ add_compile_definitions(HAVE_CONFIG_H PARPAR_ENABLE_HASHER_MD5CRC)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang")
-        add_compile_options(-Weverything)
+        add_compile_options(-Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic)
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         add_compile_options(-Wall -Wextra)
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
