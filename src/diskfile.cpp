@@ -420,8 +420,8 @@ bool DiskFile::FileExists(string filename)
   auto wfilename = Utf8ToWide(filename);
   if (!wfilename.has_value()) return false;
 
-  struct _stat st;
-  return ((0 == _wstat(wfilename->c_str(), &st)) && (0 != (st.st_mode & _S_IFREG)));
+  struct _stati64 st;
+  return ((0 == _wstati64(wfilename->c_str(), &st)) && (0 != (st.st_mode & _S_IFREG)));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
