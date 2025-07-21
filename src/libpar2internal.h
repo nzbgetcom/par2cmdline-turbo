@@ -41,7 +41,7 @@
 #define sprintf  sprintf_s
 #define stricmp  _stricmp
 #define unlink   _unlink
-#define stat _stat
+#define stat _stat64
 
 #define __LITTLE_ENDIAN 1234
 #define __BIG_ENDIAN    4321
