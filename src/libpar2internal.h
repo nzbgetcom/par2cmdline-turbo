@@ -40,6 +40,7 @@
 
 #define snprintf _snprintf_s
 #define unlink   _unlink
+#define stat _stat64
 
 #define __LITTLE_ENDIAN 1234
 #define __BIG_ENDIAN    4321
