@@ -81,8 +81,8 @@ bool DiskFile::CreateParentDirectory(string _pathname)
     auto wpath = Utf8ToWide(path);
     if (!wpath.has_value()) return false;
 
-    struct _stat st;
-    if (_wstat(wpath->c_str(), &st) == 0)
+    struct _stat64 st;
+    if (_wstat64(wpath->c_str(), &st) == 0)
       return true; // let the caller deal with non-directories
 
     if (!DiskFile::CreateParentDirectory(path))
@@ -404,8 +404,8 @@ u64 DiskFile::GetFileSize(string filename)
   auto wfilename = Utf8ToWide(filename);
   if (!wfilename.has_value()) return 0;
 
-  struct _stati64 st;
-  if ((0 == _wstati64(wfilename->c_str(), &st)) && (0 != (st.st_mode & S_IFREG)))
+  struct _stat64 st;
+  if ((0 == _wstat64(wfilename->c_str(), &st)) && (0 != (st.st_mode & S_IFREG)))
   {
     return st.st_size;
   }
@@ -420,8 +420,8 @@ bool DiskFile::FileExists(string filename)
   auto wfilename = Utf8ToWide(filename);
   if (!wfilename.has_value()) return false;
 
-  struct _stat st;
-  return ((0 == _wstat(wfilename->c_str(), &st)) && (0 != (st.st_mode & _S_IFREG)));
+  struct _stat64 st;
+  return ((0 == _wstat64(wfilename->c_str(), &st)) && (0 != (st.st_mode & _S_IFREG)));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
