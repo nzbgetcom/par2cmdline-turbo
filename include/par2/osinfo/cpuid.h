@@ -52,9 +52,9 @@
 
 
 #ifdef PLATFORM_ARM
-# ifdef __ANDROID__
+# ifdef HAVE_CPU_FEATURES
 // TODO: may be better to prefer auxv as it's supported
-// #  include <cpu-features.h>
+#  include <cpu-features.h>
 # elif defined(_WIN32)
 #  define WIN32_LEAN_AND_MEAN
 #  ifndef NOMINMAX

@@ -21,7 +21,6 @@
 // iostream is included here, so that cout and cerr are not used elsewhere.
 #include<iostream>
 #include<algorithm>
-#include "commandline.h"
 
 #include "libpar2internal.h"
 

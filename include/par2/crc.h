@@ -48,7 +48,7 @@ struct crc32table
 };
 
 // The one and only CCITT CRC32 lookup table
-extern crc32table g_ccitttable;
+extern crc32table ccitttable;
 
 inline u32 CRCCompute(size_t length, const void* buffer)
 {
@@ -62,7 +62,7 @@ inline u32 CRCUpdateBlock(u32 crc, size_t length, const void *buffer)
 
   while (length-- > 0)
   {
-    crc =  ((crc >> 8) & 0x00ffffffL) ^ g_ccitttable.table[(u8)crc ^ (*current++)];
+    crc =  ((crc >> 8) & 0x00ffffffL) ^ ccitttable.table[(u8)crc ^ (*current++)];
   }
 
   return crc;
@@ -80,7 +80,7 @@ void GenerateWindowTable(u64 window, u32 (&windowtable)[256]);
 inline u32 CRCSlideChar(u32 crc, u8 chNew, u8 chOld, const u32 (&windowtable)[256])
 {
   crc ^= ~0;
-  return ((crc >> 8) & 0x00ffffffL) ^ g_ccitttable.table[(u8)crc ^ chNew] ^ windowtable[chOld];
+  return ((crc >> 8) & 0x00ffffffL) ^ ccitttable.table[(u8)crc ^ chNew] ^ windowtable[chOld];
 }
 
 /*

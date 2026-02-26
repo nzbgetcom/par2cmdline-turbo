@@ -228,9 +228,12 @@ typedef unsigned int     size_t;
 #include <par2/par2repairersourcefile.h>
 #include <par2/recoverypacket.h>
 #include <par2/reedsolomon.h>
-#include <par2/utf8.h>
 #include <par2/verificationhashtable.h>
 #include <par2/verificationpacket.h>
+
+#ifdef _WIN32
+#include <par2/utf8.h>
+#endif
 
 // Heap checking
 #ifdef _MSC_VER

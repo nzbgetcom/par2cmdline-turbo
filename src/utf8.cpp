@@ -1,7 +1,7 @@
 //  This file is part of par2cmdline (a PAR 2.0 compatible file verification and
 //  repair tool). See https://parchive.sourceforge.net for details of PAR 2.0.
 //
-//  Copyright (c) 2024-2025 Denis <denis@nzbget.com>
+//  Copyright (c) 2024-2026 Denis <denis@nzbget.com>
 //
 //  par2cmdline is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -22,61 +22,16 @@
 
 #include <cstring>
 #include <iostream>
-#include <exception>
-
+#include <memory>
 #include <par2/utf8.h>
 
-namespace Par2
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+namespace Par2::utf8
 {
-  std::optional<std::wstring> Utf8ToWide(const std::string& str)
-  {
-    if (str.empty())
-      return L"";
-
-    try
-    {
-      std::wstring wpath = UTF8_CONVERTER.from_bytes(str.c_str());
-
-      if (wpath.size() > MAX_DIR_PATH &&
-        wpath.find(L"\\\\?\\") == std::wstring::npos &&
-        wpath.find(L"\\\\?\\UNC") == std::wstring::npos)
-      {
-        if (std::wcsncmp(wpath.c_str(), L"\\\\", 2) == 0)
-        {
-          wpath = L"\\\\?\\UNC" + wpath;
-        }
-        else
-        {
-          wpath = L"\\\\?\\" + wpath;
-        }
-      }
-
-      return wpath;
-    }
-    catch (const std::exception& e)
-    {
-      std::cerr << "Failed to convert UTF-8 to wide string: " << e.what() << std::endl;
-      return L"";
-    }
-  }
-
-  std::optional<std::string> WideToUtf8(const std::wstring& str)
-  {
-    if (str.empty())
-      return "";
-
-    try
-    {
-      return UTF8_CONVERTER.to_bytes(str.c_str());
-    }
-    catch (const std::exception& e)
-    {
-      std::cerr << "Failed to convert wide to UTF-8 string: " << e.what() << std::endl;
-      return std::nullopt;
-    }
-  }
-
-  std::string Latin1ToUtf8(const std::string& latin1Str)
+  std::string Latin1ToUtf8(std::string_view latin1Str)
   {
     if (latin1Str.empty()) return "";
 
@@ -97,6 +52,49 @@ namespace Par2
     }
     return utf8Str;
   }
+
+#ifdef _WIN32
+  std::optional<std::wstring> Utf8ToWide(std::string_view str)
+	{
+		if (str.empty()) return L"";
+ 
+		int requiredSize = MultiByteToWideChar(CP_UTF8, 0, str.data(), -1, nullptr, 0);
+		if (requiredSize <= 0) return std::nullopt;
+ 
+		if (requiredSize <= STACK_BUFFER_SIZE)
+		{
+			wchar_t buffer[STACK_BUFFER_SIZE];
+			int result = MultiByteToWideChar(CP_UTF8, 0, str.data(), -1, buffer, STACK_BUFFER_SIZE);
+			if (result <= 0) return std::nullopt;
+			return std::wstring(buffer);
+		}
+ 
+		auto buffer = std::make_unique<wchar_t[]>(requiredSize);
+		int result = MultiByteToWideChar(CP_UTF8, 0, str.data(), -1, buffer.get(), requiredSize);
+		if (result <= 0) return std::nullopt;
+		return std::wstring(buffer.get());
+	}
+ 
+	std::optional<std::string> WideToUtf8(std::wstring_view wstr)
+	{
+		if (wstr.empty()) return "";
+ 
+		int requiredSize = WideCharToMultiByte(CP_UTF8, 0, wstr.data(), -1, nullptr, 0, nullptr, nullptr);
+		if (requiredSize <= 0) return std::nullopt;
+ 
+		if (requiredSize <= STACK_BUFFER_SIZE)
+		{
+			char buffer[STACK_BUFFER_SIZE];
+			int result = WideCharToMultiByte(CP_UTF8, 0, wstr.data(), -1, buffer, STACK_BUFFER_SIZE, nullptr, nullptr);
+			if (result <= 0) return std::nullopt;
+			return std::string(buffer);
+		}
+ 
+		auto buffer = std::make_unique<char[]>(requiredSize);
+		int result = WideCharToMultiByte(CP_UTF8, 0, wstr.data(), -1, buffer.get(), requiredSize, nullptr, nullptr);
+		if (result <= 0) return std::nullopt;
+		return std::string(buffer.get());
+	}
 
   WideToUtf8ArgsAdapter::WideToUtf8ArgsAdapter(int argc, wchar_t* wargv[]) noexcept(false)
     : m_argc(argc)
@@ -128,7 +126,7 @@ namespace Par2
         continue;
       }
 
-      auto arg = WideToUtf8(wargv[i]);
+      auto arg = utf8::WideToUtf8(wargv[i]);
       if (!arg.has_value())
       {
         std::wcerr << L"Failed to convert " << wargv[i] << L" to UTF-8 string. Skipping" << std::endl;
@@ -137,7 +135,7 @@ namespace Par2
 
       size_t size = arg->size() + 1;
       m_argv[i] = new char[size];
-      std::memcpy(m_argv[i], arg.c_str(), size);
+      std::memcpy(m_argv[i], arg->c_str(), size);
     }
     m_argv[m_argc] = nullptr;
   }
@@ -158,4 +156,5 @@ namespace Par2
       delete[] m_argv;
     }
   }
+#endif
 }

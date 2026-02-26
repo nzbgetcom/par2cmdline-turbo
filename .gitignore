@@ -66,3 +66,4 @@ perf.*
 .~lock.*#
 
 .vscode
+DS_Store

@@ -40,7 +40,6 @@ namespace Par2
 // the object also computes the MD5 Hash of the whole file and of
 // the first 16k of the file for later tests.
 
-
 class FileCheckSummer
 {
 public:

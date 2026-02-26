@@ -3,6 +3,7 @@
 
 // Wrapper for ParPar's InputHasher
 
+#include <cstring>
 #include <par2/hasher/hasher.h>
 #include <par2/md5.h>
 #include <par2/libpar2.h>
