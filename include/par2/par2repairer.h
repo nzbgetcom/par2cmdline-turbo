@@ -125,19 +125,11 @@ protected:
   bool VerifySourceFiles(const std::string& basepath, std::vector<std::string>& extrafiles);
 
   // Scan any extra files specified on the command line
-  bool VerifySourceFiles(const std::string& basepath, std::vector<std::string>& extrafiles);
-
-  // Scan any extra files specified on the command line
   bool VerifyExtraFiles(const std::vector<std::string> &extrafiles, const std::string &basepath, const bool renameonly);
 
   // Attempt to match the data in the DiskFile with the source file
   bool VerifyDataFile(DiskFile *diskfile, Par2RepairerSourceFile *sourcefile, const std::string &basepath, const bool renameonly = false);
 
-  // Perform a sliding window scan of the DiskFile looking for blocks of data that
-  // might belong to any of the source files (for which a verification packet was
-  // available). If a block of data might be from more than one source file, prefer
-  // the one specified by the "sourcefile" parameter. If the first data block
-  // found is for a different source file then "sourcefile" is changed accordingly.
   // Perform a sliding window scan of the DiskFile looking for blocks of data that
   // might belong to any of the source files (for which a verification packet was
   // available). If a block of data might be from more than one source file, prefer

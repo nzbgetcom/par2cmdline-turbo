@@ -113,12 +113,10 @@ protected:
   std::mutex output_lock;
   const NoiseLevel   noiselevel;              // How noisy we should be
 
-  std::map<u32, DataBlock*> recoveryblocks;          // The recovery data (mapped by exponent)
-=======
-  std::string                    searchpath;              // Where to find files on disk
+  std::string               searchpath;              // Where to find files on disk
   DiskFileMap               diskfilemap;             // Map from filename to DiskFile
 
-  std::map<u32, DataBlock*>      recoveryblocks;          // The recovery data (mapped by exponent)
+  std::map<u32, DataBlock*> recoveryblocks;          // The recovery data (mapped by exponent)
 
   unsigned char            *filelist;
   u32                       filelistsize;
@@ -135,8 +133,6 @@ protected:
   u32                       missingfilecount;
 
   std::list<Par1RepairerSourceFile*> verifylist;
-  std::vector<DiskFile*>             backuplist;   // Those source files backups
-
   std::vector<DiskFile*>             backuplist;   // Those source files backups
   std::list<std::string>             parlist;      // list of par files
 

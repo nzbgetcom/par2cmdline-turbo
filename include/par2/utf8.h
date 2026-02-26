@@ -1,7 +1,7 @@
 //  This file is part of par2cmdline (a PAR 2.0 compatible file verification and
 //  repair tool). See https://parchive.sourceforge.net for details of PAR 2.0.
 //
-//  Copyright (c) 2024 Denis <denis@nzbget.com>
+//  Copyright (c) 2024-2026 Denis <denis@nzbget.com>
 //
 //  par2cmdline is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -20,19 +20,21 @@
 #ifndef __UTF8_H__
 #define __UTF8_H__
 
-#include <string>
+#include <string_view>
 #include <optional>
 #include <codecvt>
 
-namespace Par2
+namespace Par2::utf8
 {
-  inline constexpr int MAX_ARGS = 128;
-  inline constexpr size_t MAX_DIR_PATH = 248;
-  inline std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> UTF8_CONVERTER;
+  std::string Latin1ToUtf8(std::string_view latin1Str);
 
-  std::optional<std::wstring> Utf8ToWide(const std::string& str);
-  std::optional<std::string> WideToUtf8(const std::wstring& str);
-  std::string Latin1ToUtf8(const std::string& latin1Str);
+#ifdef _WIN32
+  inline constexpr int MAX_ARGS = 127;
+  inline constexpr size_t MAX_DIR_PATH = 248;
+  inline constexpr int STACK_BUFFER_SIZE = 1024;
+
+  std::optional<std::wstring> Utf8ToWide(std::string_view str);
+  std::optional<std::string> WideToUtf8(std::wstring_view str);
 
   class WideToUtf8ArgsAdapter final
   {
@@ -53,6 +55,7 @@ namespace Par2
     char** m_argv;
     int m_argc;
   };
+#endif
 }
 
 #endif // __UTF8_H__

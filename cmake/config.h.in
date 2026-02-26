@@ -1,25 +1,35 @@
-/* config.h.in.  Generated from configure.ac by autoheader.  */
-
 /* Define if building universal (internal helper macro) */
 #cmakedefine AC_APPLE_UNIVERSAL_BUILD @AC_APPLE_UNIVERSAL_BUILD@
 
-/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
+/* define if the compiler supports basic C++14 syntax */
+#cmakedefine HAVE_CXX14 @HAVE_CXX14@
+
+/* Define to 1 if you have the <memory.h> header file. */
+#cmakedefine HAVE_MEMORY_H @HAVE_MEMORY_H@
+
+/* Define to 1 if you have the declaration of `posix_memalign' */
+#cmakedefine HAVE_DECL_POSIX_MEMALIGN @HAVE_DECL_POSIX_MEMALIGN@
+
+/* Define to 1 if you have the declaration of `aligned_alloc' */
+#cmakedefine HAVE_STD_ALIGNED_ALLOC @HAVE_STD_ALIGNED_ALLOC@
+
+/* Define to 1 if you have the <dirent.h> header file, and it defines 'DIR'.
    */
 #cmakedefine HAVE_DIRENT_H @HAVE_DIRENT_H@
 
 /* Define to 1 if you have the <endian.h> header file. */
 #cmakedefine HAVE_ENDIAN_H @HAVE_ENDIAN_H@
 
-/* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
+/* Define to 1 if fseeko (and ftello) are declared in stdio.h. */
 #cmakedefine HAVE_FSEEKO @HAVE_FSEEKO@
 
-/* Define to 1 if you have the `getopt' function. */
+/* Define to 1 if you have the 'getopt' function. */
 #cmakedefine HAVE_GETOPT @HAVE_GETOPT@
 
 /* Define to 1 if you have the <getopt.h> header file. */
 #cmakedefine HAVE_GETOPT_H @HAVE_GETOPT_H@
 
-/* Define to 1 if you have the `getopt_long' function. */
+/* Define to 1 if you have the 'getopt_long' function. */
 #cmakedefine HAVE_GETOPT_LONG @HAVE_GETOPT_LONG@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
@@ -28,14 +38,14 @@
 /* Define to 1 if you have the <limits.h> header file. */
 #cmakedefine HAVE_LIMITS_H @HAVE_LIMITS_H@
 
-/* Define to 1 if you have the `memcpy' function. */
+/* Define to 1 if you have the 'memcpy' function. */
 #cmakedefine HAVE_MEMCPY @HAVE_MEMCPY@
 
-/* Define to 1 if you have the <memory.h> header file. */
-#cmakedefine HAVE_MEMORY_H @HAVE_MEMORY_H@
-
-/* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
+/* Define to 1 if you have the <ndir.h> header file, and it defines 'DIR'. */
 #cmakedefine HAVE_NDIR_H @HAVE_NDIR_H@
+
+/* Define if you have POSIX threads libraries and header files. */
+#cmakedefine HAVE_PTHREAD @HAVE_PTHREAD@
 
 /* Define to 1 if stdbool.h conforms to C99. */
 #cmakedefine HAVE_STDBOOL_H @HAVE_STDBOOL_H@
@@ -49,13 +59,13 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #cmakedefine HAVE_STDLIB_H @HAVE_STDLIB_H@
 
-/* Define to 1 if you have the `strcasecmp' function. */
+/* Define to 1 if you have the 'strcasecmp' function. */
 #cmakedefine HAVE_STRCASECMP @HAVE_STRCASECMP@
 
-/* Define to 1 if you have the `strchr' function. */
+/* Define to 1 if you have the 'strchr' function. */
 #cmakedefine HAVE_STRCHR @HAVE_STRCHR@
 
-/* Define to 1 if you have the `stricmp' function. */
+/* Define to 1 if you have the 'stricmp' function. */
 #cmakedefine HAVE_STRICMP @HAVE_STRICMP@
 
 /* Define to 1 if you have the <strings.h> header file. */
@@ -64,11 +74,11 @@
 /* Define to 1 if you have the <string.h> header file. */
 #cmakedefine HAVE_STRING_H @HAVE_STRING_H@
 
-/* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
+/* Define to 1 if you have the <sys/dir.h> header file, and it defines 'DIR'.
    */
 #cmakedefine HAVE_SYS_DIR_H @HAVE_SYS_DIR_H@
 
-/* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
+/* Define to 1 if you have the <sys/ndir.h> header file, and it defines 'DIR'.
    */
 #cmakedefine HAVE_SYS_NDIR_H @HAVE_SYS_NDIR_H@
 
@@ -81,38 +91,41 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #cmakedefine HAVE_UNISTD_H @HAVE_UNISTD_H@
 
+/* Define to 1 if the system has the type '_Bool'. */
+#cmakedefine HAVE__BOOL @HAVE__BOOL@
+
 /* Name of package */
 #cmakedefine PACKAGE "@PACKAGE@"
 
 /* Define to the address where bug reports for this package should be sent. */
-#cmakedefine PACKAGE_BUGREPORT
+#cmakedefine PACKAGE_BUGREPORT @PACKAGE_BUGREPORT@
 
 /* Define to the full name of this package. */
-#cmakedefine PACKAGE_NAME
+#cmakedefine PACKAGE_NAME @PACKAGE_NAME@
 
 /* Define to the full name and version of this package. */
-#cmakedefine PACKAGE_STRING
+#cmakedefine PACKAGE_STRING @PACKAGE_STRING@
 
 /* Define to the one symbol short name of this package. */
-#cmakedefine PACKAGE_TARNAME
+#cmakedefine PACKAGE_TARNAME @PACKAGE_TARNAME@
 
 /* Define to the home page for this package. */
-#cmakedefine PACKAGE_URL
+#cmakedefine PACKAGE_URL @PACKAGE_URL@
 
 /* Define to the version of this package. */
 #cmakedefine PACKAGE_VERSION "@VERSION@"
 
-/* Define to 1 if you have the ANSI C header files. */
-#cmakedefine STDC_HEADERS
+/* Define to the necessary symbol if this constant uses a non-standard name on
+   your system. */
+#cmakedefine PTHREAD_CREATE_JOINABLE @PTHREAD_CREATE_JOINABLE@
+
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
+#cmakedefine STDC_HEADERS @STDC_HEADERS@
 
 /* Version number of package */
 #cmakedefine VERSION "@VERSION@"
-
-/* Forked package name */
-#cmakedefine X_PACKAGE "@X_PACKAGE@"
-
-/* Forked package version */
-#cmakedefine X_VERSION "@X_VERSION@"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
@@ -126,24 +139,38 @@
 # endif
 #endif
 
-/* Enable large inode numbers on Mac OS X 10.5.  */
-#ifndef _DARWIN_USE_64_BIT_INODE
-# define _DARWIN_USE_64_BIT_INODE 1
-#endif
+/* Forked package name */
+#cmakedefine X_PACKAGE "@X_PACKAGE@"
+
+/* Forked package version */
+#cmakedefine X_VERSION "@X_VERSION@"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
-#cmakedefine _FILE_OFFSET_BITS
+#cmakedefine _FILE_OFFSET_BITS @_FILE_OFFSET_BITS@
 
-/* Define to 1 to make fseeko visible on some hosts (e.g. glibc 2.2). */
-#cmakedefine _LARGEFILE_SOURCE
+/* Define to 1 if necessary to make fseeko visible. */
+#cmakedefine _LARGEFILE_SOURCE @_LARGEFILE_SOURCE@
 
-/* Define for large files, on AIX-style hosts. */
-#cmakedefine _LARGE_FILES
+/* Define to 1 on platforms where this makes off_t a 64-bit type. */
+#cmakedefine _LARGE_FILES @_LARGE_FILES@
 
+/* Number of bits in time_t, on hosts where this is settable. */
+#cmakedefine _TIME_BITS @_TIME_BITS@
 
-/* Define to `__inline__' or `__inline' if that's what the C compiler
+/* Define to 1 on platforms where this makes time_t a 64-bit type. */
+#cmakedefine __MINGW_USE_VC2005_COMPAT "@__MINGW_USE_VC2005_COMPAT@"
+
+/* Define to empty if 'const' does not conform to ANSI C. */
+#cmakedefine const "@const@"
+
+/* Define to '__inline__' or '__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus
-#define inline
+#cmakedefine inline
 #endif
 
+/* Define as 'unsigned int' if <stddef.h> doesn't define. */
+#cmakedefine size_t "@size_t@"
+
+/* Define to 1 if you have the <cpu-features.h> header file (common on Android). */
+#cmakedefine HAVE_CPU_FEATURES @HAVE_CPU_FEATURES@

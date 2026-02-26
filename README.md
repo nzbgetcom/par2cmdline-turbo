@@ -4,8 +4,6 @@ There are three active branches:
 
 * `turbo`: this branch mirrors the default branch of [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) for easy synchronization with upstream changes. It is essentially the "vanilla" version.
 
-* `utf-8`: this branch includes the "vanilla" [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) code, with added support for long paths and UTF-8 encoding on Windows. This was requested by other projects.
-
 * `nzbget`: this branch builds upon the "vanilla" [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) code and incorporates changes specifically tailored for [NZBGet](https://github.com/nzbgetcom/nzbget).
 
 If you wish to contribute changes that are not related to Unicode support or NZBGet-specific code, please submit your contributions to the original [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) repository

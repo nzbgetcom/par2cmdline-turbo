@@ -52,7 +52,7 @@ Par2Repairer::Par2Repairer(std::ostream &sout, std::ostream &serr, const NoiseLe
 , sourcefiles()
 , verifylist()
 , backuplist()
-, par2Set()
+, par2list()
 , sourceblocks()
 , targetblocks()
 , blockverifiable(false)
@@ -152,9 +152,7 @@ Result Par2Repairer::Process(
   // How much leaway should we allow when scanning files
   skipleaway = _skipleaway;
 
-  // Get filenames from the command line
-  basepath = _basepath;
-  std::vector<std::string> extrafiles = _extrafiles;
+  std::vector<std::string> extrafiles =_extrafiles;
 
   // Determine the searchpath from the location of the main PAR2 file
   std::string name;
@@ -162,73 +160,32 @@ Result Par2Repairer::Process(
 
   par2list.push_back(parfilename);
 
-  // Load packets from the main PAR2 file
-  if (!LoadPacketsFromFile(searchpath + name))
-    return eLogicError;
-
-  // Load packets from other PAR2 files with names based on the original PAR2 file
-  if (!LoadPacketsFromOtherFiles(parfilename))
-    return eLogicError;
-
-  // Load packets from any other PAR2 files whose names are given on the command line
-  if (!LoadPacketsFromExtraFiles(extrafiles))
-    return eLogicError;
-
-  if (noiselevel > nlQuiet)
-    sout << std::endl;
-
-  // Check that the packets are consistent and discard any that are not
-  if (!CheckPacketConsistency())
-    return eInsufficientCriticalData;
-
-  // Use the information in the main packet to get the source files
-  // into the correct order and determine their filenames
-  if (!CreateSourceFileList())
-    return eLogicError;
-
-  // Determine the total number of DataBlocks for the recoverable source files
-  // The allocate the DataBlocks and assign them to each source file
-  if (!AllocateSourceBlocks())
-    return eLogicError;
-
   // Create a verification hash table for all files for which we have not
   // found a complete version of the file and for which we have
   // a verification packet
-  if (!PrepareVerificationHashTable())
-    return eLogicError;
-
-  // Compute the table for the sliding CRC computation
-  if (!ComputeWindowTable())
-    return eLogicError;
-
-  // Attempt to verify all of the source files
-  if (!VerifySourceFiles(basepath, extrafiles))
-    return eFileIOError;
-
-  if (!PrepareVerificationHashTable())
+  if (!alreadyloaded) {
+    if (!PrepareVerificationHashTable())
       return eLogicError;
-  
+
     // Compute the table for the sliding CRC computation
     if (!ComputeWindowTable())
       return eLogicError;
-  
+
     // Attempt to verify all of the source files
     if (!VerifySourceFiles(basepath, extrafiles))
       return eFileIOError;
-  
+
     if (completefilecount < mainpacket->RecoverableFileCount())
     {
       // Scan any extra files specified on the command line
       if (!VerifyExtraFiles(extrafiles, basepath, renameonly))
         return eLogicError;
     }
+
+    // Find out how much data we have found
+    UpdateVerificationResults();
+    alreadyloaded = true;
   }
-
-  // Find out how much data we have found
-  UpdateVerificationResults();
-
-  if (noiselevel > nlSilent)
-    sout << std::endl;
 
   // Check the verification results and report the results
   if (!CheckVerificationResults())
@@ -307,7 +264,7 @@ Result Par2Repairer::Process(
             sout << "[DEBUG] Compute tile size: " << parparcpu.getChunkLen() << std::endl;
             sout << "[DEBUG] Compute block grouping: " << parparcpu.getInputBatchSize() << std::endl;
           }
-          sout << std::endl;
+          sout << endl;
         }
 
         // Set the total amount of data to be processed.
@@ -1344,9 +1301,9 @@ bool Par2Repairer::VerifySourceFiles(const std::string& basepath, std::vector<st
     Par2RepairerSourceFile *sourcefile = sortedfile;
 
     // What filename does the file use
-    const std::string file = sourcefile->TargetFileName();
-    const std::string name = DiskFile::SplitRelativeFilename(file, basepath);
-    const std::string target_pathname = DiskFile::GetCanonicalPathname(file);
+    const std::string& file = sourcefile->TargetFileName();
+    const std::string& name = DiskFile::SplitRelativeFilename(file, basepath);
+    const std::string& target_pathname = DiskFile::GetCanonicalPathname(file);
 
     if (noiselevel >= nlDebug)
     {
@@ -1365,13 +1322,13 @@ bool Par2Repairer::VerifySourceFiles(const std::string& basepath, std::vector<st
       std::vector<std::string>::iterator it = extrafiles.begin();
       for (; it != extrafiles.end(); ++it)
       {
-	const std::string& e = *it;
-	const std::string& extra_pathname = e;
-	if (!extra_pathname.compare(target_pathname))
-	{
-	  extrafiles.erase(it);
-	  break;
-	}
+        const std::string& e = *it;
+        const std::string& extra_pathname = e;
+        if (!extra_pathname.compare(target_pathname))
+        {
+	        extrafiles.erase(it);
+	        break;
+	      }
       }
     }
 
@@ -1435,7 +1392,7 @@ bool Par2Repairer::VerifySourceFiles(const std::string& basepath, std::vector<st
   UpdateVerificationResults();
 
   if (noiselevel > nlSilent)
-    sout << endl;
+    sout << std::endl;
 
   return finalresult.load(memory_order_relaxed);
 }
@@ -1642,7 +1599,6 @@ bool Par2Repairer::VerifyDataFile(DiskFile *diskfile, Par2RepairerSourceFile *so
           std::lock_guard<std::mutex> lock(output_lock);
           sout << diskfile->FileName() << " is a perfect match for " << sourcefile->GetDescriptionPacket()->FileName() << std::endl;
         }
-
         // Record that we have a perfect match for this source file
         sourcefile->SetCompleteFile(diskfile);
 
@@ -1684,7 +1640,7 @@ bool Par2Repairer::VerifyDataFile(DiskFile *diskfile, Par2RepairerSourceFile *so
 // the one specified by the "sourcefile" parameter. If the first data block
 // found is for a different source file then "sourcefile" is changed accordingly.
 bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
-                                std::string                  basepath,     // [in]
+                                std::string             basepath,     // [in]
                                 const bool              renameonly,   // [in]
                                 Par2RepairerSourceFile* &sourcefile,  // [in/out]
                                 MatchType               &matchtype,   // [out]
@@ -1713,9 +1669,6 @@ bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
     }
     return true;
   }
-
-  std::string name;
-  DiskFile::SplitRelativeFilename(diskfile->FileName(), basepath, name);
 
   SigFilename(name);
 
@@ -2992,7 +2945,7 @@ bool Par2Repairer::RemoveParFiles(void)
   {
     DiskFile *diskfile = new DiskFile(sout, serr, output_lock);
 
-    if (diskfile->Open(s))
+    if (diskfile->Open(*s))
     {
       if (noiselevel > nlSilent)
       {

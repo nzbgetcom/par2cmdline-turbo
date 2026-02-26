@@ -4,7 +4,7 @@ if (PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
     message(FATAL_ERROR "In-source builds are not allowed. You should create separate directory for build files.")
 endif()
 
-set(VERSION "1.3.0")
+set(VERSION "1.4.0")
 set(PACKAGE "par2")
 set(X_VERSION ${VERSION})
 set(X_PACKAGE "par2cmdline-turbo")
@@ -15,11 +15,11 @@ project(
     ${PACKAGE}
     VERSION ${VERSION}
     DESCRIPTION "par2cmdline-turbo is a PAR 2.0 compatible file verification and repair tool with improved performance on x86/ARM platforms."
-    LANGUAGES C CXX ASM_MASM
+    LANGUAGES C CXX
 )
 
-option(BUILD_TOOL "Build only the executable Par2 tool" ON)
-option(BUILD_LIB "Build only the Par2 library" OFF)
+option(BUILD_TOOL "Build only the executable Par2 tool" OFF)
+option(BUILD_LIB "Build only the Par2 library" ON)
 #option(WITH_TESTS "Build tests" OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -115,19 +115,5 @@ if(BUILD_LIB)
             ${CMAKE_CURRENT_BINARY_DIR}
         PUBLIC
             ${par2_INCLUDE_DIR}
-    )
-
-    install(
-        TARGETS ${PAR2_LIBRARY} ${GF16_LIBRARY} ${HASHER_LIBRARY}
-        EXPORT "${PAR2_LIBRARY}Config"
-        ARCHIVE DESTINATION ${CMAKE_BINARY_DIR}/lib
-        LIBRARY DESTINATION ${CMAKE_BINARY_DIR}/lib
-        INCLUDES DESTINATION ${par2_INCLUDE_DIR}
-    )
-
-    export(
-        TARGETS ${PAR2_LIBRARY} ${GF16_LIBRARY} ${HASHER_LIBRARY}
-        NAMESPACE ${PAR2_LIBRARY}::
-        FILE "${CMAKE_BINARY_DIR}/${PAR2_LIBRARY}Config.cmake"
     )
 endif()

@@ -23,7 +23,6 @@
 
 #include <ostream>
 #include <string>
-// MD5 computation context with 64 byte buffer
 #include <par2/hasher/hasher.h>
 
 #ifdef _WIN32

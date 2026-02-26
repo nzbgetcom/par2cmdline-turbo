@@ -108,7 +108,7 @@ protected:
   // Close all files.
   bool CloseFiles(void);
 
-  static u32 GetFileThreads(void) {return filethreads;}
+  static u32                          GetFileThreads(void) {return filethreads;}
 
 protected:
   std::ostream &sout; // stream for output (for commandline, this is cout)

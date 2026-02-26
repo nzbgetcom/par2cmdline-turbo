@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
 #ifdef _WIN32
   SetConsoleOutputCP(CP_UTF8);
 
-  WideToUtf8ArgsAdapter wargsAdapter{ argc, wargv };
+  utf8::WideToUtf8ArgsAdapter wargsAdapter{ argc, wargv };
   auto argv = wargsAdapter.GetUtf8Args();
 #endif
 
