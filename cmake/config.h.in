@@ -50,9 +50,6 @@
 /* Define to 1 if stdbool.h conforms to C99. */
 #cmakedefine HAVE_STDBOOL_H @HAVE_STDBOOL_H@
 
-/* Define to 1 if you have the <stdint.h> header file. */
-#cmakedefine HAVE_STDINT_H @HAVE_STDINT_H@
-
 /* Define to 1 if you have the <stdio.h> header file. */
 #cmakedefine HAVE_STDIO_H @HAVE_STDIO_H@
 
