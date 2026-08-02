@@ -394,7 +394,7 @@ std::unique_ptr< std::list<std::string> > DiskFile::FindFiles(std::string path, 
 
   std::string pathWithWildcard = path + wildcard;
   auto wwildcard = utf8::Utf8ToWide(pathWithWildcard);
-  if (!wwildcard) return false;
+  if (!wwildcard) return nullptr;
   WIN32_FIND_DATAW fd;
   HANDLE h = ::FindFirstFileW(wwildcard->c_str(), &fd);
   if (h != INVALID_HANDLE_VALUE)
