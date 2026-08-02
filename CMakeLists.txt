@@ -8,6 +8,8 @@ set(VERSION "1.4.0")
 set(PACKAGE "par2")
 set(X_VERSION ${VERSION})
 set(X_PACKAGE "par2cmdline-turbo")
+set(BASE_PACKAGE "par2cmdline")
+set(BASE_VERSION "1.2.0")
 set(PAR2_LIBRARY "par2-turbo")
 set(PAR2_TURBO_LIB_VERSION ${VERSION})
 

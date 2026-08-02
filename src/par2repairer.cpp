@@ -1316,7 +1316,6 @@ bool Par2Repairer::VerifySourceFiles(const std::string& basepath, std::vector<st
 
     // if the target file is in the list of extra files, we remove it
     // from the extra files.
-    if (!extrafiles.empty())
     {
       std::lock_guard<std::mutex> lock(xfiles_lock);
       std::vector<std::string>::iterator it = extrafiles.begin();
