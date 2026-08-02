@@ -1679,7 +1679,7 @@ bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
   }
   else
   {
-    shortname = std::move(name);
+    shortname = name;
   }
 
   // Create the checksummer for the file and start reading from it
