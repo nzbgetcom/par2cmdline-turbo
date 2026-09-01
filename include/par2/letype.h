@@ -20,10 +20,18 @@
 #ifndef __LETYPE_H__
 #define __LETYPE_H__
 
+#include <par2/osinfo/stdint.h>
+
 namespace Par2
 {
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)) || \
+    (defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && (__BYTE_ORDER == __LITTLE_ENDIAN)) || \
+    defined(_WIN32)
+# define PAR2_IS_LITTLE_ENDIAN 1
+#endif
+
+#if defined(PAR2_IS_LITTLE_ENDIAN)
 
 typedef u16 leu16;
 typedef u32 leu32;
@@ -42,16 +50,28 @@ struct leu16
 
 inline leu16& leu16::operator=(const u16 &other)
 {
+#if defined(__GNUC__) || defined(__clang__)
+  value = __builtin_bswap16(other);
+#elif defined(_MSC_VER)
+  value = _byteswap_ushort(other);
+#else
   ((unsigned char*)&value)[0] = (unsigned char)((other >> 0) & 0xff);
   ((unsigned char*)&value)[1] = (unsigned char)((other >> 8) & 0xff);
+#endif
 
   return *this;
 }
 
 inline leu16::operator u16(void) const
 {
+#if defined(__GNUC__) || defined(__clang__)
+  return __builtin_bswap16(value);
+#elif defined(_MSC_VER)
+  return _byteswap_ushort(value);
+#else
   return ((unsigned char*)&value)[0] << 0 |
          ((unsigned char*)&value)[1] << 8;
+#endif
 }
 
 
@@ -66,20 +86,32 @@ struct leu32
 
 inline leu32& leu32::operator=(const u32 &other)
 {
+#if defined(__GNUC__) || defined(__clang__)
+  value = __builtin_bswap32(other);
+#elif defined(_MSC_VER)
+  value = _byteswap_ulong(other);
+#else
   ((unsigned char*)&value)[0] = (unsigned char)((other >> 0) & 0xff);
   ((unsigned char*)&value)[1] = (unsigned char)((other >> 8) & 0xff);
   ((unsigned char*)&value)[2] = (unsigned char)((other >> 16) & 0xff);
   ((unsigned char*)&value)[3] = (unsigned char)((other >> 24) & 0xff);
+#endif
 
   return *this;
 }
 
 inline leu32::operator u32(void) const
 {
+#if defined(__GNUC__) || defined(__clang__)
+  return __builtin_bswap32(value);
+#elif defined(_MSC_VER)
+  return _byteswap_ulong(value);
+#else
   return ((unsigned char*)&value)[0] << 0 |
          ((unsigned char*)&value)[1] << 8 |
          ((unsigned char*)&value)[2] << 16 |
          ((unsigned char*)&value)[3] << 24;
+#endif
 }
 
 
@@ -94,6 +126,11 @@ struct leu64
 
 inline leu64& leu64::operator=(const u64 &other)
 {
+#if defined(__GNUC__) || defined(__clang__)
+  value = __builtin_bswap64(other);
+#elif defined(_MSC_VER)
+  value = _byteswap_uint64(other);
+#else
   ((unsigned char*)&value)[0] = (unsigned char)((other >> 0) & 0xff);
   ((unsigned char*)&value)[1] = (unsigned char)((other >> 8) & 0xff);
   ((unsigned char*)&value)[2] = (unsigned char)((other >> 16) & 0xff);
@@ -102,12 +139,18 @@ inline leu64& leu64::operator=(const u64 &other)
   ((unsigned char*)&value)[5] = (unsigned char)((other >> 40) & 0xff);
   ((unsigned char*)&value)[6] = (unsigned char)((other >> 48) & 0xff);
   ((unsigned char*)&value)[7] = (unsigned char)((other >> 56) & 0xff);
+#endif
 
   return *this;
 }
 
 inline leu64::operator u64(void) const
 {
+#if defined(__GNUC__) || defined(__clang__)
+  return __builtin_bswap64(value);
+#elif defined(_MSC_VER)
+  return _byteswap_uint64(value);
+#else
   return (u64)(((unsigned char*)&value)[0]) << 0 |
          (u64)(((unsigned char*)&value)[1]) << 8 |
          (u64)(((unsigned char*)&value)[2]) << 16 |
@@ -116,6 +159,7 @@ inline leu64::operator u64(void) const
          (u64)(((unsigned char*)&value)[5]) << 40 |
          (u64)(((unsigned char*)&value)[6]) << 48 |
          (u64)(((unsigned char*)&value)[7]) << 56;
+#endif
 }
 
 #endif

@@ -358,16 +358,16 @@ void DiskFile::Close(void)
   }
 }
 
-std::string DiskFile::GetCanonicalPathname(std::string filename)
+std::string DiskFile::GetCanonicalPathname(std::string_view filename)
 {
   auto wfilename = utf8::Utf8ToWide(filename);
-  if (!wfilename) return filename;
+  if (!wfilename) return std::string(filename);
 
   // First call to get required buffer size
   DWORD length = GetFullPathNameW(wfilename->c_str(), 0, nullptr, nullptr);
   if (length == 0) 
   {
-    return filename; 
+    return std::string(filename); 
   }
 
   // Allocate buffer with required size
@@ -375,15 +375,15 @@ std::string DiskFile::GetCanonicalPathname(std::string filename)
 
   // Second call to get the actual path
   length = GetFullPathNameW(wfilename->c_str(), length, wfullname.get(), nullptr);
-  if (length == 0)
+  if (length == 0) 
   {
-    return filename;
+    return std::string(filename); 
   }
 
   wfullname[0] = towupper(wfullname[0]);
   std::replace(wfullname.get(), wfullname.get() + length, L'/', L'\\');
 
-  return utf8::WideToUtf8(wfullname.get()).value_or(filename);
+  return utf8::WideToUtf8(wfullname.get()).value_or(std::string(filename));
 }
 
 std::unique_ptr< std::list<std::string> > DiskFile::FindFiles(std::string path, std::string wildcard, bool recursive)
@@ -437,7 +437,7 @@ std::unique_ptr< std::list<std::string> > DiskFile::FindFiles(std::string path, 
   return std::unique_ptr< std::list<std::string> >(matches);
 }
 
-u64 DiskFile::GetFileSize(std::string filename)
+u64 DiskFile::GetFileSize(std::string_view filename)
 {
   auto wfilename = utf8::Utf8ToWide(filename);
   if (!wfilename) return 0;
@@ -452,7 +452,7 @@ u64 DiskFile::GetFileSize(std::string filename)
   }
 }
 
-bool DiskFile::FileExists(std::string filename)
+bool DiskFile::FileExists(std::string_view filename)
 {
   auto wfilename = utf8::Utf8ToWide(filename);
   if (!wfilename) return 0;
@@ -755,11 +755,11 @@ void DiskFile::Close(void)
 }
 
 // Attempt to get the full pathname of the file
-std::string DiskFile::GetCanonicalPathname(std::string filename)
+std::string DiskFile::GetCanonicalPathname(std::string_view filename)
 {
   // Is the supplied path already an absolute one
-  if (filename.size() == 0 || filename[0] == '/')
-    return filename;
+  if (filename.empty() || filename[0] == '/')
+    return std::string(filename);
 
   // Get the current directory
 #ifdef PATH_MAX
@@ -771,19 +771,25 @@ std::string DiskFile::GetCanonicalPathname(std::string filename)
   if (curdir == NULL)
 #endif
   {
-    return filename;
+    return std::string(filename);
   }
 
 
   // Allocate a work buffer and copy the resulting full path into it.
-  char *work = new char[strlen(curdir) + filename.size() + 2];
+  size_t curlen = strlen(curdir);
+  char *work = new char[curlen + filename.size() + 2];
   strcpy(work, curdir);
 #ifndef PATH_MAX
   free(curdir);
 #endif
-  if (work[strlen(work)-1] != '/')
-    strcat(work, "/");
-  strcat(work, filename.c_str());
+  if (work[curlen - 1] != '/')
+  {
+    work[curlen] = '/';
+    work[curlen + 1] = '\0';
+    curlen++;
+  }
+  memcpy(work + curlen, filename.data(), filename.size());
+  work[curlen + filename.size()] = '\0';
 
   char *in = work;
   char *out = work;
@@ -954,10 +960,11 @@ std::unique_ptr< std::list<std::string> > DiskFile::FindFiles(std::string path, 
   return std::unique_ptr< std::list<std::string> >(matches);
 }
 
-u64 DiskFile::GetFileSize(std::string filename)
+u64 DiskFile::GetFileSize(std::string_view filename)
 {
+  std::string fn(filename);
   struct stat st;
-  if ((0 == stat(filename.c_str(), &st)) && (0 != (st.st_mode & S_IFREG)))
+  if ((0 == stat(fn.c_str(), &st)) && (0 != (st.st_mode & S_IFREG)))
   {
     return st.st_size;
   }
@@ -967,10 +974,11 @@ u64 DiskFile::GetFileSize(std::string filename)
   }
 }
 
-bool DiskFile::FileExists(std::string filename)
+bool DiskFile::FileExists(std::string_view filename)
 {
+  std::string fn(filename);
   struct stat st;
-  return ((0 == stat(filename.c_str(), &st)) && (0 != (st.st_mode & S_IFREG)));
+  return ((0 == stat(fn.c_str(), &st)) && (0 != (st.st_mode & S_IFREG)));
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #endif
@@ -1034,27 +1042,33 @@ bool DiskFile::Delete(void)
 //  }
 //}
 
-void DiskFile::SplitFilename(std::string filename, std::string &path, std::string &name)
+void DiskFile::SplitFilename(std::string_view filename, std::string &path, std::string &name)
 {
-  std::string::size_type where;
+  std::string_view::size_type where;
 
-  if (std::string::npos != (where = filename.find_last_of(PATHSEP)) ||
-      std::string::npos != (where = filename.find_last_of(ALTPATHSEP)))
+  if (std::string_view::npos != (where = filename.find_last_of(PATHSEP)) ||
+      std::string_view::npos != (where = filename.find_last_of(ALTPATHSEP)))
   {
-    path = filename.substr(0, where+1);
-    name = filename.substr(where+1);
+    path = std::string(filename.substr(0, where+1));
+    name = std::string(filename.substr(where+1));
   }
   else
   {
     path = "." PATHSEP;
-    name = filename;
+    name = std::string(filename);
   }
 }
 
-void DiskFile::SplitRelativeFilename(std::string filename, std::string basepath, std::string &name)
+void DiskFile::SplitRelativeFilename(std::string_view filename, std::string_view basepath, std::string &name)
 {
-  name = filename;
-  name.erase(0, basepath.length());
+  if (filename.starts_with(basepath))
+  {
+    name = std::string(filename.substr(basepath.length()));
+  }
+  else
+  {
+    name = std::string(filename);
+  }
 }
 
 #ifdef _WIN32
@@ -1210,11 +1224,11 @@ void DiskFileMap::Remove(DiskFile *diskfile)
   diskfilemap.erase(filename);
 }
 
-DiskFile* DiskFileMap::Find(std::string filename) const
+DiskFile* DiskFileMap::Find(std::string_view filename) const
 {
-  assert(filename.length() != 0);
+  if (filename.empty()) return 0;
 
-  std::map<std::string, DiskFile*>::const_iterator f = diskfilemap.find(filename);
+  std::map<std::string, DiskFile*, std::less<>>::const_iterator f = diskfilemap.find(filename);
 
   return (f != diskfilemap.end()) ?  f->second : 0;
 }
@@ -1224,18 +1238,14 @@ FileSizeCache::FileSizeCache()
 {
 }
 
-u64 FileSizeCache::get(const std::string &filename) {
-  std::map<std::string, u64>::const_iterator f = cache.find(filename);
+u64 FileSizeCache::get(std::string_view filename) {
+  std::map<std::string, u64, std::less<>>::const_iterator f = cache.find(filename);
   if (f != cache.end())
     return f->second;
 
   // go to disk
   u64 filesize = DiskFile::GetFileSize(filename);
 
-  cache.insert(std::pair<std::string,u64>(filename, filesize));
-  //  std::pair<std::map<std::string,u64>::const_iterator,bool> location = cache.insert(std::pair<std::string,u64>(filename, filesize));
-  //  if (!location.second) {
-  //    throw exception?
-  //  }
+  cache.emplace(std::string(filename), filesize);
   return filesize;
 }

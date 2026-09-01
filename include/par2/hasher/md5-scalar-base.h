@@ -10,6 +10,10 @@
 #define LOAD(k, set, ptr, offs, idx, var) (var = _LE32(read32(((char*)(ptr[set])) + offs + idx*4)), var + k)
 
 
+#ifdef __cplusplus
+# include <bit>
+# define ROTATE(a, n) std::rotl((uint32_t)(a), (int)(n))
+#else
 # if defined(_MSC_VER)
 #  define ROTATE(a,n)   _lrotl(a,n)
 # elif defined(__ICC)
@@ -37,8 +41,8 @@
                                 : "=r"(ret)             \
                                 : "I"(n), "0"((unsigned int)(a))        \
                                 : "cc");                \
-                           ret;                         \
-                        })
+                            ret;                         \
+                         })
 #  elif defined(_ARCH_PPC) || defined(_ARCH_PPC64) || \
         defined(__powerpc) || defined(__ppc__) || defined(__powerpc64__)
 #   define ROTATE(a,n)  ({ unsigned int ret;   \
@@ -46,8 +50,8 @@
                                 "rlwinm %0,%1,%2,0,31"  \
                                 : "=r"(ret)             \
                                 : "r"(a), "I"(n));      \
-                           ret;                         \
-                        })
+                            ret;                         \
+                         })
 #  elif defined(__s390x__)
 #   define ROTATE(a,n) ({ unsigned int ret;    \
                                 __asm__ ("rll %0,%1,%2"     \
@@ -60,6 +64,7 @@
 # ifndef ROTATE
 #  define ROTATE(a,n)     (((a)<<(n))|(((a)&0xffffffff)>>(32-(n))))
 # endif
+#endif
 
 
 
