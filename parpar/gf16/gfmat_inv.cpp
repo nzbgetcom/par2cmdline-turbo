@@ -1,11 +1,11 @@
 #include <par2/gf16/gfmat_coeff.h>
 #include <par2/gf16/gfmat_inv.h>
 #include <par2/gf16/gf16pmul.h>
-#include <algorithm>
 
 #ifdef PARPAR_INVERT_SUPPORT
 extern "C" uint16_t* gf16_recip;
 
+#include <algorithm>
 #include <cassert>
 #include <par2/osinfo/platform.h> // for ALIGN_*
 #include <par2/gf16/gf16mul.h>
@@ -13,18 +13,6 @@ extern "C" uint16_t* gf16_recip;
 #include <future>
 
 static const unsigned MIN_THREAD_REC = 10; // minimum number of rows to process on a thread
-
-struct Galois16RecMatrixComputeState {
-	uint16_t* coeff;
-	Galois16Mul gf;
-	void* gfScratch;
-	unsigned validCount;
-	void* srcRowsBase[PP_INVERT_MAX_MULTI_ROWS];
-	std::vector<Galois16RecMatrixWorker> workers;
-	unsigned pfFactor;
-	
-	Galois16RecMatrixComputeState(Galois16Methods method) : gf(method) {}
-};
 
 class Galois16RecMatrixWorker {
 	const Galois16Mul& gf;
@@ -45,6 +33,18 @@ public:
 		if(gfScratch)
 			gf.mutScratch_free(gfScratch);
 	}
+};
+
+struct Galois16RecMatrixComputeState {
+	uint16_t* coeff;
+	Galois16Mul gf;
+	void* gfScratch;
+	unsigned validCount;
+	void* srcRowsBase[PP_INVERT_MAX_MULTI_ROWS];
+	std::vector<Galois16RecMatrixWorker> workers;
+	unsigned pfFactor;
+	
+	Galois16RecMatrixComputeState(Galois16Methods method) : gf(method) {}
 };
 
 struct Galois16RecMatrixWorkerMessage {

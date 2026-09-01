@@ -1,6 +1,6 @@
 
-#include "gf16_global.h"
-#include "../src/platform.h"
+#include <par2/gf16/gf16_global.h>
+#include <par2/osinfo/platform.h>
 
 #if defined(__AVX512BMM__) && defined(__AVX512VL__)
 int gf16_affine_available_bmm = 1;
@@ -11,7 +11,7 @@ int gf16_affine_available_bmm = 1;
 # define _MMI(f) _mm512_ ## f ## _si512
 # define _FNSUFFIX _avx512
 # define _MM_END _mm256_zeroupper();
-# include "gf16_checksum_x86.h"
+# include <par2/gf16/gf16_checksum_x86.h>
 # undef MWORD_SIZE
 # undef _mword
 # undef _MM
@@ -22,7 +22,7 @@ int gf16_affine_available_bmm = 1;
 int gf16_affine_available_bmm = 0;
 #endif
 
-#include "gf16_muladd_multi.h"
+#include <par2/gf16/gf16_muladd_multi.h>
 
 
 #if defined(__AVX512BMM__) && defined(__AVX512VL__)

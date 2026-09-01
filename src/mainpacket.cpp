@@ -34,6 +34,7 @@ static char THIS_FILE[]=__FILE__;
 
 // Construct the main packet from the source files and the block size
 
+#ifdef ENABLE_CREATOR
 bool MainPacket::Create(std::vector<Par2CreatorSourceFile*> &sourcefiles, u64 _blocksize)
 {
   recoverablefilecount = totalfilecount =(u32)sourcefiles.size();
@@ -81,6 +82,7 @@ bool MainPacket::Create(std::vector<Par2CreatorSourceFile*> &sourcefiles, u64 _b
 
   return true;
 }
+#endif
 
 // Load a main packet from a specified file
 

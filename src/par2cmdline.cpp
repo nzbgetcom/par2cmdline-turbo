@@ -81,6 +81,7 @@ int main(int argc, char* argv[])
     switch (commandline->GetOperation())
     {
       case CommandLine::opCreate:
+#ifdef ENABLE_CREATOR
 	// Create recovery data
 	result = par2create(std::cout,
 			    std::cerr,
@@ -99,7 +100,10 @@ int main(int argc, char* argv[])
 			    commandline->GetRecoveryFileCount(),
 			    commandline->GetRecoveryBlockCount()
 			    );
-
+#else
+        std::cerr << "Creation support not enabled in this build." << std::endl;
+        result = eInvalidCommandLineArguments;
+#endif
         break;
       case CommandLine::opVerify:
       case CommandLine::opRepair:
@@ -108,6 +112,7 @@ int main(int argc, char* argv[])
           switch (commandline->GetVersion())
           {
             case CommandLine::verPar1:
+#ifdef ENABLE_PAR1
 	      result = par1repair(std::cout,
 				  std::cerr,
 				  commandline->GetNoiseLevel(),
@@ -117,7 +122,10 @@ int main(int argc, char* argv[])
 				  commandline->GetExtraFiles(),
 				  commandline->GetOperation() == CommandLine::opRepair,
 				  commandline->GetPurgeFiles());
-
+#else
+              std::cerr << "PAR 1.0 support not enabled in this build." << std::endl;
+              result = eInvalidCommandLineArguments;
+#endif
               break;
             case CommandLine::verPar2:
 	      result = par2repair(std::cout,

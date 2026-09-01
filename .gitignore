@@ -3,13 +3,12 @@
 # thx @spider-mario
 
 # compilation output
-par2
-!par2/
+/par2
+/par2.exe
 libpar2.a
 libparpar*.a
 *.o
 .deps/
-par2.exe
 tests/*.exe
 
 # test output
@@ -29,7 +28,6 @@ test-driver
 Makefile.in
 Makefile
 config.h
-version.h
 config.status
 configure
 stamp-h
@@ -65,5 +63,11 @@ perf.*
 \#*#
 .~lock.*#
 
-.vscode
 .DS_Store
+.vscode
+.idea/
+.qtcreator
+
+# cmake generated headers
+include/par2/version.h
+include/par2/config.h
