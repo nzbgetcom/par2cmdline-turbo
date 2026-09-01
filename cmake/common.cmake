@@ -46,7 +46,7 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
         add_compile_options(/MT /Oi /MP /utf-8 /guard:cf)
         add_link_options(/guard:cf /OPT:REF /OPT:ICF)
     else()
-        add_compile_options(-fno-rtti -ffunction-sections -fdata-sections -Wno-unused-function)
+        add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-rtti> -ffunction-sections -fdata-sections -Wno-unused-function)
     endif()
 
     if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
@@ -58,5 +58,21 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     check_cxx_compiler_flag("-fstack-protector-strong" HAVE_STACK_PROTECT)
     if(HAVE_STACK_PROTECT AND NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "powerpc")
       add_compile_options(-fstack-protector-strong)
+    endif()
+endif()
+
+if(USE_SANITIZERS)
+    if(MSVC)
+        add_compile_options(/fsanitize=address)
+        add_link_options(/fsanitize=address)
+    else()
+        add_compile_options(
+            -fsanitize=${USE_SANITIZERS}
+            -fno-omit-frame-pointer
+            -fno-sanitize-recover=all
+        )
+        add_link_options(
+            -fsanitize=${USE_SANITIZERS}
+        )
     endif()
 endif()

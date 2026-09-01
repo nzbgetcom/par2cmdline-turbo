@@ -26,6 +26,7 @@
 #include <par2/descriptionpacket.h>
 #include <par2/verificationpacket.h>
 #include <par2/criticalpacket.h>
+#include <par2/progressmeter.h>
 
 #include <string>
 #include <atomic>
@@ -51,7 +52,7 @@ public:
   ~Par2CreatorSourceFile(void);
 
   // Open the source file and compute the Hashes and CRCs.
-  bool Open(NoiseLevel noiselevel, std::ostream &sout, std::ostream &serr, const std::string &extrafile, u64 blocksize, bool deferhashcomputation, std::string basepath, u64 totalsize, std::atomic<u64> &totalprogress, std::mutex &output_lock);
+  bool Open(NoiseLevel noiselevel, std::ostream &sout, std::ostream &serr, const std::string &extrafile, u64 blocksize, bool deferhashcomputation, std::string basepath, MTProgressMeter<u64> &progress, std::mutex &output_lock);
   void Close(void);
 
   // Recover the file description and file verification packets

@@ -4,7 +4,7 @@ if (PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
     message(FATAL_ERROR "In-source builds are not allowed. You should create separate directory for build files.")
 endif()
 
-set(VERSION "1.4.0")
+set(VERSION "1.5.0")
 set(PACKAGE "par2")
 set(X_VERSION ${VERSION})
 set(X_PACKAGE "par2cmdline-turbo")
@@ -20,9 +20,17 @@ project(
     LANGUAGES C CXX
 )
 
+option(BUILD_LIB "Build only the Par2-turbo library" ON)
 option(BUILD_TOOL "Build only the executable Par2 tool" OFF)
-option(BUILD_LIB "Build only the Par2 library" ON)
+option(ENABLE_CREATOR "Enable PAR2 creation support" OFF)
+option(ENABLE_PAR1 "Enable PAR1 repair support" OFF)
 #option(WITH_TESTS "Build tests" OFF)
+
+if(BUILD_TOOL)
+    # The standalone tool requires creator and par1 support
+    set(ENABLE_CREATOR ON CACHE BOOL "Enable PAR2 creation support" FORCE)
+    set(ENABLE_PAR1 ON CACHE BOOL "Enable PAR1 repair support" FORCE)
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
@@ -30,7 +38,7 @@ endif()
 
 find_package(Threads REQUIRED)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -41,7 +49,11 @@ set(par2_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(LIBS Threads::Threads)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-set(SRC
+set(CLI_SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/par2cmdline.cpp
+)
+
+set(LIB_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/commandline.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/crc.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/creatorpacket.cpp
@@ -54,12 +66,6 @@ set(SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/libpar2.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/mainpacket.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/md5.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/par1fileformat.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/par1repairer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/par1repairersourcefile.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/par2cmdline.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/par2creator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/par2creatorsourcefile.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/par2fileformat.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/par2repairer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/par2repairersourcefile.cpp
@@ -69,6 +75,23 @@ set(SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/verificationpacket.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utf8.cpp
 )
+
+if(ENABLE_CREATOR)
+    list(APPEND LIB_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/par2creator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/par2creatorsourcefile.cpp
+    )
+    add_compile_definitions(ENABLE_CREATOR)
+endif()
+
+if(ENABLE_PAR1)
+    list(APPEND LIB_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/par1fileformat.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/par1repairer.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/par1repairersourcefile.cpp
+    )
+    add_compile_definitions(ENABLE_PAR1)
+endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/common.cmake)
 if(NOT WIN32)
@@ -89,12 +112,12 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/parpar/gf16.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/parpar/hasher.cmake)
 
 if(BUILD_TOOL)
-    add_executable(${PACKAGE} ${SRC})
+    add_executable(${PACKAGE} ${CLI_SRC} ${LIB_SRC})
     target_precompile_headers(${PACKAGE} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/libpar2internal.h)
 endif()
 
 if(BUILD_LIB)
-    add_library(${PAR2_LIBRARY} STATIC ${SRC})
+    add_library(${PAR2_LIBRARY} STATIC ${LIB_SRC})
     target_precompile_headers(${PAR2_LIBRARY} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/libpar2internal.h)
 endif()
 

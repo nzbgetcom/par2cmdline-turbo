@@ -205,6 +205,9 @@ typedef unsigned int     size_t;
 #define offsetof(TYPE, MEMBER) ((size_t) ((char*)(&((TYPE *)1)->MEMBER) - (char*)1))
 
 // par2cmdline includes
+#include <par2/libpar2.h>
+#include <par2/letype.h>
+#include <par2/progressmeter.h>
 #include <par2/commandline.h>
 #include <par2/crc.h>
 #include <par2/creatorpacket.h>
@@ -216,15 +219,17 @@ typedef unsigned int     size_t;
 #include <par2/foreach_parallel.h>
 #include <par2/galois.h>
 #include <par2/hasher.h>
-#include <par2/letype.h>
-#include <par2/libpar2.h>
 #include <par2/mainpacket.h>
 #include <par2/md5.h>
+#ifdef ENABLE_PAR1
 #include <par2/par1fileformat.h>
 #include <par2/par1repairer.h>
 #include <par2/par1repairersourcefile.h>
+#endif
+#ifdef ENABLE_CREATOR
 #include <par2/par2creator.h>
 #include <par2/par2creatorsourcefile.h>
+#endif
 #include <par2/par2fileformat.h>
 #include <par2/par2repairer.h>
 #include <par2/par2repairersourcefile.h>

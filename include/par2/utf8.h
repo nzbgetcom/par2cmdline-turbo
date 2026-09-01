@@ -23,6 +23,7 @@
 #include <string_view>
 #include <optional>
 #include <codecvt>
+#include <locale>
 
 namespace Par2::utf8
 {
