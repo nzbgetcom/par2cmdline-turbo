@@ -28,6 +28,7 @@ using namespace std;
 namespace Par2
 {
 
+#ifdef ENABLE_CREATOR
 Result par2create(std::ostream &sout,
 		  std::ostream &serr,
 		  const NoiseLevel noiselevel,
@@ -60,6 +61,7 @@ Result par2create(std::ostream &sout,
 				  );
   return result;
 }
+#endif
 
 
 Result par2repair(std::ostream &sout,
@@ -96,6 +98,7 @@ Result par2repair(std::ostream &sout,
 }
 
 
+#ifdef ENABLE_PAR1
 Result par1repair(std::ostream &sout,
 		  std::ostream &serr,
 		  const NoiseLevel noiselevel,
@@ -120,6 +123,7 @@ Result par1repair(std::ostream &sout,
 				   purgefiles);
   return result;
 }
+#endif
 
 
 // Determine how many recovery files to create.

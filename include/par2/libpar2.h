@@ -157,6 +157,7 @@ typedef enum Result
 } Result;
 
 
+#ifdef ENABLE_CREATOR
 Result par2create(std::ostream &sout,
 			  std::ostream &serr,
 			  const NoiseLevel noiselevel,
@@ -172,7 +173,7 @@ Result par2create(std::ostream &sout,
 			  const u32 recoveryfilecount,
 			  const u32 recoveryblockcount
 			  );
-
+#endif
 
 Result par2repair(std::ostream &sout,
 		  std::ostream &serr,
@@ -190,7 +191,7 @@ Result par2repair(std::ostream &sout,
 		  const u64 skipleaway
 		  );
 
-
+#ifdef ENABLE_PAR1
 Result par1repair(std::ostream &sout,
 		  std::ostream &serr,
 		  const NoiseLevel noiselevel,
@@ -205,7 +206,7 @@ Result par1repair(std::ostream &sout,
 		  // skipdata is not used by Par1
 		  // skipleaway is not used by Par1
 		  );
-
+#endif
 
 bool ComputeRecoveryFileCount(std::ostream &sout,
 			      std::ostream &serr,

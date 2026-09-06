@@ -9,7 +9,7 @@ set(GF16_LIBRARY_SRC
     ${LIB_DIR}/gf16_affine_avx512.c
     ${LIB_DIR}/gf16_affine_avx2.c
     ${LIB_DIR}/gf16_affine_gfni.c
-    ${LIB_DIR}/gf16_affine_avx10.c
+    ${LIB_DIR}/gf16_affine_bmm.c
     ${LIB_DIR}/gf16_lookup.c
     ${LIB_DIR}/gf16_lookup_sse2.c
     ${LIB_DIR}/gf16_shuffle_avx.c
@@ -33,7 +33,6 @@ set(GF16_LIBRARY_SRC
     ${LIB_DIR}/gf_add_sse2.c
     ${LIB_DIR}/gf_add_avx2.c
     ${LIB_DIR}/gf_add_avx512.c
-    ${LIB_DIR}/gf_add_avx10.c
     ${LIB_DIR}/gf_add_neon.c
     ${LIB_DIR}/gf_add_sve.c
     ${LIB_DIR}/gf_add_sve2.c
@@ -65,10 +64,8 @@ endif()
 if(MSVC)
     if(IS_X86)
         set_source_files_properties(${LIB_DIR}/gf_add_avx2.c PROPERTIES COMPILE_OPTIONS /arch:AVX2)
-        set_source_files_properties(${LIB_DIR}/gf_add_avx10.c PROPERTIES COMPILE_OPTIONS /arch:AVX2)
         set_source_files_properties(${LIB_DIR}/gf_add_avx512.c PROPERTIES COMPILE_OPTIONS /arch:AVX512)
         set_source_files_properties(${LIB_DIR}/gf16_affine_avx2.c PROPERTIES COMPILE_OPTIONS /arch:AVX2)
-        set_source_files_properties(${LIB_DIR}/gf16_affine_avx10.c PROPERTIES COMPILE_OPTIONS /arch:AVX2)
         set_source_files_properties(${LIB_DIR}/gf16_affine_avx512.c PROPERTIES COMPILE_OPTIONS /arch:AVX512)
         set_source_files_properties(${LIB_DIR}/gf16_cksum_avx2.c PROPERTIES COMPILE_OPTIONS /arch:AVX2)
         set_source_files_properties(${LIB_DIR}/gf16_cksum_avx512.c PROPERTIES COMPILE_OPTIONS /arch:AVX512)
@@ -112,14 +109,11 @@ if(NOT MSVC OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
             set_source_files_properties(${LIB_DIR}/gf16_affine_avx512.c PROPERTIES COMPILE_OPTIONS "-mavx512bw;-mavx512vl;-mgfni")
             set_source_files_properties(${LIB_DIR}/gf16_affine_gfni.c PROPERTIES COMPILE_OPTIONS "-mssse3;-mgfni")
             
-            set_source_files_properties(${SRC_DIR}/platform_warnings.c PROPERTIES COMPILE_OPTIONS "-mavx2;-mgfni")
+            set_source_files_properties(${LIB_DIR}/platform_warnings.c PROPERTIES COMPILE_OPTIONS "-mavx2;-mgfni")
         endif()
-        CHECK_CXX_COMPILER_FLAG("-mno-evex512" COMPILER_SUPPORTS_AVX10)
-        if(COMPILER_SUPPORTS_AVX10 AND COMPILER_SUPPORTS_GFNI)
-            set_source_files_properties(${LIB_DIR}/gf16_affine_avx10.c PROPERTIES COMPILE_OPTIONS "-mavx512bw;-mavx512vl;-mgfni;-mno-evex512")
-        endif()
-        if(COMPILER_SUPPORTS_AVX10)
-            set_source_files_properties(${LIB_DIR}/gf_add_avx10.c PROPERTIES COMPILE_OPTIONS "-mavx512vl;-mno-evex512")
+        CHECK_CXX_COMPILER_FLAG("-mavx512bmm -mavx512vl" COMPILER_SUPPORTS_BMM)
+        if(COMPILER_SUPPORTS_BMM)
+            set_source_files_properties(${LIB_DIR}/gf16_affine_bmm.c PROPERTIES COMPILE_OPTIONS "-mavx512vl;-mavx512bmm")
         endif()
         
         CHECK_CXX_COMPILER_FLAG("-mvpclmulqdq" COMPILER_SUPPORTS_VPCLMULQDQ)
@@ -197,7 +191,8 @@ add_library(${GF16_LIBRARY} STATIC ${GF16_LIBRARY_SRC})
 target_link_libraries(${GF16_LIBRARY} PRIVATE Threads::Threads)
 target_include_directories(${GF16_LIBRARY} PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${LIB_DIR}/gf16/opencl-include
+    ${LIB_DIR}
+    ${LIB_DIR}/opencl-include
 )
 target_compile_definitions(${GF16_LIBRARY} PRIVATE  
     PARPAR_INVERT_SUPPORT

@@ -23,9 +23,9 @@ dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.62)
-AC_INIT([par2cmdline-turbo], [1.4.0])
+AC_INIT([par2cmdline-turbo], [1.5.0])
 AC_DEFINE([BASE_PACKAGE], ["par2cmdline"], [Upstream package name])
-AC_DEFINE([BASE_VERSION], ["1.2.0"], [Upstream package version])
+AC_DEFINE([BASE_VERSION], ["1.3.0"], [Upstream package version])
 
 AC_CONFIG_SRCDIR([src/par2cmdline.cpp])
 
@@ -73,6 +73,17 @@ AC_CHECK_FUNCS([stricmp] [strcasecmp])
 AC_CHECK_FUNCS([strchr] [memcpy])
 
 AC_CHECK_FUNCS([getopt] [getopt_long])
+
+dnl Alternative windows build console application
+case "$host_os" in
+  *mingw* | *msys* | *cygwin*)
+    MINGW_BUILD=yes
+    ;;
+  *)
+    MINGW_BUILD=no
+    ;;
+esac
+AM_CONDITIONAL([MINGW], [test "x$MINGW_BUILD" = "xyes"])
 
 dnl C++14 check
 m4_include([m4/ax_cxx_compile_stdcxx.m4])
@@ -122,9 +133,9 @@ AM_COND_IF([HAS_GFNI], [AC_SUBST(CFLAGS_GFNI, "-mgfni -mssse3")])
 AX_CHECK_COMPILE_FLAG([-mvpclmulqdq], , , [-Werror])
 AM_CONDITIONAL([HAS_VPCLMUL], [test x$ax_cv_check_cflags__Werror__mvpclmulqdq = xyes])
 AM_COND_IF([HAS_VPCLMUL], [AC_SUBST(CFLAGS_VPCLMUL, "-mvpclmulqdq -mavx2")])
-AX_CHECK_COMPILE_FLAG([-mno-evex512], , , [-Werror])
-AM_CONDITIONAL([HAS_AVX10], [test x$ax_cv_check_cflags__Werror__mno_evex512 = xyes])
-AM_COND_IF([HAS_AVX10], [AC_SUBST(CFLAGS_AVX10, "-mavx512vl -mavx512bw -mno-evex512")])
+AX_CHECK_COMPILE_FLAG([-mavx512bmm], , , [-Werror])
+AM_CONDITIONAL([HAS_BMM], [test x$ax_cv_check_cflags__Werror__mavx512bmm = xyes])
+AM_COND_IF([HAS_BMM], [AC_SUBST(CFLAGS_BMM, "-mavx512vl -mavx512bmm")])
 AX_CHECK_COMPILE_FLAG([-mfpu=neon -march=armv7-a], , , [-Werror])
 AM_CONDITIONAL([HAS_NEON], [test x$ax_cv_check_cflags__Werror__mfpu_neon__march_armv7_a = xyes])
 AM_COND_IF([HAS_NEON], [AC_SUBST(CFLAGS_NEON, "-mfpu=neon -fno-lto -march=armv7-a")])

@@ -22,7 +22,11 @@
 #define __MAINPACKET_H__
 
 #include <par2/criticalpacket.h>
+#ifdef ENABLE_CREATOR
 #include <par2/par2creatorsourcefile.h>
+#else
+namespace Par2 { class Par2CreatorSourceFile; }
+#endif
 #include <par2/par2fileformat.h>
 #include <par2/md5.h>
 #include <vector>
@@ -49,10 +53,12 @@ public:
   ~MainPacket(void) {}
 
 public:
+#ifdef ENABLE_CREATOR
   // Construct the main packet from the source file list and block size.
   // "sourcefiles" will be sorted base on their FileId value.
   bool Create(std::vector<Par2CreatorSourceFile*> &sourcefiles,
               u64 _blocksize);
+#endif
 
   // Load a main packet from a specified file
   bool Load(DiskFile *diskfile, u64 offset, PACKET_HEADER &header);

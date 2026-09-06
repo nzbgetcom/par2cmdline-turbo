@@ -1,15 +1,31 @@
-This is a fork of [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) and it's mostly tuned for [NZBGet](https://github.com/nzbgetcom/nzbget)
+# par2cmdline-turbo (NZBGet Fork)
 
-There are three active branches:
+This is a fork of [animetosho/par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) tailored for embedding directly as a high-performance verification and repair library in [NZBGet](https://github.com/nzbgetcom/nzbget).
 
-* `turbo`: this branch mirrors the default branch of [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) for easy synchronization with upstream changes. It is essentially the "vanilla" version.
+### Branches
+* **`turbo`**: Mirrors upstream [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) for synchronization with new releases.
+* **`nzbget`**: Builds on top of `turbo` with library integration and CMake modularization for NZBGet.
 
-* `nzbget`: this branch builds upon the "vanilla" [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) code and incorporates changes specifically tailored for [NZBGet](https://github.com/nzbgetcom/nzbget).
+---
 
-If you wish to contribute changes that are not related to Unicode support or NZBGet-specific code, please submit your contributions to the original [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) repository
+## Key Differences from Upstream
 
+* **C++ Namespace Isolation (`namespace Par2`)**  
+  All library classes and functions are wrapped inside `namespace Par2` to prevent symbol collisions with NZBGet's internal types (e.g., `DiskFile`, `Par2Repairer`, `Log`).
 
-## About par2cmdline-turbo
+* **Public Header Reorganization (`include/par2/`)**  
+  Upstream places all headers flat across `src/` and `parpar/` directories. This fork relocates public interface headers to `include/par2/` with standard `#include <par2/...>` paths and makes each header self-contained. This allows consumer projects to cleanly include the library without exposing private build artifacts or relying on implicit include ordering.
+
+* **Modular / Slim Library Build (`CMakeLists.txt`)**  
+  Provides native CMake build configuration with options to control targets and footprint:
+  - `BUILD_LIB` *(default: ON)*: Builds the `par2-turbo` static library without the CLI `main()` entrypoint.
+  - `BUILD_TOOL` *(default: OFF)*: Builds the standalone `par2` executable CLI tool.
+  - `ENABLE_CREATOR` & `ENABLE_PAR1`: Can be disabled (`-DENABLE_CREATOR=OFF -DENABLE_PAR1=OFF`) to exclude creation and PAR1 engines, reducing the static library binary size.
+
+* **Progress Reporting Callbacks**  
+  Integrated callback hooks into `ProgressMeter` / `MTProgressMeter` to drive NZBGet's real-time progress display during parity verification and repair.
+
+---
 
 This is a *simple* fork of [par2cmdline](https://github.com/Parchive/par2cmdline) which replaces core computation routines with [ParPar’s](https://github.com/animetosho/ParPar) processing backend, improving par2cmdline’s performance on x86/ARM platforms.
 

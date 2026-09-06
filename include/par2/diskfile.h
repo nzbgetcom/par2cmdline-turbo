@@ -35,9 +35,9 @@
 #include <par2/libpar2.h>
 #include <par2/utf8.h>
 #include <string>
+#include <string_view>
 #include <list>
 #include <map>
-#include <vector>
 #include <memory>
 #include <mutex>
 
@@ -101,19 +101,19 @@ public:
   bool Delete(void);
 
 public:
-  static std::string GetCanonicalPathname(std::string filename);
+  static std::string GetCanonicalPathname(std::string_view filename);
 
-  static void SplitFilename(std::string filename, std::string &path, std::string &name);
-  static void SplitRelativeFilename(std::string filename, std::string basepath, std::string &name);
-  static std::string SplitRelativeFilename(const std::string& filename, const std::string& basepath)
+  static void SplitFilename(std::string_view filename, std::string &path, std::string &name);
+  static void SplitRelativeFilename(std::string_view filename, std::string_view basepath, std::string &name);
+  static std::string SplitRelativeFilename(std::string_view filename, std::string_view basepath)
   {
     std::string ret;
     SplitRelativeFilename(filename, basepath, ret);
     return ret;
   }
 
-  static bool FileExists(std::string filename);
-  static u64 GetFileSize(std::string filename);
+  static bool FileExists(std::string_view filename);
+  static u64 GetFileSize(std::string_view filename);
 
   // Search the specified path for files which match the specified wildcard
   // and return their names in a list.
@@ -160,19 +160,19 @@ public:
 
   bool Insert(DiskFile *diskfile);
   void Remove(DiskFile *diskfile);
-  DiskFile* Find(std::string filename) const;
+  DiskFile* Find(std::string_view filename) const;
 
 protected:
-  std::map<std::string, DiskFile*>    diskfilemap;             // Map from filename to DiskFile
+  std::map<std::string, DiskFile*, std::less<>>    diskfilemap;             // Map from filename to DiskFile
 };
 
 class FileSizeCache
 {
 public:
   FileSizeCache();
-  u64 get(const std::string &filename);
+  u64 get(std::string_view filename);
 protected:
-  std::map<std::string, u64> cache;
+  std::map<std::string, u64, std::less<>> cache;
 };
 
 }

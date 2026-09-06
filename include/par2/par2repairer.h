@@ -35,6 +35,7 @@
 #include <par2/creatorpacket.h>
 #include <par2/libpar2.h>
 #include <par2/commandline.h>
+#include <par2/progressmeter.h>
 
 #include <atomic>
 #include <mutex>
@@ -128,7 +129,7 @@ protected:
   bool VerifyExtraFiles(const std::vector<std::string> &extrafiles, const std::string &basepath, const bool renameonly);
 
   // Attempt to match the data in the DiskFile with the source file
-  bool VerifyDataFile(DiskFile *diskfile, Par2RepairerSourceFile *sourcefile, const std::string &basepath, const bool renameonly = false);
+  bool VerifyDataFile(DiskFile *diskfile, Par2RepairerSourceFile *sourcefile, const std::string &basepath, MTProgressMeter<u64> &progress, const bool renameonly = false);
 
   // Perform a sliding window scan of the DiskFile looking for blocks of data that
   // might belong to any of the source files (for which a verification packet was
@@ -137,6 +138,16 @@ protected:
   // found is for a different source file then "sourcefile" is changed accordingly.
   virtual bool ScanDataFile(DiskFile        *diskfile,   // [in]     The file being scanned
                     std::string             basepath,    // [in]
+                    const bool              renameonly,  // [in]     Only look for perfect matches
+                    Par2RepairerSourceFile* &sourcefile, // [in/out] The source file matched
+                    MatchType               &matchtype,  // [out]    The type of match
+                    MD5Hash                 &hashfull,   // [out]    The full hash of the file
+                    MD5Hash                 &hash16k,    // [out]    The hash of the first 16k
+                    u32                     &count);     // [out]    The number of blocks found
+
+  virtual bool ScanDataFile(DiskFile        *diskfile,   // [in]     The file being scanned
+                    std::string             basepath,    // [in]
+                    MTProgressMeter<u64>    &progress,   // [in]
                     const bool              renameonly,  // [in]     Only look for perfect matches
                     Par2RepairerSourceFile* &sourcefile, // [in/out] The source file matched
                     MatchType               &matchtype,  // [out]    The type of match
@@ -166,7 +177,7 @@ protected:
   bool AllocateBuffers(size_t memorylimit);
 
   // Read source data, process it through the RS matrix and write it to disk.
-  bool ProcessData(u64 blockoffset, size_t blocklength);
+  bool ProcessData(u64 blockoffset, size_t blocklength, ProgressMeter<u64> &progress);
 
   // Verify that all of the reconstructed target files are now correct
   bool VerifyTargetFiles(const std::string &basepath);
@@ -195,15 +206,18 @@ protected:
   std::mutex output_lock;
 
   std::unique_ptr<ParHeaders> headers;  
+  bool alreadyloaded = false;
+  bool cancelled = false;
 
-  const NoiseLevel noiselevel;              // OnScreen display
+  u64 mttotalsize = 0;
+  u64 mttotalextrasize = 0;
 
   std::string               searchpath;              // Where to find files on disk
 
   std::string               basepath;
 
   static u32 filethreads;      // Number of threads for file processing
-  bool alreadyloaded = false;
+  const NoiseLevel noiselevel;              // OnScreen display
   bool                      skipdata;                // Should we skip data whilst scanning
   u64                       skipleaway;              // The leaway +/- we should allow whilst scanning
 
@@ -252,15 +266,6 @@ protected:
   PAR2ProcCPU parparcpu;                             // ParPar CPU sub-backend
 
   void                     *transferbuffer;          // Buffer for reading/writing DataBlocks (chunksize * num_transfer_buffers)
-
-  u64                       progress;                // How much data has been processed.
-  u64                       totaldata;               // Total amount of data to be processed.
-  u64                       mttotalsize;             // Total size of files for mt-progress line
-  u64                       mttotalextrasize;        // Total size of extra files for mt-progress line
-  std::atomic<u64>          mttotalprogress;         // MT total progress
-  bool                      mtprocessingextrafiles;  // Are we currently processing extra files
-
-  bool                      cancelled;               // repair cancelled
 };
 
 }
