@@ -10,10 +10,13 @@
 #define LOAD(k, set, ptr, offs, idx, var) (var = _LE32(read32(((char*)(ptr[set])) + offs + idx*4)), var + k)
 
 
-#ifdef __cplusplus
-# include <bit>
-# define ROTATE(a, n) std::rotl((uint32_t)(a), (int)(n))
-#else
+#if defined(__cplusplus) && __cplusplus >= 202002L && defined(__has_include)
+# if __has_include(<bit>)
+#  include <bit>
+#  define ROTATE(a, n) std::rotl((uint32_t)(a), (int)(n))
+# endif
+#endif
+#ifndef ROTATE
 # if defined(_MSC_VER)
 #  define ROTATE(a,n)   _lrotl(a,n)
 # elif defined(__ICC)
