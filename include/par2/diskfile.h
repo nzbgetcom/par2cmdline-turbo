@@ -54,10 +54,10 @@ public:
   ~DiskFile(void);
 
   // Ensures the specified path's parent directory exists
-  bool CreateParentDirectory(std::string pathname);
+  bool CreateParentDirectory(std::string_view pathname);
 
   // Create a file and set its length
-  bool Create(std::string filename, u64 filesize);
+  bool Create(std::string_view filename, u64 filesize);
 
   // Write some data to the file
   // maxlength should be the default value, except during testing.
@@ -66,8 +66,8 @@ public:
 
   // Open the file
   bool Open(void);
-  bool Open(const std::string &filename);
-  bool Open(const std::string &filename, u64 filesize);
+  bool Open(std::string_view filename);
+  bool Open(std::string_view filename, u64 filesize);
 
   // Check to see if the file is open
 #ifdef _WIN32
@@ -88,14 +88,14 @@ public:
   u64 FileSize(void) const {return filesize;}
 
   // Get the name of the file
-  std::string FileName(void) const {return filename;}
+  const std::string& FileName(void) const {return filename;}
 
   // Does the file exist
   bool Exists(void) const {return exists;}
 
   // Rename the file
   bool Rename(void); // Pick a filename automatically
-  bool Rename(std::string filename);
+  bool Rename(std::string_view filename);
 
   // Delete the file
   bool Delete(void);

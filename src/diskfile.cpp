@@ -75,14 +75,14 @@ DiskFile::~DiskFile(void)
     ::CloseHandle(hFile);
 }
 
-bool DiskFile::CreateParentDirectory(std::string _pathname)
+bool DiskFile::CreateParentDirectory(std::string_view _pathname)
 {
   // do we have a path separator in the filename ?
-  std::string::size_type where;
-  if (std::string::npos != (where = _pathname.find_last_of(PATHSEP)) ||
-      std::string::npos != (where = _pathname.find_last_of(ALTPATHSEP)))
+  std::string_view::size_type where;
+  if (std::string_view::npos != (where = _pathname.find_last_of(PATHSEP)) ||
+      std::string_view::npos != (where = _pathname.find_last_of(ALTPATHSEP)))
   {
-    std::string path = _pathname.substr(0, where);
+    std::string path(_pathname.substr(0, where));
 
     // Handle Windows root path (e.g., "C:" or empty path from "\file")
     // If path is empty or is a drive letter (e.g., "C:"), the root already exists
@@ -117,7 +117,7 @@ bool DiskFile::CreateParentDirectory(std::string _pathname)
 
 // Create new file on disk and make sure that there is enough
 // space on disk for it.
-bool DiskFile::Create(std::string _filename, u64 _filesize)
+bool DiskFile::Create(std::string_view _filename, u64 _filesize)
 {
   assert(hFile == INVALID_HANDLE_VALUE);
 
@@ -255,7 +255,7 @@ bool DiskFile::Write(u64 _offset, const void *buffer, size_t length, LengthType 
 
 // Open the file
 
-bool DiskFile::Open(const std::string &_filename, u64 _filesize)
+bool DiskFile::Open(std::string_view _filename, u64 _filesize)
 {
   assert(hFile == INVALID_HANDLE_VALUE);
 
@@ -500,14 +500,14 @@ DiskFile::~DiskFile(void)
     fclose(file);
 }
 
-bool DiskFile::CreateParentDirectory(std::string _pathname)
+bool DiskFile::CreateParentDirectory(std::string_view _pathname)
 {
   // do we have a path separator in the filename ?
-  std::string::size_type where;
-  if (std::string::npos != (where = _pathname.find_last_of(PATHSEP)) ||
-      std::string::npos != (where = _pathname.find_last_of(ALTPATHSEP)))
+  std::string_view::size_type where;
+  if (std::string_view::npos != (where = _pathname.find_last_of(PATHSEP)) ||
+      std::string_view::npos != (where = _pathname.find_last_of(ALTPATHSEP)))
   {
-    std::string path = _pathname.substr(0, where);
+    std::string path(_pathname.substr(0, where));
 
     // Handle root path - if path is empty, the root already exists
     if (path.empty())
@@ -534,7 +534,7 @@ bool DiskFile::CreateParentDirectory(std::string _pathname)
 
 // Create new file on disk and make sure that there is enough
 // space on disk for it.
-bool DiskFile::Create(std::string _filename, u64 _filesize)
+bool DiskFile::Create(std::string_view _filename, u64 _filesize)
 {
   assert(file == 0);
 
@@ -551,7 +551,7 @@ bool DiskFile::Create(std::string _filename, u64 _filesize)
     return false;
   }
 
-  int fd = open(_filename.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
   if (fd < 0)
   {
     std::lock_guard<std::mutex> lock(*serr_lock);
@@ -665,7 +665,7 @@ bool DiskFile::Write(u64 _offset, const void *buffer, size_t length, LengthType 
 
 // Open the file
 
-bool DiskFile::Open(const std::string &_filename, u64 _filesize)
+bool DiskFile::Open(std::string_view _filename, u64 _filesize)
 {
   assert(file == 0);
 
@@ -985,12 +985,10 @@ bool DiskFile::FileExists(std::string_view filename)
 
 bool DiskFile::Open(void)
 {
-  std::string _filename = filename;
-
-  return Open(_filename);
+  return Open(filename);
 }
 
-bool DiskFile::Open(const std::string &_filename)
+bool DiskFile::Open(std::string_view _filename)
 {
   return Open(_filename, GetFileSize(_filename));
 }
@@ -1151,7 +1149,7 @@ std::string DiskFile::ErrorMessage(DWORD error)
   return result;
 }
 
-bool DiskFile::Rename(std::string _filename)
+bool DiskFile::Rename(std::string_view _filename)
 {
   assert(hFile == INVALID_HANDLE_VALUE);
 
@@ -1162,7 +1160,7 @@ bool DiskFile::Rename(std::string _filename)
 
   if (::MoveFileW(wfilename->c_str(), _wfilename->c_str()))
   {
-    filename.swap(_filename);
+    filename = _filename;
 
     return true;
   }
@@ -1173,13 +1171,14 @@ bool DiskFile::Rename(std::string _filename)
   return false;
 }
 #else
-bool DiskFile::Rename(std::string _filename)
+bool DiskFile::Rename(std::string_view _filename)
 {
   assert(file == 0);
 
-  if (::rename(filename.c_str(), _filename.c_str()) == 0)
+  std::string fn(_filename);
+  if (::rename(filename.c_str(), fn.c_str()) == 0)
   {
-    filename.swap(_filename);
+    filename = std::move(fn);
 
     return true;
   }

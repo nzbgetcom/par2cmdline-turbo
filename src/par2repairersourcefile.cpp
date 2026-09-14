@@ -83,7 +83,7 @@ void Par2RepairerSourceFile::ComputeTargetFileName(std::ostream &sout, std::ostr
   targetfilename = path + filename;
 }
 
-std::string Par2RepairerSourceFile::TargetFileName(void) const
+const std::string& Par2RepairerSourceFile::TargetFileName(void) const
 {
   return targetfilename;
 }

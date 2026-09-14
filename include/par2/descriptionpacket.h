@@ -60,7 +60,7 @@ public:
   bool Load(DiskFile *diskfile, u64 offset, PACKET_HEADER &header);
 
   // Return the name of the file
-  std::string FileName(void) const;
+  const std::string& FileName(void) const;
 
   // Get the Hash values from the packet
   const MD5Hash& HashFull(void) const;
@@ -99,7 +99,7 @@ inline u64 DescriptionPacket::FileSize(void) const
 // termination character, par2cmdline always allocates a little extra data
 // and fills it with NULLs to allow the filename to be directly read out of
 // the packet.
-inline std::string DescriptionPacket::FileName(void) const
+inline const std::string& DescriptionPacket::FileName(void) const
 {
   assert(packetdata != 0);
 
