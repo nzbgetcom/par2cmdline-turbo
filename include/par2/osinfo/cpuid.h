@@ -101,6 +101,13 @@ static unsigned long getauxval(unsigned long cap) {
 #   undef CPU_HAS_NEON
 #   ifdef __aarch64__
 #    define CPU_HAS_NEON (getauxval(AT_HWCAP) & HWCAP_ASIMD)
+#    if defined(HWCAP_CRC32)
+#     undef CPU_HAS_ARMCRC
+#     define CPU_HAS_ARMCRC (getauxval(AT_HWCAP) & HWCAP_CRC32)
+#    elif defined(AT_HWCAP2) && defined(HWCAP2_CRC32)
+#     undef CPU_HAS_ARMCRC
+#     define CPU_HAS_ARMCRC (getauxval(AT_HWCAP2) & HWCAP2_CRC32)
+#    endif
 #    if defined(HWCAP_SHA3)
 #     undef CPU_HAS_NEON_SHA3
 #     define CPU_HAS_NEON_SHA3 (getauxval(AT_HWCAP) & HWCAP_SHA3)
@@ -116,13 +123,6 @@ static unsigned long getauxval(unsigned long cap) {
 #   else
 #    define CPU_HAS_NEON (getauxval(AT_HWCAP) & HWCAP_NEON)
 #   endif
-#   if defined(AT_HWCAP2) && defined(HWCAP2_CRC32)
-#    undef CPU_HAS_ARMCRC
-#    define CPU_HAS_ARMCRC (getauxval(AT_HWCAP2) & HWCAP2_CRC32)
-#   elif defined(HWCAP_CRC32)
-#    undef CPU_HAS_ARMCRC
-#    define CPU_HAS_ARMCRC (getauxval(AT_HWCAP) & HWCAP_CRC32)
-#   endif
 #  elif defined(ANDROID_CPU_FAMILY_ARM)
 #   undef CPU_HAS_NEON
 #   undef CPU_HAS_ARMCRC
@@ -131,7 +131,6 @@ static unsigned long getauxval(unsigned long cap) {
 #    define CPU_HAS_ARMCRC (android_getCpuFeatures() & ANDROID_CPU_ARM64_FEATURE_CRC32)
 #   else
 #    define CPU_HAS_NEON (android_getCpuFeatures() & ANDROID_CPU_ARM_FEATURE_NEON)
-#    define CPU_HAS_ARMCRC (android_getCpuFeatures() & ANDROID_CPU_ARM_FEATURE_CRC32)
 #   endif
 #  elif defined(_WIN32)
 #   undef CPU_HAS_NEON
