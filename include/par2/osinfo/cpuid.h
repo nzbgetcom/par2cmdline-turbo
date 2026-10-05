@@ -69,7 +69,7 @@
 #   include <sys/auxv.h>
 #   if defined(__FreeBSD__) || defined(__OpenBSD__)
 static unsigned long getauxval(unsigned long cap) {
-	unsigned long ret;
+	unsigned long ret = 0;
 	elf_aux_info(cap, &ret, sizeof(ret));
 	return ret;
 }
@@ -101,27 +101,27 @@ static unsigned long getauxval(unsigned long cap) {
 #   undef CPU_HAS_NEON
 #   ifdef __aarch64__
 #    define CPU_HAS_NEON (getauxval(AT_HWCAP) & HWCAP_ASIMD)
+#    if defined(HWCAP_CRC32)
+#     undef CPU_HAS_ARMCRC
+#     define CPU_HAS_ARMCRC (getauxval(AT_HWCAP) & HWCAP_CRC32)
+#    elif defined(AT_HWCAP2) && defined(HWCAP2_CRC32)
+#     undef CPU_HAS_ARMCRC
+#     define CPU_HAS_ARMCRC (getauxval(AT_HWCAP2) & HWCAP2_CRC32)
+#    endif
 #    if defined(HWCAP_SHA3)
 #     undef CPU_HAS_NEON_SHA3
 #     define CPU_HAS_NEON_SHA3 (getauxval(AT_HWCAP) & HWCAP_SHA3)
 #    endif
-#    if defined(HWCAP_SVE)
+#    if defined(HWCAP_SVE) && !defined(__FreeBSD__) && !defined(__OpenBSD__)
 #     undef CPU_HAS_SVE
 #     define CPU_HAS_SVE (getauxval(AT_HWCAP) & HWCAP_SVE)
 #    endif
-#    if defined(AT_HWCAP2) && defined(HWCAP2_SVE2)
+#    if defined(AT_HWCAP2) && defined(HWCAP2_SVE2) && !defined(__FreeBSD__) && !defined(__OpenBSD__)
 #     undef CPU_HAS_SVE2
 #     define CPU_HAS_SVE2 (getauxval(AT_HWCAP2) & HWCAP2_SVE2)
 #    endif
 #   else
 #    define CPU_HAS_NEON (getauxval(AT_HWCAP) & HWCAP_NEON)
-#   endif
-#   if defined(AT_HWCAP2) && defined(HWCAP2_CRC32)
-#    undef CPU_HAS_ARMCRC
-#    define CPU_HAS_ARMCRC (getauxval(AT_HWCAP2) & HWCAP2_CRC32)
-#   elif defined(HWCAP_CRC32)
-#    undef CPU_HAS_ARMCRC
-#    define CPU_HAS_ARMCRC (getauxval(AT_HWCAP) & HWCAP_CRC32)
 #   endif
 #  elif defined(ANDROID_CPU_FAMILY_ARM)
 #   undef CPU_HAS_NEON
@@ -131,7 +131,6 @@ static unsigned long getauxval(unsigned long cap) {
 #    define CPU_HAS_ARMCRC (android_getCpuFeatures() & ANDROID_CPU_ARM64_FEATURE_CRC32)
 #   else
 #    define CPU_HAS_NEON (android_getCpuFeatures() & ANDROID_CPU_ARM_FEATURE_NEON)
-#    define CPU_HAS_ARMCRC (android_getCpuFeatures() & ANDROID_CPU_ARM_FEATURE_CRC32)
 #   endif
 #  elif defined(_WIN32)
 #   undef CPU_HAS_NEON
@@ -175,7 +174,7 @@ static unsigned long getauxval(unsigned long cap) {
 #   include <sys/auxv.h>
 #   if defined(__FreeBSD__) || defined(__OpenBSD__)
 static unsigned long getauxval(unsigned long cap) {
-	unsigned long ret;
+	unsigned long ret = 0;
 	elf_aux_info(cap, &ret, sizeof(ret));
 	return ret;
 }
